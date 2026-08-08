@@ -23,8 +23,14 @@
 # CONFIG
 # ============================================================
 
-PYTHON      := python3
-PIP         := pip
+# Détection auto du venv (priorité : .venv local > .venv du projet parent > système)
+_VENV_PYTHON := $(wildcard .venv/bin/python3 ../rag-tutor/.venv/bin/python3)
+ifeq ($(_VENV_PYTHON),)
+  PYTHON := python3
+else
+  PYTHON := $(firstword $(_VENV_PYTHON))
+endif
+PIP         := $(PYTHON) -m pip
 OLLAMA      := ollama
 
 # Modèles Ollama requis
