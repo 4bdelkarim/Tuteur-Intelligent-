@@ -5,7 +5,6 @@ tutor.py — CLI conversationnel pour le tuteur pédagogique socratique v2.
 Contrairement à chat.py (Q&A direct, une question → une réponse), ce module
 gère une CONVERSATION multi-tours avec :
   - Mémoire conversationnelle (ConversationMemory)
-  - Détection de changement de sujet → reset du contexte retrieval
   - Prompt socratique (TUTOR_SYSTEM_PROMPT)
   - Compression automatique de l'historique
 
@@ -83,13 +82,6 @@ def main():
             memory.clear()
             print("🧹 Conversation réinitialisée.")
             continue
-
-        # --- Détection changement de sujet ---
-        if memory.is_new_topic(question):
-            print("🔄 Nouveau sujet détecté — le contexte est rafraîchi.")
-            # On garde l'historique mais on pourrait reset le retrieval
-            # (pour l'instant, le retrieval repart de zéro à chaque question
-            #  donc aucun reset explicite n'est nécessaire)
 
         # --- Ajouter la question à l'historique (avant génération) ---
         memory.add_turn("student", question)
