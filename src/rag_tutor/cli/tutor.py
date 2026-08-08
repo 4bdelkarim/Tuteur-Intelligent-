@@ -21,6 +21,7 @@ import time
 import sys
 
 from ..core.pipeline import answer as pipeline_answer
+from ..core.generator import REFUSAL_MESSAGE
 from ..conversation.memory import ConversationMemory
 from ..conversation.prompts import TUTOR_SYSTEM_PROMPT
 
@@ -97,18 +98,29 @@ def main():
             use_query_processing=not args.no_query_processing,
             use_refusal_gate=not args.no_refusal_gate,
             history=history_text,
+            stream=True,
         )
         elapsed = time.time() - t0
 
-        # --- Ajouter la réponse à l'historique ---
-        memory.add_turn("tutor", result.answer)
+        # --- Affichage ---
+        if result.refused:
+            print(f"\n🤖 Tuteur 🚫 REFUSÉ > {REFUSAL_MESSAGE}")
+            memory.add_turn("tutor", REFUSAL_MESSAGE)
+        else:
+            # Streaming token par token
+            print(f"\n🤖 Tuteur > ", end="", flush=True)
+            full_answer = ""
+            t_start = time.time()
+            for token in result._answer_stream:
+                print(token, end="", flush=True)
+                full_answer += token
+            t_end = time.time()
+            elapsed_gen = t_end - t_start
+            print(f"  ({elapsed_gen:.1f}s)")
+            memory.add_turn("tutor", full_answer)
 
         # --- Compression si nécessaire ---
         memory.compress()
-
-        # --- Affichage ---
-        status = "🚫 REFUSÉ" if result.refused else f"({elapsed:.1f}s)"
-        print(f"\n🤖 Tuteur {status} > {result.answer}")
 
         if args.show_sources:
             print("\n📚 Sources :")

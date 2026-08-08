@@ -282,3 +282,25 @@ def check_confidence_llm(query, hits):
     elif conf > 5:
         conf = 5
     return can, conf
+
+def generate_stream(query, hits, system_prompt=None, model=None, history=None):
+    """Version streaming de generate() : yield chaque token au fur et a mesure.
+    Meme contrat que generate(), mais retourne un generateur de str.
+
+    Note : le M2 (verify_answer) est DESACTIVE en mode streaming — il necessite
+    la reponse complete pour verifier l'ancrage documentaire."""
+    from .llm_client import chat_stream
+    system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+    context = _format_context(hits)
+
+    if history:
+        user_message = (
+            f"HISTORIQUE DE LA CONVERSATION :\n\n{history}\n\n"
+            f"DOCUMENTS DE COURS DISPONIBLES :\n\n{context}\n\n"
+            f"QUESTION DE L'ETUDIANT :\n{query}"
+        )
+    else:
+        user_message = f"DOCUMENTS DE COURS DISPONIBLES :\n\n{context}\n\nQUESTION DE L'ETUDIANT :\n{query}"
+
+    kwargs = {"model": model} if model else {}
+    yield from chat_stream(system_prompt, user_message, **kwargs)

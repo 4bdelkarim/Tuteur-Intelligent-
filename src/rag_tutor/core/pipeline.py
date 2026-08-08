@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from .query_processing import process_query
 from .retriever import retrieve, merge_dedup
 from .refusal_gate import should_refuse_reranker
-from .generator import generate, verify_answer, DEFAULT_SYSTEM_PROMPT, REFUSAL_MESSAGE
+from .generator import generate, generate_stream, verify_answer, DEFAULT_SYSTEM_PROMPT, REFUSAL_MESSAGE
 
 
 @dataclass
@@ -41,7 +41,7 @@ class RAGResult:
     refused: bool      # True si refusal_gate a bloque AVANT generate() (pas d'appel LLM fait)
 
 
-def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusal_gate=True, history=None):
+def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusal_gate=True, history=None, stream=False):
     """use_query_processing=False : saute process_query() entierement (1 appel LLM
     de moins par question) -- utilise la question brute directement pour le
     retrieval. Sacrifice la reformulation/decomposition ; utile en mode degrade
@@ -126,6 +126,20 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
             query=query, rewritten_query=rewritten, sub_queries=sub_queries,
             hits=all_hits, contexts=[h["text"] for h in all_hits],
             answer=REFUSAL_MESSAGE, refused=True,
+        )
+
+    # --- Mode streaming : bypass M2 (necessite la reponse complete) ---
+    if stream:
+        from types import GeneratorType
+        return RAGResult(
+            query=query, rewritten_query=rewritten, sub_queries=sub_queries,
+            hits=all_hits, contexts=[h["text"] for h in all_hits],
+            answer="", refused=False,
+            # Le caller itere sur .answer_stream pour afficher les tokens
+            # et reconstruit la reponse complete en les concatenant.
+            _answer_stream=generate_stream(
+                query, all_hits, system_prompt=system_prompt, history=history
+            ),
         )
 
     answer_text = generate(query, all_hits, system_prompt=system_prompt, history=history)

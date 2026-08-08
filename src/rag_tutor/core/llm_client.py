@@ -56,3 +56,32 @@ def chat(system_prompt, user_message, model=GEN_MODEL, temperature=0.2, max_toke
         options=opts,
     )
     return resp["message"]["content"]
+
+def chat_stream(system_prompt, user_message, model=GEN_MODEL, temperature=0.2,
+                max_tokens=MAX_TOKENS, host=OLLAMA_HOST, num_ctx=NUM_CTX,
+                keep_alive="30m"):
+    """Version streaming de chat() : yield chaque token des qu'il est genere par Ollama.
+    Meme signature que chat(), mais retourne un generateur de str.
+
+    Usage :
+        for token in chat_stream(system, user):
+            print(token, end="", flush=True)
+    """
+    import ollama
+    client = ollama.Client(host=host)
+    opts = {"temperature": temperature, "num_predict": max_tokens}
+    if num_ctx is not None:
+        opts["num_ctx"] = num_ctx
+    stream = client.chat(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ],
+        options=opts,
+        stream=True,
+    )
+    for chunk in stream:
+        content = chunk.get("message", {}).get("content", "")
+        if content:
+            yield content
