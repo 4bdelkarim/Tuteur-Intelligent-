@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environnement virtuel
+.venv/
+venv/
+env/
+
+# ChromaDB
+dbfig_pc/
+
+# Données brutes (volumineuses)
+data/raw/
+data/processed/
+data/chroma_db/
+
+# Fichiers de config locaux
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rapport LaTeX (artefacts de compilation)
+rapport_final/*.aux
+rapport_final/*.log
+rapport_final/*.out
+rapport_final/*.toc
+rapport_final/*.lof
+rapport_final/*.lot
+rapport_final/*.blg
+rapport_final/*.bbl
+rapport_final/*.synctex.gz
