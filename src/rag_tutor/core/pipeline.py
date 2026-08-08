@@ -39,6 +39,7 @@ class RAGResult:
     contexts: list     # juste les textes -- pratique pour la génération / un affichage rapide
     answer: str
     refused: bool      # True si refusal_gate a bloque AVANT generate() (pas d'appel LLM fait)
+    answer_stream: object = None  # generateur de tokens en mode stream=True
 
 
 def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusal_gate=True, history=None, stream=False):
@@ -137,7 +138,7 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
             answer="", refused=False,
             # Le caller itere sur .answer_stream pour afficher les tokens
             # et reconstruit la reponse complete en les concatenant.
-            _answer_stream=generate_stream(
+            answer_stream=generate_stream(
                 query, all_hits, system_prompt=system_prompt, history=history
             ),
         )

@@ -111,7 +111,7 @@ def main():
             print(f"\n🤖 Tuteur > ", end="", flush=True)
             full_answer = ""
             t_start = time.time()
-            for token in result._answer_stream:
+            for token in result.answer_stream:
                 print(token, end="", flush=True)
                 full_answer += token
             t_end = time.time()
