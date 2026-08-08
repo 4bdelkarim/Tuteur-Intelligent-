@@ -43,8 +43,8 @@ MODE        ?= hybrid_rerank
 SHOW_SOURCES ?=
 
 # Mode hors-ligne HuggingFace — le modèle bge-reranker est déjà en cache local
-export HF_HUB_OFFLINE = 1
-export CUDA_VISIBLE_DEVICES =
+export HF_HUB_OFFLINE=1
+export CUDA_VISIBLE_DEVICES=
 
 # Couleurs
 GREEN  := \033[0;32m
