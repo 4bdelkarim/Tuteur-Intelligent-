@@ -7,10 +7,13 @@ gère une CONVERSATION multi-tours avec :
   - Mémoire conversationnelle (ConversationMemory)
   - Prompt socratique (TUTOR_SYSTEM_PROMPT)
   - Compression automatique de l'historique
+  - Évaluation par question (--show-eval)
 
 Usage :
   python -m rag_tutor.cli.tutor
   python -m rag_tutor.cli.tutor --k 6 --show-sources
+  python -m rag_tutor.cli.tutor --show-eval           # évaluation complète par question
+  python -m rag_tutor.cli.tutor --show-eval --no-judge  # sans le juge LLM (plus rapide)
 
   "quit" / "exit" / "q" / Ctrl+C / Ctrl+D pour sortir.
   "clear" pour réinitialiser la conversation.
@@ -22,8 +25,9 @@ import sys
 
 from ..core.pipeline import answer as pipeline_answer
 from ..core.generator import REFUSAL_MESSAGE
-from ..conversation.memory import ConversationMemory
+from ..conversation.memory import ConversationMemory, summarize_with_llm
 from ..conversation.prompts import TUTOR_SYSTEM_PROMPT
+from ..evaluation.per_question import evaluate_response, format_eval_report
 
 
 def format_sources(hits, max_sources=3):
@@ -56,6 +60,11 @@ def main():
                     help="affiche les sources utilisées après chaque réponse")
     ap.add_argument("--recent-window", type=int, default=6,
                     help="nombre de tours récents gardés intacts (défaut 6)")
+    ap.add_argument("--show-eval", action="store_true",
+                    help="affiche l'évaluation détaillée après chaque réponse "
+                         "(stats pipeline + juge LLM + retrieval)")
+    ap.add_argument("--no-judge", action="store_true",
+                    help="désactive le juge LLM dans --show-eval (garde stats pipeline + retrieval)")
     args = ap.parse_args()
 
     memory = ConversationMemory(recent_window=args.recent_window)
@@ -90,6 +99,8 @@ def main():
         # --- Formater l'historique pour le prompt ---
         history_text = memory.get_formatted_history()
 
+        full_answer = ""  # initialisé ici pour éviter UnboundLocalError
+
         t0 = time.time()
         result = pipeline_answer(
             question,
@@ -109,7 +120,6 @@ def main():
         else:
             # Streaming token par token
             print(f"\n🤖 Tuteur > ", end="", flush=True)
-            full_answer = ""
             t_start = time.time()
             for token in result.answer_stream:
                 print(token, end="", flush=True)
@@ -119,8 +129,21 @@ def main():
             print(f"  ({elapsed_gen:.1f}s)")
             memory.add_turn("tutor", full_answer)
 
+        # --- Rapport d'évaluation par question ---
+        if args.show_eval:
+            try:
+                eval_report = evaluate_response(
+                    question, result,
+                    answer_text=full_answer if not result.refused else result.answer,
+                    run_judge=not args.no_judge,
+                    run_retrieval_scores=True,
+                )
+                print(f"\n{format_eval_report(eval_report)}")
+            except Exception as e:
+                print(f"\n⚠️  [eval] Erreur lors de l'évaluation : {e}")
+
         # --- Compression si nécessaire ---
-        memory.compress()
+        memory.compress(llm_summarize_fn=summarize_with_llm)
 
         if args.show_sources:
             print("\n📚 Sources :")

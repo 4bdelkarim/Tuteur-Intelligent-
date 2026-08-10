@@ -215,10 +215,10 @@ class ConversationMemory:
 # Helpers pratiques
 # =====================================================
 
-def summarize_with_llm(text: str, llm_client) -> str:
+def summarize_with_llm(text: str) -> str:
     """Résume un texte via le LLM (utilise le client Ollama générique).
 
-    llm_client doit avoir une fonction chat(system_prompt, user_message) -> str.
+    Signatures compatibles avec ConversationMemory.compress() : callable(str) -> str.
     """
     from ..core.llm_client import chat
     return chat(

@@ -30,13 +30,5 @@ data/chroma_db/
 .DS_Store
 Thumbs.db
 
-# Rapport LaTeX (artefacts de compilation)
-rapport_final/*.aux
-rapport_final/*.log
-rapport_final/*.out
-rapport_final/*.toc
-rapport_final/*.lof
-rapport_final/*.lot
-rapport_final/*.blg
-rapport_final/*.bbl
-rapport_final/*.synctex.gz
+# Rapport LaTeX (dossier entier exclu du dépôt)
+rapport/

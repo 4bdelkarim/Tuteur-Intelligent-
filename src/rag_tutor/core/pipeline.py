@@ -55,6 +55,8 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
 
     history (optionnel) : str pre-formaté contenant l'historique de conversation
     (sortie de ConversationMemory.get_formatted_history()). None = mode Q&A direct.
+    Si fourni, il est passe a la fois au query processing (resolution des anaphores
+    avant retrieval) et au generator (contexte conversationnel dans le prompt).
 
     BUG CORRIGE ICI (diagnostique en comparant les runs ancien/nouveau dataset +
     relecture de merge_dedup()) : quand la question est decomposee en plusieurs
@@ -71,7 +73,7 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
     cette troncature prematuree faussait hit@k/MRR a la baisse -- independamment
     de toute vraie degradation du retriever."""
     if use_query_processing:
-        proc = process_query(query)
+        proc = process_query(query, history=history)
         # Toujours inclure la question reformulee (intention globale), et AJOUTER
         # les sous-questions en bonus pour ameliorer le rappel sur des notions
         # specifiques. Ne plus jeter la question globale : c'etait la cause de la

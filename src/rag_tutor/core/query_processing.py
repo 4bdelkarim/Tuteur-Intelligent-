@@ -36,6 +36,13 @@ _SYSTEM_PROMPT = (
     '  "sub_queries" : liste de sous-questions INDEPENDANTES si la question '
     "porte sur PLUSIEURS notions radicalement differentes et eloignees dans le "
     "cours ; liste VIDE si la question est deja simple/atomique.\n"
+    "\n"
+    "Si un HISTORIQUE DE CONVERSATION est fourni ci-dessous, utilise-le pour "
+    "resoudre les references implicites (pronoms, anaphores, ellipses) AVANT "
+    "de reformuler. Exemple : si l'historique mentionne 'LSTM' et que la "
+    "question dit 'compare-la avec le CNN', la reformulation doit devenir "
+    "'Comparer les LSTM avec les CNN'.\n"
+    "\n"
     "IMPORTANT :\n"
     "- Limite-toi a 2 ou 3 sous-questions MAXIMUM.\n"
     "- Ne decompose PAS si la question peut etre repondue par un seul passage du cours.\n"
@@ -61,12 +68,24 @@ def _parse(raw, original_query):
     return {"rewritten": original_query, "sub_queries": []}
 
 
-def process_query(query, model=None):
+def process_query(query, history=None, model=None):
     """Reformule `query` et la decompose si besoin. Ne leve jamais d'exception
-    liee au LLM/parsing -- repli sur la question d'origine en cas de probleme."""
+    liee au LLM/parsing -- repli sur la question d'origine en cas de probleme.
+
+    Si `history` est fourni (str, historique formate), il est injecte dans le
+    prompt pour permettre au LLM de resoudre les anaphores et references
+    implicites avant la reformulation (contextual query processing).
+    """
     kwargs = {"model": model} if model else {}
     try:
-        raw = chat(_SYSTEM_PROMPT, query, **kwargs)
+        if history:
+            user_message = (
+                f"HISTORIQUE DE CONVERSATION :\n{history}\n\n"
+                f"QUESTION A REFORMULER :\n{query}"
+            )
+        else:
+            user_message = query
+        raw = chat(_SYSTEM_PROMPT, user_message, **kwargs)
     except Exception:
         return {"rewritten": query, "sub_queries": []}
     return _parse(raw, query)
