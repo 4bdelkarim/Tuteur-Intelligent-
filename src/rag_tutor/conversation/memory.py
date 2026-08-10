@@ -5,19 +5,16 @@ pédagogique conversationnel v2.
 
 Responsabilités :
   1. Stocker les tours de conversation (student / tutor)
-  2. Détecter un changement de sujet → réinitialiser le contexte retrieval
-  3. Compresser les anciens messages quand on approche de la limite de contexte
-  4. Formater l'historique pour inclusion dans le prompt de génération
+  2. Compresser les anciens messages quand on approche de la limite de contexte
+  3. Formater l'historique pour inclusion dans le prompt de génération
 
 API publique :
   ConversationMemory.add_turn(role, content) -> None
   ConversationMemory.get_formatted_history(max_tokens=4000) -> str
-  ConversationMemory.is_new_topic(query, threshold=0.3) -> bool
   ConversationMemory.clear() -> None
   ConversationMemory.last_n_turns(n) -> list
 """
 
-import re
 from collections import deque
 
 
@@ -28,8 +25,6 @@ class ConversationMemory:
       - Stocke les N derniers tours intacts (fenêtre récente, défaut 6 tours)
       - Les tours plus anciens sont compressés en un résumé (via le LLM si
         disponible, sinon tronqués)
-      - Détection de changement de sujet : compare les mots-clés de la
-        nouvelle question avec ceux des 3 derniers tours
     """
 
     def __init__(self, recent_window=6, max_summary_tokens=500):
@@ -78,32 +73,6 @@ class ConversationMemory:
             history_text = self._truncate_history(recent, self._summary, max_tokens)
 
         return history_text
-
-    def is_new_topic(self, query: str, threshold: float = 0.3) -> bool:
-        """Détecte si la question change radicalement de sujet.
-
-        Compare les mots-clés (mots >= 4 lettres) de la question avec ceux
-        des 3 derniers tours. Si le chevauchement est < threshold → nouveau sujet.
-
-        Retourne True si le sujet a changé, False sinon.
-        """
-        if len(self._turns) < 2:
-            return False
-
-        query_keywords = self._extract_keywords(query)
-        if not query_keywords:
-            return False
-
-        # Prendre les 3 derniers tours (student + tutor)
-        recent_turns = self._turns[-3:]
-        recent_text = " ".join(t["content"] for t in recent_turns)
-        recent_keywords = self._extract_keywords(recent_text)
-
-        if not recent_keywords:
-            return False
-
-        overlap = len(query_keywords & recent_keywords) / len(query_keywords)
-        return overlap < threshold
 
     def clear(self):
         """Réinitialise la mémoire."""
@@ -161,20 +130,6 @@ class ConversationMemory:
     # ------------------------------------------------------------------
     # Helpers privés
     # ------------------------------------------------------------------
-
-    @staticmethod
-    def _extract_keywords(text: str) -> set:
-        """Extrait les mots-clés (mots >= 4 lettres, hors stopwords basiques)."""
-        stopwords = {
-            "cette", "cette", "dans", "pour", "avec", "plus", "moins",
-            "tout", "très", "être", "avoir", "faire", "peut", "aussi",
-            "alors", "comme", "entre", "deux", "leur", "dont", "quelle",
-            "qu'est", "comment", "pourquoi", "différence", "the", "and",
-            "what", "that", "this", "from", "with", "does", "between",
-            "explique", "expliquer",
-        }
-        words = re.findall(r"\w{4,}", text.lower())
-        return {w for w in words if w not in stopwords}
 
     @staticmethod
     def _estimate_tokens(text: str) -> int:

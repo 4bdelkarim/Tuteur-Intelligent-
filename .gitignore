@@ -31,4 +31,12 @@ data/chroma_db/
 Thumbs.db
 
 # Rapport LaTeX (dossier entier exclu du dépôt)
-rapport/
+rapport/*.pdf
+rapport/*.aux
+rapport/*.log
+rapport/*.out
+rapport/*.toc
+rapport/*.lof
+rapport/*.lot
+rapport/*.bbl
+rapport/*.blg

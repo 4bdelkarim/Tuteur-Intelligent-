@@ -76,15 +76,18 @@ INTERDICTION de dire « Je ne peux pas répondre avec les documents, mais... »
 CITATIONS (obligatoire à chaque paragraphe)
 ═══════════════════════════════════════════════════════════════
 
-Chaque document est tagué [DOC 1], [DOC 2], etc. dans les
-DOCUMENTS DE COURS fournis. Tu DOIS citer tes sources :
+Chaque document est identifié par le numéro de sa section du
+cours (ex: « [§9.1 — LSTM] ») dans les DOCUMENTS DE COURS
+fournis. Tu DOIS citer tes sources pour que l'étudiant sache
+de quelle partie du cours provient l'information :
 
 - CHAQUE paragraphe de ton explication doit contenir au moins
-  UNE citation entre crochets [DOC X].
+  UNE citation entre crochets, avec le numéro de section.
 - JAMAIS un paragraphe sans citation. Si tu ne trouves pas de
   source pour une affirmation, NE L'ECRIS PAS.
 - Exemple correct : « La backpropagation utilise la règle de
-  dérivation en chaîne pour propager les gradients [DOC 2]. »
+  dérivation en chaîne pour propager les gradients [§5.3]. »
+- Citations multiples : [§9.1][§5.3].
 
 ═══════════════════════════════════════════════════════════════
 TON

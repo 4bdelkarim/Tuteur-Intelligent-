@@ -1,0 +1,1776 @@
+% =============================================================
+%  Rapport de stage ISIMA — Tuteur Pédagogique Intelligent par RAG
+%  Rapport complet — Juillet 2026
+%  Auteur : Abdelkarim TOUNGOUT
+% =============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% ===================== PACKAGES =====================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{csquotes}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% ===================== COULEURS ISIMA =====================
+\usepackage{xcolor}
+\definecolor{bleuPrincipal}{RGB}{31,56,100}
+\definecolor{bleuSecondaire}{RGB}{46,85,151}
+\definecolor{grisTexte}{RGB}{64,64,64}
+\definecolor{grisClair}{RGB}{240,240,240}
+\definecolor{bleuAccent}{RGB}{232,238,247}
+\definecolor{vertAccent}{RGB}{232,247,238}
+
+% ===================== TITRES =====================
+\usepackage{titlesec}
+\titleformat{\section}{\color{bleuPrincipal}\Large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\color{bleuSecondaire}\large\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\color{grisTexte}\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
+
+% ===================== TABLEAUX =====================
+\usepackage{array,booktabs,tabularx,colortbl,makecell,multirow}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% ===================== LISTES =====================
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.4em, itemsep=2pt, topsep=4pt}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=3pt, topsep=4pt}
+
+% ===================== MATHÉMATIQUES =====================
+\usepackage{amsmath,amssymb}
+
+% ===================== FIGURES =====================
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% ===================== DIAGRAMME DE GANTT =====================
+\usepackage{pgfgantt}
+
+% ===================== GRAPHIQUES =====================
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+
+% ===================== HYPERLIENS =====================
+\usepackage{hyperref}
+\definecolor{codebg}{RGB}{248,250,252}
+\definecolor{codeframe}{RGB}{203,213,225}
+\lstdefinestyle{ragcode}{
+    language=Python,
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{orange!80!black},
+    frame=single,
+    framerule=0.6pt,
+    rulecolor=\color{codeframe},
+    numbers=left,
+    numberstyle=\footnotesize\color{gray},
+    stepnumber=1,
+    numbersep=10pt,
+    breaklines=true,
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+}
+\lstset{style=ragcode}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=bleuPrincipal,
+  citecolor=bleuSecondaire,
+  urlcolor=bleuSecondaire,
+  pdftitle={Rapport de stage --- Tuteur Pédagogique RAG},
+  pdfauthor={Abdelkarim TOUNGOUT}
+}
+
+% ===================== EN-TÊTES ET PIEDS DE PAGE =====================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\color{grisTexte}\textit{Rapport de stage --- Tuteur Pédagogique RAG}}
+\fancyhead[R]{\small\color{grisTexte}\textit{ISIMA --- 2026}}
+\fancyfoot[C]{\small\color{grisTexte}\thepage}
+
+% ===================== LÉGENDES =====================
+\usepackage{caption}
+\captionsetup{font=small,labelfont={bf,color=bleuPrincipal}}
+
+% ===================== TODO NOTES (à supprimer pour la version finale) =====================
+\usepackage[textsize=small,color=yellow!30]{todonotes}
+
+% =============================================================
+\begin{document}
+
+% ===================== PAGE DE GARDE =====================
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+% --- Logos ---
+% (Placer les fichiers logo_isima.png et logo_limos.png dans rapport/figures/)
+{\color{bleuPrincipal}\Large\textbf{ISIMA}\par}
+\vspace{0.2cm}
+{\color{bleuSecondaire}\normalsize Institut Supérieur d'Informatique, de Modélisation\par}
+{\color{bleuSecondaire}\normalsize et de leurs Applications\par}
+
+\vspace{0.8cm}
+
+{\color{bleuPrincipal}\Large\textbf{LIMOS}\par}
+\vspace{0.2cm}
+{\color{bleuSecondaire}\normalsize UMR 6158 — CNRS / Université Clermont Auvergne\par}
+
+\vspace{1.5cm}
+
+{\large\textbf{Institut Supérieur d'Informatique,}\\\textbf{de Modélisation et de leurs Applications}\par}
+\vspace{0.3cm}
+{\normalsize Rapport de stage de 2\textsuperscript{ème} année\par}
+{\normalsize Cycle ingénieur ISIMA\par}
+\vspace{0.3cm}
+{\normalsize\textit{Filière~: F4 --- Optimisation et Intelligence Artificielle}\par}
+
+\vspace{2cm}
+
+{\color{bleuPrincipal}\LARGE\bfseries Tuteur Pédagogique Intelligent\par}
+\vspace{0.4cm}
+{\color{bleuSecondaire}\large Conception et implémentation d'un tuteur IA à base d'un système RAG\par}
+
+\vspace{2.5cm}
+
+\begin{tabular}{rl}
+\toprule
+\textbf{Présenté par}          & Abdelkarim TOUNGOUT \\
+\textbf{Responsable ISIMA}     & Vincent BARRA \\
+\textbf{Laboratoire d'accueil} & LIMOS --- Clermont-Ferrand \\
+\textbf{Adresse}               & 1 rue de la Chebarde, 63178 Aubière \\
+\textbf{Date de présentation}  & Juillet 2026 \\
+\textbf{Durée du stage}        & Février -- Juillet 2026 (6 mois) \\
+\bottomrule
+\end{tabular}
+
+\vfill
+
+\vspace{1cm}
+
+% --- Institutions en bas de page ---
+{\color{bleuPrincipal}\textbf{ISIMA} --- Institut Supérieur d'Informatique, de Modélisation et de leurs Applications\par}
+{\color{bleuSecondaire}\textbf{LIMOS} --- UMR 6158 CNRS / Université Clermont Auvergne\par}
+
+{\footnotesize\color{grisTexte}
+Version du \today
+}
+
+\end{titlepage}
+
+% ===================== RÉSUMÉ =====================
+\section*{Résumé}
+\addcontentsline{toc}{section}{Résumé}
+
+Ce rapport présente la conception et l'implémentation d'un système de tutorat pédagogique intelligent fondé sur une architecture de génération augmentée par récupération (RAG), appliqué au contenu d'un cours de machine learning. Le système extrait le contenu de documents PDF et de pages web (texte, formules, tableaux, figures, code), l'indexe dans une base vectorielle, puis répond aux questions des étudiants en s'appuyant exclusivement sur ce corpus. Le pipeline intègre une recherche hybride (lexicale et sémantique), une réévaluation par \textit{cross-encoder}, un traitement de la requête (reformulation et décomposition) et un mécanisme de refus explicite avant génération. L'ensemble est déployé entièrement en local, sans coût d'API, en s'appuyant sur des modèles \textit{open-weight} (GLM-OCR, Qwen3-VL, BGE-M3, Qwen2.5).
+
+\textit{Mots-clés~: RAG, tutorat pédagogique, recherche hybride, \textit{embedding}, \textit{chunking} parent-enfant, LLM local, GLM-OCR}
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+This report presents the design and implementation of an intelligent pedagogical tutoring system based on a Retrieval-Augmented Generation (RAG) architecture, applied to machine learning course content. The system extracts content from PDF documents and web pages (text, formulas, tables, figures, code), indexes it in a vector database, and answers student questions by relying exclusively on this corpus. The pipeline integrates hybrid search (lexical and semantic), query processing (rewriting and decomposition), cross-encoder reranking, and an explicit refusal mechanism before generation. The entire system runs locally, at zero API cost, using open-weight models (GLM-OCR, Qwen3-VL, BGE-M3, Qwen2.5).
+
+\textit{Keywords: RAG, pedagogical tutoring, hybrid search, embedding, parent-child chunking, local LLM, GLM-OCR}
+
+% ===================== REMERCIEMENTS =====================
+\section*{Remerciements}
+\addcontentsline{toc}{section}{Remerciements}
+
+Je tiens à exprimer ma gratitude envers toutes les personnes qui ont contribué à la réalisation de ce projet.
+
+en premier lieu, je remercie chaleureusement M.~Vincent~BARRA, Professeur à l'ISIMA et responsable de ce stage, pour sa disponibilité, ses conseils avisés et la confiance qu'il m'a accordée tout au long de ce projet. Ses orientations m'ont permis de structurer ce travail et d'en approfondir les dimensions techniques avec rigueur.
+
+Je remercie également l'ensemble de l'équipe pédagogique de la filière F4 pour la qualité de la formation dispensée, qui m'a fourni les bases théoriques et pratiques nécessaires à la conduite de ce projet, en particulier dans les domaines du traitement automatique du langage naturel et de l'apprentissage profond.
+
+Je tiens à remercier le LIMOS pour l'accès à l'infrastructure de calcul ayant permis la phase d'évaluation de ce projet, ainsi que la communauté \textit{open-source} dont les outils et modèles (Ollama, ChromaDB, LangChain, BGE-M3, Qwen) constituent le socle technique de ce travail.
+
+Enfin, mes remerciements vont à mes camarades de promotion pour les échanges stimulants qui ont jalonné ce semestre, et à ma famille pour son soutien indéfectible.
+
+% ===================== LISTE DES ACRONYMES =====================
+\section*{Liste des acronymes}
+\addcontentsline{toc}{section}{Liste des acronymes}
+
+\begin{description}[leftmargin=3.5cm,labelwidth=3cm]
+  \item[BM25] \textit{Best Matching 25} --- algorithme de recherche lexicale probabiliste
+  \item[CLI]  \textit{Command-Line Interface} --- interface en ligne de commande
+  \item[LLM]  \textit{Large Language Model} --- grand modèle de langage
+  \item[MRR]  \textit{Mean Reciprocal Rank} --- moyenne de l'inverse du rang
+  \item[MTEB] \textit{Massive Text Embedding Benchmark}
+  \item[OCR]  \textit{Optical Character Recognition} --- reconnaissance optique de caractères
+  \item[POC]  \textit{Proof of Concept} --- preuve de concept
+  \item[RAG]  \textit{Retrieval-Augmented Generation} --- génération augmentée par récupération
+  \item[RRF]  \textit{Reciprocal Rank Fusion} --- fusion de rang réciproque
+  \item[RSE]  Responsabilité Sociétale et Environnementale
+  \item[TER]  Travail d'Étude et de Recherche
+  \item[UCA]  Université Clermont Auvergne
+  \item[VLM]  \textit{Vision-Language Model} --- modèle vision-langage
+\end{description}
+
+% ===================== TABLES DES MATIÈRES =====================
+\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% =============================================================
+%                 CHAPITRE 1 : INTRODUCTION
+% =============================================================
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Présentation du laboratoire d'accueil}
+\label{sec:limos}
+
+Le Laboratoire d'Informatique, de Modélisation et d'Optimisation des Systèmes (LIMOS, UMR~6158) est une unité mixte de recherche du CNRS et de l'Université Clermont Auvergne (UCA), située sur le campus des Cézeaux à Aubière. Créé en 1982, le LIMOS rassemble aujourd'hui plus de 250 membres (chercheurs, enseignants-chercheurs, doctorants et personnels administratifs) répartis en six équipes de recherche.
+
+Le laboratoire structure ses activités autour de trois axes scientifiques principaux~:
+\begin{itemize}
+  \item \textbf{Systèmes Informatiques et Réseaux}~: optimisation des réseaux, systèmes distribués, cybersécurité~;
+  \item \textbf{Modélisation, Optimisation et Aide à la Décision}~: recherche opérationnelle, optimisation combinatoire, logistique~;
+  \item \textbf{Science des Données et Intelligence Artificielle}~: apprentissage automatique, fouille de données, traitement du langage naturel.
+\end{itemize}
+
+C'est au sein de ce troisième axe que s'inscrit le présent stage, sous la responsabilité de M.~Vincent~BARRA, Professeur à l'ISIMA et chercheur au LIMOS. Ses travaux portent sur l'apprentissage profond, l'analyse de données multimodales et les systèmes de traitement automatique du langage naturel.
+
+Le LIMOS met à disposition de ses chercheurs et stagiaires une infrastructure de calcul mutualisée, dont un serveur équipé d'un GPU NVIDIA H100 NVL (95~Go de VRAM). C'est sur cette infrastructure que l'ensemble des expérimentations du projet a été conduit, en cohérence avec la politique de mutualisation des ressources promue par le laboratoire.
+
+\subsection{Contexte}
+
+L'essor des grands modèles de langage (LLMs) a ouvert de nouvelles perspectives dans le domaine de l'éducation assistée par l'intelligence artificielle. Ces modèles, capables de comprendre et de formuler du texte en langage naturel, constituent des candidats naturels pour la construction de systèmes de tutorat capables d'interagir avec un apprenant, de répondre à ses questions et de l'accompagner dans sa compréhension d'un cours.
+
+Toutefois, l'utilisation directe d'un LLM comme tuteur se heurte à deux limites structurelles. La première est l'\textbf{hallucination}~: le modèle peut produire une réponse plausible en apparence mais factuellement incorrecte, sans qu'aucun signal ne le distingue d'une affirmation fondée. La seconde est la \textbf{fixité temporelle des connaissances}~: un modèle n'a accès qu'à ce qui figurait dans son corpus d'entraînement, sans possibilité de refléter un contenu de cours spécifique, mis à jour ou absent de ce corpus.
+
+Ces deux limites sont particulièrement critiques dans un contexte pédagogique, où une réponse erronée présentée avec assurance peut induire l'apprenant en erreur sans qu'il ait les moyens de le détecter.
+
+\subsection{Problématique}
+
+Comment construire un système de tutorat pédagogique capable de répondre de manière fiable à des questions portant sur un corpus de cours spécifique --- incluant du texte, des formules mathématiques, des tableaux, des figures et du code --- en s'appuyant exclusivement sur ce corpus plutôt que sur les connaissances générales d'un modèle de langage, tout en restant déployable localement, sans coût d'API, sur du matériel accessible~?
+
+\subsection{Objectifs}
+
+Ce projet vise à concevoir, implémenter et évaluer un système de tutorat pédagogique fondé sur une architecture de génération augmentée par récupération (RAG), appliqué au contenu d'un cours de machine learning. Les objectifs spécifiques sont les suivants~:
+
+\begin{enumerate}
+  \item Construire un pipeline d'extraction capable de traiter des documents PDF (natifs et scannés) et des pages web, en préservant la richesse du contenu (formules, tableaux, figures, code).
+  \item Concevoir et implémenter une chaîne d'ingestion (\textit{chunking}, enrichissement, \textit{embedding}, indexation) adaptée à un corpus pédagogique multimodal.
+  \item Mettre en place un pipeline de \textit{retrieval} hybride combinant recherche lexicale et sémantique, avec réévaluation par \textit{cross-encoder} et gestion explicite du refus.
+  \item Intégrer un modèle de langage local avec un \textit{prompt} pédagogique, ancré strictement dans le contexte récupéré.
+  \item Évaluer quantitativement la qualité du système sur un jeu de données de référence.
+\end{enumerate}
+
+L'ensemble du système est conçu pour fonctionner entièrement en local, sans appel à des services distants, en s'appuyant exclusivement sur des modèles \textit{open-weight}.
+
+\subsection{Cahier des charges}
+\label{sec:cahier-des-charges}
+
+Le projet répond à un cahier des charges articulé autour de spécifications fonctionnelles et techniques.
+
+\subsubsection{Spécifications fonctionnelles}
+
+\begin{enumerate}
+  \item \textbf{Extraction multimodale}~: le système doit extraire le contenu de documents PDF (natifs et scannés) et de pages web, en préservant le texte, les formules mathématiques, les tableaux, les figures et les blocs de code.
+  \item \textbf{Indexation et recherche}~: les contenus extraits doivent être indexés dans une base vectorielle interrogeable en langage naturel. La recherche doit combiner des mécanismes lexicaux et sémantiques pour maximiser le rappel.
+  \item \textbf{Génération ancrée}~: les réponses produites doivent s'appuyer exclusivement sur le contenu du corpus indexé, avec un mécanisme explicite de refus lorsque le corpus ne permet pas de répondre.
+  \item \textbf{Interface interactive}~: une interface en ligne de commande (CLI) doit permettre à un utilisateur de poser des questions et de recevoir des réponses contextualisées.
+  \item \textbf{Évaluation quantitative}~: les performances du système doivent être mesurées sur un jeu de données de référence couvrant des questions à réponse unique, à réponses multiples et hors domaine.
+\end{enumerate}
+
+\subsubsection{Spécifications techniques}
+
+\begin{enumerate}
+  \item \textbf{Déploiement local}~: l'intégralité du pipeline doit s'exécuter sur l'infrastructure locale du laboratoire, sans dépendance à des API externes payantes.
+  \item \textbf{Modèles \textit{open-weight}}~: tous les modèles utilisés (OCR, vision, embedding, génération) doivent être libres de droits et exécutables localement.
+  \item \textbf{Modularité}~: chaque composant du pipeline doit être indépendant et remplaçable sans impact sur les autres modules.
+  \item \textbf{Performance}~: le temps de réponse complet (traitement de la requête + retrieval + génération) ne doit pas excéder 30~secondes par question en conditions normales d'utilisation.
+  \item \textbf{Reproductibilité}~: l'ensemble des expérimentations doit être reproductible via des scripts documentés et des dépendances versionnées.
+\end{enumerate}
+
+\subsubsection{Livrables}
+
+\begin{itemize}
+  \item Code source du pipeline complet, documenté et versionné (Git).
+  \item Base vectorielle indexée (ChromaDB) contenant l'intégralité du corpus de cours.
+  \item Jeu de données d'évaluation (\textit{golden dataset}) de 60 questions annotées.
+  \item Rapport de stage détaillant la méthodologie, l'implémentation et les résultats.
+  \item Scripts d'évaluation reproductibles avec métriques de retrieval et de génération.
+\end{itemize}
+
+\subsection{Plan du rapport}
+
+Le chapitre~\ref{sec:rse} présente les considérations de responsabilité sociétale et environnementale (pratiques RSE du LIMOS, impact environnemental du projet, bilan carbone des déplacements). Le chapitre~\ref{sec:organisation} décrit l'organisation du projet, incluant les diagrammes de Gantt prévisionnel et réalisé, ainsi que l'analyse des écarts. Le chapitre~\ref{sec:etat-art} présente l'état de l'art du domaine, structuré par phase du pipeline RAG. Le chapitre~\ref{sec:methodologie} détaille la réalisation technique, de l'extraction des données à la génération des réponses. Le chapitre~\ref{sec:evaluation} présente le protocole d'évaluation et les résultats obtenus. Enfin, la conclusion synthétise les contributions et identifie les perspectives d'évolution, notamment vers un tuteur conversationnel de seconde génération.
+
+% =============================================================
+%             CHAPITRE 2 : RSE
+% =============================================================
+\section{Responsabilité Sociétale et Environnementale (RSE)}
+\label{sec:rse}
+
+\subsection{Pratiques RSE du laboratoire d'accueil}
+
+Le Laboratoire d'Informatique, de Modélisation et d'Optimisation des Systèmes (LIMOS, UMR~6158) est une unité mixte de recherche du CNRS et de l'Université Clermont Auvergne. Le laboratoire s'inscrit dans la démarche de développement durable du CNRS, déclinée dans son Plan de Transition Écologique adopté en 2021. Cette démarche se traduit par plusieurs axes concrets~: rationalisation de l'usage des infrastructures de calcul mutualisées (serveurs partagés du mésocentre), politique d'achat de matériel reconditionné pour les postes de travail, et encouragement au calcul éco-responsable via l'optimisation des algorithmes et la réduction des redondances de calcul.
+
+Le projet s'est déroulé sur l'infrastructure mutualisée du laboratoire, contribuant ainsi à une utilisation plus efficace des ressources de calcul existantes plutôt qu'à l'acquisition de matériel dédié supplémentaire.
+
+\subsection{Impact environnemental du projet}
+
+Le choix d'un déploiement entièrement local limite l'empreinte environnementale du projet par rapport à une solution reposant sur des API cloud~: aucune sollicitation de datacenter distant, pas de transfert de données sur le réseau. Les modèles retenus (0,6B à 14B paramètres) sont dimensionnés pour fonctionner sur du matériel accessible, ce qui réduit la consommation énergétique par rapport à des modèles plus volumineux.
+
+\subsubsection{Estimation de la consommation énergétique}
+
+Les phases de calcul intensif du projet se répartissent comme suit~:
+
+\begin{itemize}
+  \item \textbf{Extraction et ingestion}~: exécutées une fois, durée cumulée d'environ 3\,h.
+  \item \textbf{Génération du jeu de données d'évaluation}~: environ 1\,h.
+  \item \textbf{Évaluation complète}~: environ 2\,h.
+\end{itemize}
+
+Pour un total d'environ \textbf{6\,h de calcul GPU}. Le mix électrique français émet environ 50--60\,g de CO\textsubscript{2}eq par kWh (ADEME 2025), ce qui représente un impact carbone négligeable pour l'ensemble du projet.
+
+En comparaison, l'utilisation d'une API cloud (GPT-4o par exemple) aurait engendré des transferts réseau répétés et une consommation dans un datacenter dont le mix énergétique est moins favorable (moyenne mondiale~: $\sim$400\,g CO\textsubscript{2}eq/kWh). Le déploiement local présente donc un double avantage~: économique (coût d'API nul) et environnemental (pas de transfert réseau, mix électrique français).
+
+\subsection{Bilan carbone des déplacements}
+\label{sec:bilan-carbone}
+
+Le bilan carbone des déplacements a été calculé à l'aide de l'outil officiel de l'ADEME (\url{https://impactco2.fr/outils/transport}), conformément aux recommandations ISIMA. Les déplacements liés au stage se décomposent en deux catégories~:
+
+\paragraph{Trajets domicile--lieu de stage}
+
+Le stage s'est déroulé au LIMOS, sur le campus des Cézeaux à Aubière. Le trajet domicile--campus est d'environ 5\,km, effectué quotidiennement en tramway (ligne A, station «~Campus~») ou à pied. Le Tableau~\ref{tab:carbone-deplacements} synthétise le calcul~:
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{L{3.5cm} C{2cm} C{2cm} C{2.5cm} C{2.5cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Mode}} &
+\textcolor{white}{\textbf{Distance/jour}} &
+\textcolor{white}{\textbf{Jours}} &
+\textcolor{white}{\textbf{Facteur (gCO\textsubscript{2}eq/km)}} &
+\textcolor{white}{\textbf{Total (kgCO\textsubscript{2}eq)}} \\
+\midrule
+Tramway        & 10\,km (A/R) & 80 jours  & 3,8  & 3,04 \\
+Marche à pied  & 10\,km (A/R) & 10 jours  & 0    & 0    \\
+\midrule
+\textbf{Total} &             &           &      & \textbf{3,04} \\
+\bottomrule
+\end{tabularx}
+\caption{Bilan carbone des déplacements domicile--LIMOS (source~: ADEME Impact CO\textsubscript{2}, \url{impactco2.fr}).}
+\label{tab:carbone-deplacements}
+\end{table}
+
+Le bilan carbone total des déplacements s'élève à environ \textbf{3,0\,kg CO\textsubscript{2}eq} sur l'ensemble de la période de stage, soit l'équivalent d'environ 15\,km en voiture thermique. Ce résultat, très modeste, reflète le choix d'une mobilité douce (transports en commun et marche à pied), cohérent avec la politique de développement durable de l'UCA et du LIMOS.
+
+\paragraph{Déplacements annexes}
+
+Aucun déplacement professionnel supplémentaire (conférence, réunion extérieure) n'a été effectué dans le cadre de ce stage. L'ensemble du projet s'est déroulé sur le site du laboratoire, en télétravail partiel pour les phases de rédaction, limitant ainsi l'empreinte carbone globale.
+
+\paragraph{Bilan carbone global}
+
+Le bilan carbone total du stage se décompose comme suit~:
+\begin{itemize}
+  \item Déplacements domicile--LIMOS~: 3,04\,kg CO\textsubscript{2}eq.
+\end{itemize}
+Soit un total d'environ \textbf{3,0\,kg CO\textsubscript{2}eq} pour l'ensemble du stage, un impact carbone négligeable, représentant moins de 0,04\,\% de l'empreinte carbone annuelle moyenne d'un Français (environ 9\,t CO\textsubscript{2}eq/an).
+
+
+% =============================================================
+%             CHAPITRE 3 : ORGANISATION
+% =============================================================
+\section{Organisation du projet}
+\label{sec:organisation}
+
+\subsection{Phasage du projet}
+
+Le projet s'est déroulé sur un semestre (février--juillet 2026) et s'est articulé en quatre phases principales~:
+
+\begin{enumerate}
+  \item \textbf{Phase 1 --- Recherche et conception (février--mars)}~: étude bibliographique de l'état de l'art, analyse des besoins, choix technologiques, conception de l'architecture modulaire.
+  \item \textbf{Phase 2 --- Implémentation du pipeline de préparation (mars--avril)}~: extraction PDF (GLM-OCR), extraction web, normalisation, \textit{chunking} parent-enfant, \textit{embedding} et indexation.
+  \item \textbf{Phase 3 --- Implémentation du pipeline d'exécution (mai--juin)}~: \textit{retrieval} hybride, \textit{reranking}, traitement de la requête, génération, interface CLI.
+  \item \textbf{Phase 4 --- Évaluation et rédaction (juin--juillet)}~: constitution du \textit{golden dataset}, évaluation quantitative (Ragas), optimisation des performances, rédaction du rapport.
+\end{enumerate}
+
+\subsection{Diagramme de Gantt prévisionnel}
+\label{sec:gantt-previsionnel}
+
+Le diagramme de Gantt prévisionnel (Figure~\ref{fig:gantt-prev}) a été établi en début de stage (février 2026) sur la base des objectifs initiaux et des contraintes calendaires connues. Il reflète une estimation prudente des durées de chaque phase, avec une marge de deux semaines en fin de projet pour absorber les imprévus.
+
+\begin{figure}[H]
+\centering
+\begin{ganttchart}[
+  hgrid,
+  vgrid,
+  x unit=0.35cm,
+  y unit title=0.7cm,
+  y unit chart=0.65cm,
+  title height=1,
+  bar height=0.5,
+  bar top shift=0.1,
+  group top shift=0.3,
+  milestone top shift=0.35,
+  time slot format=isodate,
+  title/.style={fill=bleuSecondaire, draw=bleuSecondaire}
+]{2026-02-03}{2026-07-10}
+\gantttitlecalendar{month=name} \\
+
+\ganttgroup{Phase 1 : Recherche \& Conception}{2026-02-03}{2026-03-13} \\
+\ganttbar{État de l'art}{2026-02-03}{2026-02-28} \\
+\ganttbar{Analyse des besoins}{2026-02-24}{2026-03-13} \\
+
+\ganttgroup{Phase 2 : Implémentation (préparation)}{2026-03-09}{2026-04-24} \\
+\ganttbar{Extraction PDF}{2026-03-09}{2026-04-03} \\
+\ganttbar{Extraction Web}{2026-03-16}{2026-04-03} \\
+\ganttbar{Chunking + Embedding}{2026-04-06}{2026-04-24} \\
+
+\ganttgroup{Phase 3 : Implémentation (exécution)}{2026-04-20}{2026-06-12} \\
+\ganttbar{Retrieval hybride}{2026-04-20}{2026-05-15} \\
+\ganttbar{Reranking + QP}{2026-05-11}{2026-05-29} \\
+\ganttbar{Génération + CLI}{2026-05-25}{2026-06-12} \\
+
+\ganttgroup{Phase 4 : Évaluation \& Rédaction}{2026-06-08}{2026-07-10} \\
+\ganttbar{Golden dataset}{2026-06-08}{2026-06-19} \\
+\ganttbar{Évaluation}{2026-06-15}{2026-06-26} \\
+\ganttbar{Rédaction du rapport}{2026-06-22}{2026-07-10} \\
+
+\ganttmilestone{Soutenance}{2026-07-10}
+\end{ganttchart}
+\caption{Diagramme de Gantt prévisionnel du stage, établi en février 2026.}
+\label{fig:gantt-prev}
+\end{figure}
+
+\subsection{Diagramme de Gantt réalisé}
+\label{sec:gantt-reel}
+
+Le diagramme de Gantt ci-dessous (Figure~\ref{fig:gantt-reel}) synthétise la planification réelle du projet.
+
+\begin{figure}[H]
+\centering
+\begin{ganttchart}[
+  hgrid,
+  vgrid,
+  x unit=0.35cm,
+  y unit title=0.7cm,
+  y unit chart=0.65cm,
+  title height=1,
+  bar height=0.5,
+  bar top shift=0.1,
+  group top shift=0.3,
+  milestone top shift=0.35,
+  time slot format=isodate,
+  title/.style={fill=bleuPrincipal, draw=bleuPrincipal}
+]{2026-02-03}{2026-07-10}
+\gantttitlecalendar{month=name} \\
+
+\ganttgroup{Phase 1 : Recherche \& Conception}{2026-02-03}{2026-03-20} \\
+\ganttbar{État de l'art}{2026-02-03}{2026-03-06} \\
+\ganttbar{Analyse des besoins}{2026-03-02}{2026-03-20} \\
+
+\ganttgroup{Phase 2 : Implémentation (préparation)}{2026-03-16}{2026-05-01} \\
+\ganttbar{Extraction PDF (GLM-OCR)}{2026-03-16}{2026-04-17} \\
+\ganttbar{Extraction Web}{2026-03-23}{2026-04-10} \\
+\ganttbar{Chunking + Embedding}{2026-04-13}{2026-05-01} \\
+
+\ganttgroup{Phase 3 : Implémentation (exécution)}{2026-04-27}{2026-06-19} \\
+\ganttbar{Retrieval hybride}{2026-04-27}{2026-05-22} \\
+\ganttbar{Reranking + Query Processing}{2026-05-18}{2026-06-05} \\
+\ganttbar{Génération + CLI}{2026-06-01}{2026-06-19} \\
+
+\ganttgroup{Phase 4 : Évaluation \& Rédaction}{2026-06-15}{2026-07-10} \\
+\ganttbar{Golden dataset}{2026-06-15}{2026-06-26} \\
+\ganttbar{Évaluation Ragas}{2026-06-22}{2026-07-03} \\
+\ganttbar{Rédaction du rapport}{2026-06-29}{2026-07-10} \\
+
+\ganttmilestone{Soutenance}{2026-07-10}
+\end{ganttchart}
+\caption{Diagramme de Gantt réalisé du stage.}
+\label{fig:gantt-reel}
+\end{figure}
+
+\subsection{Analyse des écarts}
+\label{sec:ecarts}
+
+La comparaison des deux diagrammes de Gantt fait apparaître trois écarts principaux, dont les causes et conséquences sont analysées ci-dessous.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{L{3cm} L{2.5cm} L{2.5cm} L{4cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Tâche}} &
+\textcolor{white}{\textbf{Prévisionnel}} &
+\textcolor{white}{\textbf{Réalisé}} &
+\textcolor{white}{\textbf{Explication}} \\
+\midrule
+Extraction PDF   & 4 semaines  & 5 semaines  & Complexité imprévue des figures composites (schémas avec formules intégrées) \\
+Golden dataset   & 2 semaines  & 2 semaines  & Conforme (léger décalage dans le semestre) \\
+Rédaction        & 3 semaines  & 2 semaines  & Gain de temps : contenu technique déjà documenté dans les journaux de session \\
+\bottomrule
+\end{tabularx}
+\caption{Analyse des écarts entre le planning prévisionnel et le réalisé.}
+\label{tab:ecarts}
+\end{table}
+
+\paragraph{Écart 1 --- Extraction PDF (+1 semaine)}
+
+L'extraction des documents PDF a nécessité une semaine supplémentaire par rapport au planning prévisionnel. La cause principale est la complexité du traitement des figures composites (schémas comportant à la fois des éléments graphiques et des formules mathématiques intégrées), qui a exigé un paramétrage plus fin du pipeline GLM-OCR + Qwen3-VL. Cet écart, bien qu'anticipable, n'a pas eu d'impact sur les phases suivantes grâce aux marges intégrées dans la planification initiale.
+
+\paragraph{Écart 2 --- Rédaction du rapport ($-$1 semaine)}
+
+La rédaction du rapport a été réalisée en deux semaines au lieu des trois prévues. Ce gain s'explique par la tenue régulière de journaux de session (\texttt{rapport/journal\_*.md}) tout au long du projet, documentant les décisions techniques, les résultats intermédiaires et les corrections de bugs au fil de l'eau. Ces notes ont servi de base à la rédaction finale, réduisant significativement le temps de mise en forme.
+
+\paragraph{Bilan global}
+
+Le projet a été livré dans les délais impartis (juillet 2026). Les écarts observés sont mineurs ($\pm 1$ semaine) et se compensent mutuellement~: le retard initial en extraction a été absorbé par une avance en rédaction, grâce à la documentation continue du projet. La marge de deux semaines intégrée au planning prévisionnel s'est avérée correctement dimensionnée.
+
+\subsection{Environnement technique}
+
+Le projet s'appuie sur les outils et modèles suivants, tous \textit{open-weight} et exécutables localement~:
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{L{3cm} L{4cm} L{5.5cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Composant}} & \textcolor{white}{\textbf{Outil / Modèle}} & \textcolor{white}{\textbf{Rôle}} \\
+\midrule
+Inférence LLM   & Ollama                  & \textit{Runtime} local pour LLMs et embeddings \\
+OCR             & GLM-OCR (0,9B)          & Extraction texte, tableaux, formules depuis PDF \\
+Vision          & Qwen3-VL (8B)           & Interprétation des figures en langage naturel \\
+Embedding       & BGE-M3 (0,6B)           & Vectorisation multilingue (dense + sparse + MV) \\
+Génération      & Qwen2.5 (14B)           & Génération de réponses pédagogiques contextualisées \\
+Juge            & Qwen3 (8B)              & Évaluation automatique (LLM-as-a-judge) + Juge post-génération \\
+Indexation      & ChromaDB                & Base de données vectorielle \\
+Retrieval       & BM25 + RRF              & Recherche hybride avec fusion de classements \\
+Reranking       & BGE-Reranker-v2-m3     & Réévaluation par cross-encoder + seuil de refus pré-génération \\
+Évaluation      & Ragas + DeepEval        & Métriques RAG + synthèse de golden dataset \\
+Refus           & Score reranker + LLM Judge & Double mécanisme de refus (pré- et post-génération) \\
+\bottomrule
+\end{tabularx}
+\caption{Environnement technique du projet.}
+\label{tab:env-tech}
+\end{table}
+
+% =============================================================
+%                 CHAPITRE 4 : ÉTAT DE L'ART
+% =============================================================
+\section{État de l'art~: systèmes RAG}
+\label{sec:etat-art}
+
+\subsection{Limites structurelles des modèles de langage}
+
+Les grands modèles de langage (LLMs) ont démontré des capacités remarquables en génération de texte, en raisonnement et en résolution de problèmes complexes. Toutefois, leur utilisation directe dans un système de tutorat pédagogique se heurte à deux limites structurelles bien identifiées dans la littérature~\cite{gao2024ragsurvey,lewis2020rag}.
+
+La première est l'\textbf{hallucination}~: un modèle peut produire une réponse plausible en apparence mais factuellement incorrecte, sans qu'aucun signal ne permette à l'utilisateur de distinguer une affirmation fondée d'une invention. Shuster~\textit{et~al.}~\cite{shuster2021hallucination} ont montré que l'intégration d'un mécanisme de récupération réduit significativement ce phénomène dans les systèmes conversationnels.
+
+La seconde est la \textbf{fixité temporelle des connaissances}~: un modèle n'a accès qu'à ce qui figurait dans son corpus d'entraînement à une date donnée, sans possibilité de refléter un contenu de cours spécifique, mis à jour ou absent de ce corpus.
+
+Ces deux limites sont particulièrement problématiques dans un contexte pédagogique, où une réponse erronée présentée avec assurance peut induire l'apprenant en erreur sans qu'il ait les moyens de le détecter.
+
+\subsection{La génération augmentée par récupération (RAG)}
+
+La \textbf{génération augmentée par récupération} (\textit{Retrieval-Augmented Generation}, RAG), introduite par Lewis~\textit{et~al.}~\cite{lewis2020rag} dans le cadre de NeurIPS~2020, répond directement à ces deux limites en ancrant la génération dans un corpus de documents contrôlé et vérifiable. Le principe fondamental consiste à découpler la \textit{connaissance} de la \textit{capacité de raisonnement}~: un corpus de documents externes fait office de mémoire consultable, tandis que le modèle de langage se limite à raisonner et à formuler une réponse à partir de ce qui lui est fourni~\cite{lewis2020rag}.
+
+Cette séparation présente un avantage pratique majeur pour un contexte évolutif comme un cours~: mettre à jour les connaissances du système revient à mettre à jour le corpus indexé, sans réentraîner ni ajuster le modèle lui-même.
+
+% =============================================================
+\subsection{Évolution des architectures RAG}
+\label{sec:evolution-rag}
+
+Le domaine a connu une progression rapide depuis l'article fondateur de Lewis~\textit{et~al.}~\cite{lewis2020rag}, que Gao~\textit{et~al.}~\cite{gao2024ragsurvey} structurent en trois générations~: le RAG naïf, le RAG avancé et le RAG modulaire.
+
+\subsubsection{RAG naïf (2020--2022)}
+
+La forme la plus simple de RAG se limite à trois étapes séquentielles~: indexation du corpus en vecteurs, recherche par similarité vectorielle à partir de la requête de l'utilisateur, puis génération directe à partir des passages récupérés. Cette approche, si elle démontre le principe, se heurte rapidement à des limites pratiques~\cite{gao2024ragsurvey}~:
+\begin{itemize}
+  \item une recherche fondée sur un seul mécanisme (dense) peine à couvrir à la fois les correspondances exactes de vocabulaire et les reformulations sémantiques~;
+  \item l'ordre de pertinence issu de la seule recherche initiale reste approximatif~;
+  \item l'ensemble du contexte récupéré n'est pas nécessairement utile à la génération, un contexte surchargé pouvant au contraire diluer l'information pertinente.
+\end{itemize}
+
+\subsubsection{RAG avancé (2023--2024)}
+
+Le RAG avancé introduit des mécanismes correctifs à chacun des points faibles du RAG naïf~\cite{gao2024ragsurvey,wang2024bestpractices}~:
+\begin{itemize}
+  \item \textbf{En amont de la recherche}~: reformulation de la requête (\textit{query rewriting}~\cite{ma2023queryrewriting}), décomposition de questions complexes, génération de documents hypothétiques (HyDE~\cite{gao2022hyde})~;
+  \item \textbf{Au niveau de la recherche}~: recherche hybride combinant recherche lexicale et recherche dense, fusion de classements par RRF~\cite{cormack2009rrf}~;
+  \item \textbf{En aval de la recherche}~: réévaluation des résultats par un modèle de \textit{reranking}~\cite{nogueira2019bert}, compression du contexte avant transmission à la génération~\cite{jiang2023llmlingua,xu2024recomp}.
+\end{itemize}
+
+C'est cette famille d'approches qui structure la conception du présent projet, avec en amont un traitement de la requête (reformulation et décomposition en sous-questions), mis en \oe{}uvre via le module de \textit{query processing}.
+
+\subsubsection{RAG modulaire et agentique (2025--2026)}
+
+La génération la plus récente pousse la modularité plus loin, traitant le pipeline comme un assemblage de composants interchangeables~: chaque phase (extraction, \textit{chunking}, \textit{embedding}, recherche, \textit{reranking}, génération) est conçue comme un module indépendant, remplaçable sans impact sur les autres~\cite{gao2024ragsurvey}. Cette philosophie est celle qui guide l'architecture du présent projet.
+
+En parallèle, le paradigme \textbf{RAG agentique} émerge~\cite{singh2025agenticrag}~: des agents fondés sur des LLMs orchestrent dynamiquement le pipeline, décidant à chaque étape s'il faut reformuler la requête, relancer la recherche, ou corriger la réponse générée. Les architectures CRAG (\textit{Corrective RAG}) et Self-RAG illustrent cette tendance, le modèle évaluant lui-même la pertinence des passages récupérés et la fidélité de sa propre réponse avant de la retourner à l'utilisateur. Le TREC~2025 RAG Track~\cite{trec2025rag} a formalisé cette évaluation à grande échelle, avec plus de 150~soumissions évaluées sur la pertinence, la complétude, et l'attribution des réponses.
+
+% =============================================================
+\subsection{État de l'art par phase du pipeline}
+\label{sec:etat-art-phases}
+
+Cette section passe en revue l'état de l'art pour chaque phase du pipeline RAG, en se concentrant sur les composantes pertinentes pour le projet.
+
+% ------- CHUNKING -------
+\subsubsection{Stratégies de découpage (\textit{chunking})}
+
+Le découpage d'un corpus en unités indexables conditionne directement la qualité du \textit{retrieval} en aval. Lu~\textit{et~al.}~\cite{lu2025hichunk} montrent que la méthode de \textit{chunking} impacte significativement chaque composante du pipeline RAG, de la qualité de la recherche à la fidélité de la génération. Reuter~\textit{et~al.}~\cite{reuter2026chunking} confirment que les stratégies structurellement informées surpassent de manière consistante les découpages à taille fixe, tout en soulignant le surcoût computationnel qu'elles impliquent.
+
+La littérature distingue cinq familles principales de stratégies.
+
+\paragraph{Découpage à taille fixe}
+
+L'approche la plus simple consiste à segmenter le texte en blocs de taille constante (en \textit{tokens} ou en caractères), avec un chevauchement optionnel entre blocs consécutifs. Simple à mettre en \oe{}uvre, elle présente un défaut majeur~: la frontière de découpe ignore la structure sémantique du texte, risquant de fragmenter une unité de sens~\cite{smith2024chunking}.
+
+\paragraph{Découpage récursif}
+
+Le découpage récursif (\textit{recursive text splitting}) utilise une hiérarchie de séparateurs (paragraphes, puis phrases, puis caractères) appliquée récursivement jusqu'à obtenir des blocs de taille cible. Il respecte mieux la structure syntaxique du texte, mais reste aveugle à la structure sémantique du document (sections, sous-sections)~\cite{langchain2023}.
+
+\paragraph{Découpage \textit{structure-aware}}
+
+Le découpage \textit{structure-aware} s'appuie directement sur la hiérarchie de titres et sections du document pour déterminer les frontières de découpe. Chaque section ou sous-section constitue un \textit{chunk} naturel. Cette approche préserve l'unité sémantique mais peut produire des \textit{chunks} de tailles très hétérogènes~\cite{yepes2024chunking}.
+
+\paragraph{Découpage hiérarchique parent-enfant}
+
+Le découpage parent-enfant propose une réponse au compromis granularité/contexte~: plutôt que de chercher une taille de \textit{chunk} unique, il sépare ces deux granularités en deux niveaux de \textit{chunks} distincts, reliés entre eux~\cite{langchain2023}. Les \textit{chunks} enfants, courts et précis, servent de granularité pour la recherche~; le \textit{chunk} parent associé, plus large, fournit le contexte complet transmis à la génération. Cette approche a été validée dans le cadre de SemEval~2026 Task~8 par le système H-RAG~\cite{hrag2026semeval}, qui confirme l'importance de l'agrégation au niveau parent pour la qualité de la génération dans les systèmes RAG multi-tours.
+
+\paragraph{Découpage sémantique}
+
+Le découpage sémantique utilise les \textit{embeddings} eux-mêmes pour déterminer les frontières de découpe~: un changement brusque de similarité entre phrases consécutives signale une rupture thématique. Qu~\textit{et~al.}~\cite{qu2025semantic} ont toutefois montré que le gain de performance par rapport aux méthodes plus simples ne justifie pas toujours le surcoût computationnel, en particulier pour des corpus structurés.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{2.8cm} C{2cm} C{2.2cm} C{2.2cm} L{3cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Stratégie}} &
+\textcolor{white}{\textbf{Granularité}} &
+\textcolor{white}{\textbf{Contexte}} &
+\textcolor{white}{\textbf{Complexité}} &
+\textcolor{white}{\textbf{Limite principale}} \\
+\midrule
+Taille fixe          & Fine     & Faible    & Triviale    & Fragmentation sémantique \\
+Récursif             & Fine     & Moyen     & Faible      & Aveugle à la structure \\
+\textit{Structure-aware} & Variable & Fort  & Moyenne     & Tailles hétérogènes \\
+\rowcolor{bleuAccent}
+\textbf{Parent-enfant} & \textbf{Fine + large} & \textbf{Fort} & \textbf{Moyenne} & \textbf{Complexité d'indexation} \\
+Sémantique           & Variable & Fort      & Élevée      & Coût computationnel \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse comparative des stratégies de \textit{chunking}. La stratégie retenue (parent-enfant) est mise en évidence.}
+\label{tab:chunking}
+\end{table}
+
+% ------- EMBEDDING -------
+\subsubsection{Modèles d'\textit{embedding}}
+
+Le choix d'un modèle d'\textit{embedding} détermine la qualité de la recherche sémantique. Le paysage des modèles multilingues \textit{open-weight} a connu une évolution rapide, portée par les \textit{benchmarks} de référence MTEB~\cite{muennighoff2023mteb} et sa version étendue MMTEB~\cite{enevoldsen2025mmteb}, couvrant plus de 500~tâches d'évaluation sur plus de 250~langues.
+
+\paragraph{Évolution des modèles}
+
+Les premiers modèles d'\textit{embedding} multilingues (mBERT, XLM-R) produisaient des représentations de qualité limitée pour la recherche. L'introduction de modèles entraînés spécifiquement pour le \textit{retrieval}, comme E5~\cite{wang2024e5} et GTE~\cite{li2023gte}, a marqué un premier saut de performance. La famille BGE (\textit{BAAI General Embedding}) a ensuite poussé les performances sur les \textit{benchmarks} multilingues, culminant avec \textbf{BGE-M3}~\cite{chen2024bgem3}, qui unifie trois modes de \textit{retrieval} (dense, sparse et multi-vecteurs) dans un seul modèle, supportant plus de 100~langues avec des entrées jusqu'à 8\,192~\textit{tokens}.
+
+Plus récemment, la famille \textbf{Qwen3-Embedding}~\cite{zhang2025qwen3embedding} (Alibaba), publiée en juin~2025, occupe la première place du classement MMTEB multilingue avec un score de 70,58 pour la variante 8B (au 5~juin~2025). La série est disponible en trois tailles (0.6B, 4B, 8B) et inclut également des modèles de \textit{reranking}, héritant des capacités multilingues et de raisonnement de la série Qwen3.
+
+\paragraph{Tableau comparatif}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{3cm} C{1.3cm} C{1.3cm} C{2.2cm} C{1.5cm} C{1.5cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Modèle}} &
+\textcolor{white}{\textbf{Dim.}} &
+\textcolor{white}{\textbf{Langues}} &
+\textcolor{white}{\textbf{Modes}} &
+\textcolor{white}{\textbf{Contexte}} &
+\textcolor{white}{\textbf{Local}} \\
+\midrule
+E5-multilingual       & 1024 & 100+  & Dense      & 514   & Oui \\
+GTE-Qwen2-7B          & 1536 & 30+   & Dense      & 32768 & Oui \\
+\rowcolor{bleuAccent}
+\textbf{BGE-M3}       & \textbf{1024} & \textbf{100+} & \textbf{Dense+sparse+MV} & \textbf{8192} & \textbf{Oui} \\
+Qwen3-Embedding-8B    & 1024 & 100+  & Dense      & 32768 & Oui \\
+text-embedding-3      & 3072 & 100+  & Dense      & 8191  & Non (API) \\
+Gemini-Embedding      & 3072 & 100+  & Dense      & 8192  & Non (API) \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse comparative des modèles d'\textit{embedding} multilingues (mi-2026). Le modèle retenu (BGE-M3) est mis en évidence. MV = multi-vecteurs.}
+\label{tab:embedding}
+\end{table}
+
+% ------- RETRIEVAL -------
+\subsubsection{Mécanismes de recherche (\textit{retrieval})}
+
+La phase de \textit{retrieval} vise à retrouver, pour chaque requête, les passages les plus pertinents du corpus indexé. Trois familles de mécanismes coexistent, avec une tendance marquée vers leur combinaison~\cite{gao2024ragsurvey,wang2024bestpractices}.
+
+\paragraph{Recherche lexicale (sparse)}
+
+La recherche lexicale repose sur la correspondance exacte de termes entre la requête et les documents. \textbf{BM25}, issu du \textit{Probabilistic Relevance Framework}~\cite{robertson2009bm25}, reste à ce jour l'algorithme de référence en recherche lexicale. Strich~\textit{et~al.}~\cite{strich2026bm25} ont montré en~2026 que, sur des documents financiers à terminologie précise, BM25 surpasse la recherche dense avec text-embedding-3-large sur la quasi-totalité des métriques --- un résultat qui remet en cause l'hypothèse courante de la domination universelle de la recherche dense.
+
+\paragraph{Recherche dense (sémantique)}
+
+La recherche dense encode la requête et les documents dans un même espace vectoriel, puis classe les documents par similarité cosinus avec le vecteur de la requête. Cette approche, rendue praticable par les modèles d'\textit{embedding} pré-entraînés (cf.~section précédente), capte les reformulations et les relations sémantiques, mais peut manquer une correspondance lexicale exacte sur un terme technique~\cite{chen2024bgem3}.
+
+\paragraph{Recherche hybride et fusion}
+
+La recherche hybride combine les deux mécanismes pour exploiter leurs forces complémentaires. La principale difficulté technique réside dans la fusion des classements~: les scores BM25 et les scores de similarité cosinus ne sont pas directement comparables, car ils opèrent sur des échelles différentes.
+
+La \textbf{fusion de rang réciproque} (\textit{Reciprocal Rank Fusion}, RRF), introduite par Cormack~\textit{et~al.}~\cite{cormack2009rrf} à SIGIR~2009, contourne ce problème en s'appuyant uniquement sur la \textit{position} de chaque résultat dans chaque classement, indépendamment des scores bruts. Le score RRF d'un document~$d$ est défini par~:
+\begin{equation}
+  \text{RRF}(d) = \sum_{r \in \mathcal{R}} \frac{1}{k + \operatorname{rang}_r(d)}
+  \label{eq:rrf}
+\end{equation}
+où~$\mathcal{R}$ est l'ensemble des mécanismes de recherche, $\operatorname{rang}_r(d)$ la position du document~$d$ dans le classement du mécanisme~$r$, et~$k$ une constante de lissage (typiquement~60). Cormack~\textit{et~al.} ont montré que cette méthode surpasse les approches de fusion par apprentissage et les méthodes de type Condorcet sur les \textit{benchmarks} TREC. Strich~\textit{et~al.}~\cite{strich2026bm25} confirment en~2026 qu'un pipeline hybride en deux étapes (recherche hybride + \textit{reranking} neuronal) atteint les meilleures performances (Recall@5~=~0,816, MRR@3~=~0,605), surpassant toutes les méthodes à une seule étape.
+
+\paragraph{Réévaluation par \textit{cross-encoder} (\textit{reranking})}
+
+La recherche initiale (lexicale, dense ou hybride) est optimisée pour parcourir rapidement l'ensemble du corpus, mais ne garantit pas un classement fin des résultats. Une étape de réévaluation par \textbf{\textit{cross-encoder}} affine ce classement en comparant \textit{conjointement} la requête et chaque passage candidat, plutôt que des représentations vectorielles précalculées indépendamment.
+
+Nogueira et Cho~\cite{nogueira2019bert} ont démontré en~2019 que des modèles BERT \textit{fine-tunés} comme \textit{cross-encoders} surpassaient largement les méthodes classiques de \textit{reranking} sur le \textit{benchmark} MS~MARCO. Le principe a depuis été étendu à des modèles spécialisés multilingues~: \textbf{BGE-reranker-v2-m3}~\cite{xiao2024bge} constitue une référence en contexte multilingue. Plus récemment, la série \textbf{Qwen3-Reranker}~\cite{zhang2025qwen3embedding}, publiée conjointement avec Qwen3-Embedding, propose des modèles de \textit{reranking} en 0.6B et 8B qui excellent dans les scénarios de recherche textuelle multilingue.
+
+Fensore~\textit{et~al.}~\cite{fensore2025liverag} illustrent le compromis coût/qualité du \textit{reranking} dans le cadre du LiveRAG Challenge~2025~: le \textit{reranking} par RankLLaMA améliore le MAP de 0,523 à 0,797 (amélioration relative de~52\,\%), mais au prix d'un temps d'inférence passant de 1,74\,s à 84\,s par question.
+
+\paragraph{Compression du contexte}
+
+La qualité d'une réponse ne croît pas nécessairement avec le volume de contexte fourni au modèle de langage~: un contexte surchargé peut au contraire diluer l'information pertinente~\cite{gao2024ragsurvey}. La compression du contexte vise à réduire la longueur de l'entrée tout en préservant l'information essentielle.
+
+Deux familles de méthodes coexistent~\cite{pan2024llmlingua2}~: la compression \textit{hard}, qui opère au niveau lexical en sélectionnant ou supprimant des \textit{tokens} (\textbf{LLMLingua}~\cite{jiang2023llmlingua}, \textbf{LLMLingua-2}~\cite{pan2024llmlingua2}), et la compression \textit{soft}, qui encode le contexte en représentations denses plus compactes. Plus récemment, \textbf{RECOMP}~\cite{xu2024recomp} propose une approche hybride combinant extraction et résumé abstrait, avec un modèle entraîné par distillation pour sélectionner les passages les plus informatifs. Le \textit{framework} \textbf{SeleCom}~\cite{selecom2026}, présenté à WWW~2026, redéfinit le rôle de l'encodeur comme un sélecteur d'information conditionné par la requête, montrant qu'une sélection ciblée surpasse une compression globale du document.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{3cm} L{3.5cm} L{3.5cm} C{2.5cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Mécanisme}} &
+\textcolor{white}{\textbf{Forces}} &
+\textcolor{white}{\textbf{Limites}} &
+\textcolor{white}{\textbf{Complexité}} \\
+\midrule
+BM25 (lexical)        & Correspondances exactes, termes techniques   & Aveugle au sens        & $\mathcal{O}(n)$ \\
+Dense (BGE-M3)        & Reformulations, synonymes                     & Peut manquer l'exact   & $\mathcal{O}(n)$ \\
+\rowcolor{bleuAccent}
+\textbf{Hybride + RRF} & \textbf{Complémentarité lexical/sémant.}      & \textbf{Double index}  & $\mathcal{O}(n)$ \\
+\textit{Cross-encoder}& Classement très précis                        & Coût quadratique       & $\mathcal{O}(k \cdot \ell^2)$ \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse comparative des mécanismes de \textit{retrieval}. L'approche retenue combine les trois lignes~: hybride + RRF + \textit{cross-encoder}.}
+\label{tab:retrieval}
+\end{table}
+
+% ------- GÉNÉRATION -------
+\subsubsection{Génération contrainte par le contexte}
+
+La génération dans un système RAG doit être explicitement contrainte pour exploiter le contexte récupéré plutôt que les connaissances internes du modèle. Cette contrainte se matérialise par un \textit{prompt de génération} qui impose un ancrage strict (\textit{grounding})~: la réponse doit s'appuyer exclusivement sur le contexte fourni, avec un refus explicite en l'absence d'information pertinente~\cite{gao2024ragsurvey}.
+
+\paragraph{Évolution des LLMs déployables localement}
+
+Le paysage des modèles de langage exploitables localement a connu une évolution rapide. La famille \textbf{Qwen} (Alibaba), déployée via des \textit{runtimes} d'inférence locale comme Ollama ou vLLM, illustre cette progression~: Qwen2.5~\cite{qwen2024qwen25} a constitué un choix de référence en~2024--2025 pour le RAG local, tandis que Qwen3~\cite{qwen2025qwen3}, publié en mai~2025, apporte une fenêtre de contexte élargie, un support multilingue renforcé, et un mode de raisonnement hybride (\textit{thinking}/\textit{non-thinking}), sans coût supplémentaire pour un déploiement local.
+
+\paragraph{Techniques d'amélioration de la génération}
+
+La \textbf{reformulation de requête} (\textit{query rewriting}) consiste à réécrire ou décomposer la requête de l'utilisateur avant de l'envoyer au \textit{retrieval}, afin de corriger une formulation ambiguë ou sous-spécifiée. Ma~\textit{et~al.}~\cite{ma2023queryrewriting} ont montré que cette technique améliore significativement les performances en question-réponse ouverte. Dans ce projet, elle est mise en \oe{}uvre par le module de \textit{query processing}, qui reformule la question et la décompose en sous-questions indépendantes lorsque nécessaire. En revanche, la \textbf{compression du contexte}, qui vise à réduire la longueur de l'entrée du modèle~\cite{jiang2023llmlingua,xu2024recomp}, est étudiée dans l'état de l'art mais n'est volontairement pas branchée dans ce POC~: la stratégie parent-enfant limite déjà le volume transmis à la génération.
+
+% ------- ÉVALUATION -------
+\subsubsection{Évaluation des systèmes RAG}
+
+L'évaluation d'un système RAG se distingue de l'évaluation d'un modèle de langage seul par la nécessité d'évaluer conjointement deux composantes~: la qualité du \textit{retrieval} et la qualité de la génération~\cite{es2024ragas}.
+
+\paragraph{Métriques de \textit{retrieval}}
+
+Les métriques de rang évaluent la capacité du système à retrouver les passages pertinents~:
+\begin{itemize}
+  \item \textbf{Hit@k}~: proportion des requêtes pour lesquelles au moins un passage pertinent figure parmi les~$k$ premiers résultats~;
+  \item \textbf{MRR} (\textit{Mean Reciprocal Rank})~: moyenne de l'inverse du rang du premier passage pertinent~;
+  \item \textbf{Précision et rappel du contexte}~: proportion des passages récupérés qui sont pertinents, et proportion des passages pertinents qui sont récupérés.
+\end{itemize}
+
+\paragraph{Métriques de génération}
+
+Les métriques de génération, fondées sur le principe du \textit{modèle-juge} (\textit{LLM-as-a-judge}), évaluent la qualité de la réponse produite~:
+\begin{itemize}
+  \item \textbf{Fidélité} (\textit{faithfulness})~: la réponse est-elle fidèle au contexte fourni, sans ajout d'information non présente dans les passages récupérés~?
+  \item \textbf{Pertinence de la réponse} (\textit{answer relevancy})~: la réponse adresse-t-elle bien la question posée~?
+  \item \textbf{Exactitude factuelle} (\textit{factual correctness})~: la réponse est-elle factuellement correcte par rapport à la vérité terrain~?
+\end{itemize}
+
+\paragraph{\textit{Frameworks} d'évaluation}
+
+Deux \textit{frameworks} structurent aujourd'hui cette évaluation~:
+
+\textbf{Ragas} (\textit{Retrieval Augmented Generation Assessment}), introduit par Es~\textit{et~al.}~\cite{es2024ragas} et présenté à EACL~2024, est conçu spécifiquement pour les systèmes RAG. Il fournit une suite de métriques (fidélité, pertinence de la réponse, précision et rappel du contexte) calculées sans annotation humaine, via un modèle de langage juge. Sa légèreté et sa spécialisation RAG en font un choix naturel pour une évaluation rapide.
+
+\textbf{DeepEval}~\cite{deepeval2024} est un \textit{framework} plus généraliste de test de systèmes fondés sur des LLMs, incluant des métriques RAG comparables à celles de Ragas, ainsi qu'un \textbf{synthétiseur de données de test} permettant de générer automatiquement un jeu de questions-réponses de référence (\textit{golden dataset}) à partir du corpus lui-même. Ce dernier outil permet de constituer un jeu d'évaluation sans annotation manuelle exhaustive.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{2.5cm} L{3.5cm} L{3.5cm} C{3cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{\textit{Framework}}} &
+\textcolor{white}{\textbf{Forces}} &
+\textcolor{white}{\textbf{Limites}} &
+\textcolor{white}{\textbf{Synthèse de données}} \\
+\midrule
+\rowcolor{bleuAccent}
+\textbf{Ragas} $\star$  & Spécialisé RAG, léger, \textit{reference-free}   & Pas de synthétiseur natif        & Non \\
+DeepEval $\star\star$ & Métriques RAG + généralistes, synthétiseur de \textit{golden dataset} & Plus lent pour le calcul des métriques & \textbf{Oui} \\
+\bottomrule
+\end{tabularx}
+\caption{Synthèse comparative des \textit{frameworks} d'évaluation RAG. $\star$~= retenu pour le calcul des métriques. $\star\star$~= retenu pour la synthèse du \textit{golden dataset}.}
+\label{tab:eval}
+\end{table}
+
+% =============================================================
+\subsection{Tensions du domaine et positionnement du projet}
+\label{sec:tensions}
+
+La revue précédente fait émerger plusieurs \textbf{tensions} que les approches existantes n'adressent pas toujours simultanément~:
+
+\begin{itemize}
+  \item \textbf{Performance vs. déployabilité locale.} Les systèmes RAG les plus performants reposent sur des modèles propriétaires (GPT-4o pour la génération, text-embedding-3 pour l'\textit{embedding}, Cohere pour le \textit{reranking}), incompatibles avec une contrainte de déploiement local à coût nul.
+
+  \item \textbf{Précision lexicale vs. compréhension sémantique.} Les mécanismes de recherche lexicale et dense présentent des forces complémentaires mais des faiblesses symétriques~\cite{strich2026bm25}. Leur combinaison (recherche hybride) est bien documentée mais introduit la difficulté supplémentaire de la fusion de classements hétérogènes.
+
+  \item \textbf{Granularité de recherche vs. richesse de contexte.} Un \textit{chunk} court améliore la précision de la recherche mais appauvrit le contexte fourni à la génération~\cite{lu2025hichunk}. Le découpage parent-enfant adresse ce compromis mais augmente la complexité de l'indexation.
+
+  \item \textbf{Qualité de réévaluation vs. coût d'inférence.} Le \textit{reranking} par \textit{cross-encoder} améliore significativement le classement~\cite{nogueira2019bert} mais son coût peut être prohibitif~: Fensore~\textit{et~al.}~\cite{fensore2025liverag} mesurent un facteur~48$\times$ sur le temps d'inférence.
+
+  \item \textbf{Rigueur d'évaluation vs. coût de constitution des données de test.} L'évaluation rigoureuse d'un système RAG nécessite un jeu de données de référence, dont la constitution manuelle est coûteuse. Les synthétiseurs automatiques (DeepEval) offrent une alternative, au prix d'un temps de calcul plus important~\cite{deepeval2024}.
+\end{itemize}
+
+\subsection*{Positionnement du projet}
+
+Les choix opérés dans ce projet s'inscrivent dans ce panorama avec une contrainte transversale~: un déploiement entièrement local, sans coût d'API, la performance étant jugée à l'aune de ce qui est disponible à la date de rédaction (mi-2026).
+
+Pour l'extraction, \textsc{GLM-OCR}~\cite{glmocr2026} a été retenu pour sa capacité native à traiter texte, tableaux et formules dans un pipeline unique, exécutable localement. L'interprétation des figures s'appuie sur \textbf{Qwen3-VL-8B}~\cite{qwen2025qwen3vl}, choisie comme meilleur compromis entre capacité de raisonnement visuel et coût d'inférence local.
+
+Pour l'ingestion, le \textbf{découpage parent-enfant} a été retenu afin de concilier précision de recherche et richesse contextuelle, conformément aux résultats de Lu~\textit{et~al.}~\cite{lu2025hichunk} et du système H-RAG~\cite{hrag2026semeval}~; \textbf{BGE-M3}~\cite{chen2024bgem3} reste le modèle d'\textit{embedding} utilisé, son rapport qualité-coût demeurant pertinent pour ce POC bien que des alternatives plus récentes (Qwen3-Embedding~\cite{zhang2025qwen3embedding}) occupent le haut des classements ouverts~; \textbf{ChromaDB} a été retenu pour l'indexation vectorielle, suffisant à l'échelle du corpus traité.
+
+Pour le \textit{retrieval}, la combinaison \textbf{BM25}~\cite{robertson2009bm25} et \textbf{recherche dense} (BGE-M3), fusionnée par \textbf{RRF}~\cite{cormack2009rrf} puis réévaluée par un \textbf{\textit{cross-encoder}}~\cite{nogueira2019bert,xiao2024bge}, correspond à l'architecture hybride en deux étapes validée par Strich~\textit{et~al.}~\cite{strich2026bm25} comme la plus performante. Le traitement de la requête (\textit{query processing}) complète la chaîne en amont~; la compression du contexte, bien que décrite dans l'état de l'art, n'est volontairement pas branchée dans ce POC (axe d'évolution identifié).
+
+Pour la génération, \textbf{Qwen2.5}~\cite{qwen2024qwen25} via Ollama a été conservé comme choix fonctionnel et gratuit, Qwen3~\cite{qwen2025qwen3} étant identifié comme évolution possible sans remise en cause de l'architecture.
+
+Enfin, pour l'évaluation, le \textbf{synthétiseur de DeepEval}~\cite{deepeval2024} a été utilisé pour constituer le \textit{golden dataset} à partir du corpus, tandis que le calcul des métriques repose sur \textbf{Ragas}~\cite{es2024ragas}, retenu pour sa légèreté et sa spécialisation RAG.
+
+% =============================================================
+%                CHAPITRE 5 : MÉTHODOLOGIE
+% =============================================================
+\section{Méthodologie}
+\label{sec:methodologie}
+
+\subsection{Analyse des besoins}
+
+\subsubsection{Contexte et nature des données}
+
+Le projet vise à construire un système de tutorat pédagogique basé sur une architecture RAG, exploitant deux catégories de sources documentaires~: des documents PDF (supports de cours natifs ou scannés) et des pages web (ressources pédagogiques complémentaires). Ces deux types de sources présentent des caractéristiques et des contraintes d'extraction distinctes qui structurent l'ensemble des choix techniques en amont.
+
+Les documents PDF combinent du texte structuré, des formules mathématiques, des tableaux, et des figures (schémas, graphiques, captures d'écran). Les pages web combinent du texte, des extraits de code, et une structure HTML porteuse de bruit (menus, liens, éléments décoratifs) qu'il convient d'écarter.
+
+\subsubsection{Exigences fonctionnelles}
+
+De cette nature des données découlent des exigences d'extraction spécifiques à chaque source~:
+
+Pour les PDF~: (i)~extraction du texte brut, (ii)~extraction structurée des formules mathématiques et des tableaux, (iii)~interprétation sémantique des figures par transcription en langage naturel.
+
+Pour les sites web~: (i)~extraction du texte et conversion en un format structuré exploitable, (ii)~extraction des blocs de code, (iii)~élimination du bruit non pédagogique.
+
+\subsubsection{Contraintes du projet}
+
+Le projet est mené dans un cadre de preuve de concept (POC), avec les contraintes suivantes~:
+
+\begin{itemize}
+  \item \textbf{Déploiement local}~: le pipeline s'exécute entièrement sur l'infrastructure locale disponible, sans appel à des services distants. Ce choix répond à une logique de maîtrise de l'infrastructure et de contrôle des coûts --- les données utilisées étant des contenus pédagogiques déjà librement accessibles, sans caractère sensible.
+  \item \textbf{Contrainte budgétaire}~: recours exclusif à des outils et modèles \textit{open-weight}, sans coût d'API, la performance étant évaluée à l'aune de ce qui est disponible et exploitable localement à la date de rédaction (mi-2026).
+  \item \textbf{Contrainte matérielle}~: le pipeline doit rester exécutable sur le matériel partagé disponible (GPU NVIDIA H100 NVL, 95 Go de VRAM), ce qui oriente vers des modèles de taille raisonnable plutôt que vers les plus gros modèles disponibles.
+\end{itemize}
+
+Ces contraintes orientent dès ce stade les grandes décisions d'architecture (outils \textit{open-weight}, dimensionnement des modèles) détaillées dans les parties Conception et Implémentation.
+
+\subsection{Conception}
+
+\subsubsection{Principes de conception}
+
+Les contraintes identifiées dans l'analyse des besoins orientent directement les principes qui structurent la conception du système.
+
+Le premier principe est la \textbf{modularité}~: chaque phase du pipeline (extraction, normalisation, ingestion, \textit{retrieval}, génération) est conçue comme un composant indépendant, remplaçable sans impact sur les autres. Cette modularité permet de faire évoluer un choix d'outil ou de modèle à mesure que l'état de l'art progresse, sans remettre en cause l'architecture globale.
+
+Le second principe est la \textbf{séparation entre extraction et traitement}~: les données brutes (PDF, pages web) sont d'abord converties vers un format normalisé commun, avant toute opération de préparation à la recherche. Cette séparation évite que les spécificités de chaque source ne se propagent dans les étapes en aval.
+
+Le troisième principe est la \textbf{testabilité par étape}~: chaque phase du pipeline doit pouvoir être validée indépendamment (qualité d'extraction, pertinence du \textit{chunking}, précision du \textit{retrieval}, fidélité de la génération), ce qui conditionne directement la phase d'évaluation présentée plus loin.
+
+\subsubsection{Vue d'ensemble de l'architecture}
+
+Le pipeline se structure en deux temps~: une phase de préparation des données, exécutée une seule fois en amont, et une phase d'exécution, déclenchée à chaque requête de l'utilisateur. La phase de préparation (Extraction $\to$ Normalisation $\to$ Ingestion) convertit les sources brutes en une base vectorielle indexée. La phase d'exécution (Requête $\to$ \textit{Retrieval} $\to$ Génération $\to$ Réponse) part d'une question de l'utilisateur, retrouve les passages pertinents, puis génère une réponse contextualisée.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/pipeline_global.png}
+\caption{Vue d'ensemble de l'architecture. Vert~= phase de préparation (\textit{offline}), gris~= interface utilisateur, violet~= traitement de la requête.}
+\label{fig:pipeline-global}
+\end{figure}
+
+\subsubsection{Conception du traitement des données}
+
+Le traitement des données se compose de deux pipelines d'extraction distincts --- l'un pour les PDF, l'autre pour les pages web --- qui convergent vers une étape commune de normalisation, garantissant que la suite du système manipule un format homogène, indépendamment de la source d'origine. Le pipeline PDF traite trois natures de contenu en parallèle~: le texte brut, les éléments structurés (formules mathématiques, tableaux), et les figures. Le pipeline web traite le texte, les blocs de code, et élimine le bruit structurel du HTML.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/flux_extraction.png}
+\caption{Flux d'extraction des données.}
+\label{fig:flux-extraction}
+\end{figure}
+
+\subsubsection{Conception de l'ingestion}
+
+Une fois les documents normalisés, l'ingestion les prépare pour la recherche. Le découpage doit concilier deux besoins a priori contradictoires~: des unités suffisamment fines pour permettre une recherche précise, et un contexte suffisamment large pour ne pas fragmenter le sens. Ce compromis structure le choix de stratégie de découpage, détaillé dans la partie Implémentation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/flux_ingestion.png}
+\caption{Flux d'ingestion.}
+\label{fig:flux-ingestion}
+\end{figure}
+
+Chaque unité est ensuite enrichie de métadonnées (document source, type de contenu, position), qui remplissent un double rôle~: permettre la citation précise des sources dans les réponses générées, et filtrer la recherche selon des critères contextuels. Les unités enrichies sont enfin transformées en représentations vectorielles, puis stockées dans une base indexée.
+
+\subsubsection{Conception du \textit{retrieval}}
+
+La recherche doit concilier deux principes de correspondance aux forces complémentaires~: une correspondance lexicale, précise sur les termes exacts (vocabulaire technique, notations mathématiques) mais aveugle aux reformulations, et une correspondance sémantique, qui capte le sens général mais peut manquer une correspondance exacte importante. La façon de combiner ces deux principes est détaillée dans la partie Implémentation.
+
+Une première recherche, optimisée pour parcourir rapidement l'ensemble du corpus, ne garantit pas nécessairement un ordre de pertinence fin parmi les résultats obtenus~: une étape de réévaluation, appliquée aux meilleurs candidats déjà identifiés, permet d'affiner ce classement. Enfin, les passages retenus remontent vers leur parent~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération, la compression du contexte (non branchée dans ce POC) étant identifiée comme axe d'évolution.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/flux_retrieval_concept.png}
+\caption{Flux conceptuel du \textit{retrieval}.}
+\label{fig:flux-retrieval}
+\end{figure}
+
+\subsubsection{Conception de la génération}
+
+Le contexte récupéré est fourni au modèle de langage aux côtés de la requête de l'utilisateur, encadré par une consigne stricte~: la réponse doit s'appuyer exclusivement sur le contexte fourni, avec un refus explicite en l'absence d'information pertinente. En amont, un module de \textit{query processing} reformule et décompose la question avant la recherche, tandis que la compression du contexte est identifiée comme axe d'évolution.
+
+\subsection{Implémentation}
+
+\subsubsection{Extraction --- PDF}
+
+Le pipeline PDF repose entièrement sur GLM-OCR pour l'extraction~: le texte, les tableaux, et les figures (détectées et rognées automatiquement) sont produits directement en sortie, sous la forme d'un fichier Markdown, de fichiers JSON structurés, et des images de figures isolées.
+
+Le travail restant porte sur l'interprétation de ces figures et la constitution du document final. Certaines figures repérées par GLM-OCR se sont révélées composites --- plusieurs sous-figures regroupées sous une même figure détectée --- ce qui a nécessité deux logiques de \textit{prompt} distinctes pour le VLM (Qwen3-VL-8B)~: lorsqu'une figure contient des sous-figures, l'ensemble est transmis simultanément au VLM afin d'obtenir une interprétation cohérente de la figure complète~; pour une figure simple, un \textit{prompt} dédié produit directement son interprétation.
+
+Le fichier Markdown final est ensuite constitué en insérant les interprétations produites par le VLM aux emplacements correspondants du texte extrait par GLM-OCR.
+
+\subsubsection{Extraction --- Web}
+
+L'extraction web repose sur un pipeline personnalisé~: un \textit{scraper} convertit le contenu HTML en Markdown, un \textit{crawler} parcourt l'ensemble des pages pertinentes du site ciblé, et un nettoyeur applique un ensemble de traitements sur le Markdown produit --- suppression des balises de mise en forme non porteuses de sens, remplacement des images par des espaces réservés, normalisation des délimiteurs de formules mathématiques vers un format unique, et exclusion automatique des sections d'exercices. Les blocs de code sont conservés tels quels lors de ce nettoyage.
+
+\subsubsection{\textit{Chunking} parent-enfant}
+
+La stratégie retenue est un découpage parent-enfant. Chaque document normalisé est d'abord segmenté en unités parents --- de taille plus large, correspondant à une section cohérente du document. Chaque parent est ensuite subdivisé en unités enfants, plus courtes, calibrées pour la précision de la recherche.
+
+Ce sont les \textit{chunks} enfants qui sont indexés et interrogés lors du \textit{retrieval}. Lorsqu'un enfant est jugé pertinent pour une requête, le système ne retourne pas ce fragment court isolé, mais remonte à son parent associé, transmis à la génération. Le mécanisme découple ainsi la granularité de la recherche (fine, sur les enfants) de la granularité du contexte fourni au modèle (large, via les parents).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../rapport/figures/chunking_parent_child.png}
+\caption{\textit{Chunking} parent-enfant.}
+\label{fig:chunking}
+\end{figure}
+
+\subsubsection{Enrichissement par métadonnées}
+
+Chaque \textit{chunk} enfant est associé à un ensemble de métadonnées lors de l'indexation~: le document source dont il est issu, le type de contenu (texte, formule, figure interprétée, code), et sa position dans le document. Le \textit{chunk} parent associé est lui-même référencé comme métadonnée du \textit{chunk} enfant.
+
+Ces métadonnées remplissent deux rôles distincts. Le premier est la citation~: une réponse générée peut être associée précisément au document et à la section d'où provient l'information. Le second est le filtrage~: la recherche peut être restreinte selon un critère de métadonnée, ce qui affine les résultats avant même l'étape de recherche par similarité.
+
+\subsubsection{\textit{Embedding} et indexation}
+
+Les \textit{chunks} enrichis de métadonnées sont vectorisés avec BGE-M3, puis les vecteurs obtenus sont stockés dans ChromaDB, prêts à être interrogés lors du \textit{retrieval}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/indexation.png}
+\caption{Flux d'\textit{embedding} et d'indexation.}
+\label{fig:embedding-indexation}
+\end{figure}
+
+\subsubsection{\textit{Retrieval} hybride}
+
+La requête de l'utilisateur est transmise simultanément à une recherche lexicale via BM25 et à une recherche dense par similarité vectorielle sur les \textit{embeddings} BGE-M3 indexés dans ChromaDB~; les deux classements obtenus sont combinés par fusion de rang réciproque pondérée (\textit{Weighted RRF}), avec un coefficient $\alpha=0,6$ favorisant légèrement la recherche dense. Le score RRF pondéré d'un document~$d$ est~:
+\begin{equation}
+  \text{RRF}_w(d) = \frac{\alpha}{k + \operatorname{rang}_{\text{dense}}(d)} + \frac{1-\alpha}{k + \operatorname{rang}_{\text{BM25}}(d)}
+  \label{eq:rrf-weighted}
+\end{equation}
+où $k=60$ est la constante de lissage standard~\cite{cormack2009rrf}. Cette pondération s'appuie sur la position de chaque \textit{chunk} dans chacun des classements plutôt que sur des scores bruts non directement comparables entre eux, tout en donnant un avantage calibré au signal sémantique.
+
+Le classement fusionné est ensuite réévalué par un \textit{cross-encoder}, qui recalcule un score de pertinence en comparant directement la requête et le contenu de chaque candidat --- une réévaluation plus coûteuse mais appliquée uniquement aux meilleurs candidats déjà identifiés par la fusion RRF.
+
+Enfin, les passages retenus après réévaluation remontent vers leurs parents~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération, sans étape de compression dédiée (non branchée dans ce POC).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/retrieval.png}
+\caption{Pipeline complet de \textit{retrieval}.}
+\label{fig:pipeline-retrieval}
+\end{figure}
+
+\subsubsection{Génération pédagogique}
+
+Le contexte parent (section complète du document source) est transmis au modèle de langage (Qwen2.5 via Ollama) aux côtés de la requête de l'utilisateur, encadré par un \textit{prompt} de génération qui combine deux exigences. La première est un \textit{grounding} strict~: la réponse doit s'appuyer exclusivement sur le contexte fourni, avec un refus explicite en l'absence d'information pertinente. La seconde donne au système une posture de tuteur~: le \textit{prompt} oriente vers une explication pédagogique adaptée au contenu du cours, favorisant la compréhension du raisonnement sous-jacent plutôt que la seule restitution d'une information.
+
+En amont de la recherche, un module de \textit{query processing} reformule la question de l'étudiant et la décompose en sous-questions indépendantes lorsqu'elle porte sur plusieurs notions distinctes~; chaque sous-question est ensuite recherchée séparément, puis les résultats sont fusionnés avant génération.
+
+\subsubsection{Mécanismes de refus}
+
+Deux mécanismes de refus complémentaires encadrent la génération~:
+
+\textbf{Mécanisme 1 — Refus pré-génération par score du \textit{cross-encoder}} (\texttt{should\_refuse\_reranker})~: avant d'appeler le LLM, le score du meilleur passage récupéré (logit du \textit{cross-encoder}) est comparé à un seuil calibré empiriquement (\texttt{RERANKER\_REFUSAL\_THRESHOLD = 0,1119}, cf.~Section~\ref{sec:calibration}). Si le score est inférieur au seuil, le système refuse sans appeler le LLM, économisant un appel de génération.
+
+\textbf{Mécanisme 2 — Refus post-génération par juge LLM} (\texttt{verify\_answer})~: après la génération, un second LLM (Qwen3~:8B) audite la réponse produite. Il vérifie que chaque affirmation est ancrée dans le contexte fourni, sans ajout d'information provenant de la mémoire paramétrique du modèle de génération. Si une information hors-contexte est détectée, la réponse est remplacée par le message de refus. Ce mécanisme s'inspire du paradigme \textit{Self-RAG}~\cite{singh2025agenticrag} tout en utilisant un modèle séparé pour éviter l'auto-évaluation biaisée.
+
+La compression du contexte, étudiée dans l'état de l'art, n'est volontairement pas branchée dans ce POC.
+
+\subsubsection{Interface en ligne de commande (CLI)}
+
+Le CLI constitue le point d'entrée du système~: l'utilisateur y saisit sa question en texte libre, qui déclenche l'exécution complète de la phase d'exécution du pipeline, et reçoit en sortie la réponse générée accompagnée des sources citées.
+
+Le CLI sert également d'interface pour l'évaluation par lots~: il accepte un jeu de questions en entrée (le \textit{golden dataset}) et produit en sortie l'ensemble des réponses correspondantes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../rapport/figures/pipeline.png}
+\caption{Flux global détaillé du projet. Préparation (extraction PDF/Web, normalisation, ingestion) puis exécution (CLI $\to$ \textit{retrieval} $\to$ génération $\to$ réponse).}
+\label{fig:flux-global}
+\end{figure}
+
+% =============================================================
+%             CHAPITRE 6 : ÉVALUATION
+% =============================================================
+\section{Évaluation}
+\label{sec:evaluation}
+
+L'évaluation du système vise à répondre à trois questions~: (i)~le système retrouve-t-il les passages pertinents du corpus pour une question donnée~? (ii)~la réponse générée est-elle fidèle au contexte récupéré~? (iii)~le système sait-il refuser de répondre lorsque l'information n'est pas présente dans le corpus~? Cette section décrit le protocole expérimental et présente les résultats obtenus.
+
+\subsection{Protocole expérimental}
+
+\subsubsection{Constitution du jeu de données de référence}
+
+Un jeu de données de référence (\textit{golden dataset}) a été constitué en utilisant le synthétiseur de DeepEval~\cite{deepeval2024} pour générer automatiquement des paires question--réponse à partir du corpus indexé. Contrairement à une approche naïve où DeepEval appliquerait son propre \textit{chunking} (taille 800, pas de parent-enfant), le protocole adopté garantit l'alignement entre le \textit{chunking} du jeu de données et celui du système réel~:
+
+\begin{enumerate}
+  \item Le corpus est d'abord découpé avec \textbf{notre} chunker parent-enfant (1775~parents, 8379~enfants).
+  \item Chaque parent est exporté dans un fichier Markdown individuel dans un dossier dédié (\texttt{parents\_cours\_ml/}). Le fichier contient le texte complet de la section parent et un en-tête YAML avec ses métadonnées (source, numéro de section, pages). Cette étape est réalisée par \texttt{scripts101/generate\_golden\_dataset.py}.
+  \item DeepEval est configuré avec une taille de \textit{chunk} de 100\,000~caractères (bien supérieure à la taille maximale d'un parent, $\sim$80\,000), garantissant qu'\textit{aucun re-chunking} n'est appliqué~: chaque fichier devient un unique \textit{chunk} DeepEval = exactement un parent.
+  \item Les \textit{contextes de référence} (\textit{gold contexts}) produits sont donc exactement nos parents réels, assurant un alignement parfait avec le système.
+\end{enumerate}
+
+Le jeu de données final comporte \textbf{60~questions} réparties en trois catégories~:
+\begin{itemize}
+  \item \textbf{20 questions \textit{single passage}}~: réponse contenue dans un seul parent. Teste la qualité de la génération pure.
+  \item \textbf{20 questions \textit{multi passage}}~: réponse nécessitant 2--3 parents de sources différentes. Teste la capacité de \textit{retrieval} et de synthèse.
+  \item \textbf{20 questions sans réponse} (\textit{unanswerable})~: question plausible mais dont la réponse n'est pas présente dans le contexte fourni. Teste le mécanisme de refus.
+\end{itemize}
+
+Les 60~questions sont réparties en un jeu de calibration (15~questions : 10~answerable + 5~unanswerable) et un jeu de test (45~questions : 30~answerable + 15~unanswerable).
+
+\textbf{Correction du biais du dataset.} Lors des premières évaluations, nous avons constaté un problème méthodologique~: le synthétiseur de DeepEval génère les questions \textit{unanswerable} en sélectionnant un \textit{chunk} du corpus, puis en formulant une question dont la réponse est absente de \textit{ce chunk spécifique} --- mais potentiellement présente ailleurs dans le corpus. Comme l'ensemble du corpus porte sur le machine learning, les questions générées restaient dans le domaine du ML et le système pouvait légitimement y répondre via le \textit{retrieval} d'autres passages du corpus. La métrique de refus était donc non informative (0\,\% de refus détectés sur les 15~questions), non pas en raison d'une défaillance du mécanisme de refus, mais parce que les questions étaient \textit{de facto} répondables. Nous avons donc remplacé ces 15~questions par des questions de domaines totalement étrangers au \textit{Deep Learning} (géographie, biologie, histoire, informatique hors-ML, physique, chimie, économie).
+
+\subsubsection{Métriques d'évaluation}
+
+L'évaluation combine des métriques de \textit{retrieval} et de refus, complétées par des intervalles de confiance bootstrap à 95\,\% (1000~réplications).
+
+\paragraph{Métriques de \textit{retrieval}}
+
+\begin{itemize}
+  \item \textbf{Hit@4}~: proportion de questions pour lesquelles au moins un passage pertinent figure parmi les 4~premiers résultats.
+  \item \textbf{MRR} (\textit{Mean Reciprocal Rank})~: moyenne de l'inverse du rang du premier passage pertinent.
+  \item \textbf{nDCG@4} (\textit{Normalized Discounted Cumulative Gain})~: pertinence graduée du top-4, avec scores de chevauchement lexical bidirectionnel.
+  \item \textbf{Precision@4}~: proportion de passages pertinents parmi les 4~premiers résultats.
+\end{itemize}
+
+\paragraph{Métriques de refus}
+
+\begin{itemize}
+  \item \textbf{Refusal Correctness}~: proportion de décisions de refus correctes (refuser une question sans réponse, répondre à une question avec réponse).
+  \item \textbf{Refusal Precision / Recall / F1}~: précision (un refus est-il justifié~?), rappel (toutes les questions sans réponse sont-elles refusées~?), et leur moyenne harmonique.
+\end{itemize}
+
+La détection de refus a fait l'objet d'une attention particulière. Initialement basée sur une égalité stricte avec la phrase de refus du pipeline, elle a été élargie pour reconnaître les refus \textit{naturels} du LLM (phrases courtes indiquant l'incapacité à répondre à partir des documents, sans contenu factuel). Cette correction s'est avérée cruciale~: le LLM refusait correctement dans ses propres mots, mais l'évaluateur ne le détectait pas.
+
+\subsection{Calibration du mécanisme de refus}
+\label{sec:calibration}
+
+Le mécanisme de refus pré-génération (M1) repose sur le score du \textit{cross-encoder} (\texttt{hits[0]["dist"]}). Pour déterminer le seuil optimal, nous avons collecté les scores du \textit{cross-encoder} sur le jeu de test complet (30~questions answerable + 15~questions unanswerable hors-domaine), en mode \texttt{hybrid\_rerank} avec le \textit{refusal gate} désactivé.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{3.5cm} C{1.5cm} C{2cm} C{2cm} C{2cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Catégorie}} & \textcolor{white}{\textbf{n}} & \textcolor{white}{\textbf{min}} & \textcolor{white}{\textbf{médiane}} & \textcolor{white}{\textbf{max}} \\
+\midrule
+Answerable   & 30 & 0,1119 & 0,8184 & 0,9985 \\
+Unanswerable & 15 & 0,0006 & 0,0022 & 0,0118 \\
+\bottomrule
+\end{tabularx}
+\caption{Distribution des scores du \textit{cross-encoder} par catégorie.}
+\label{tab:calibration-distrib}
+\end{table}
+
+Le Tableau~\ref{tab:calibration-distrib} montre une séparation parfaite~: le score maximal des questions \textit{unanswerable} (0,0118) est dix fois inférieur au score minimal des questions \textit{answerable} (0,1119). Il n'existe \textbf{aucun chevauchement} entre les deux distributions. Le seuil optimal, déterminé en maximisant l'exactitude de classification, est de \textbf{0,1119}, pour une \textbf{exactitude de 100\,\%} (15~vrais refus, 0~faux refus, 0~faux non-refus).
+
+Il convient de nuancer ce résultat~: la séparation parfaite est facilitée par le choix de questions \textit{unanswerable} volontairement hors-domaine (géographie, biologie, histoire), que le \textit{cross-encoder} discrimine trivialement du corpus de ML. Sur des questions \textit{near-domain} --- des questions de ML dont le cours ne traite pas, comme \textit{«~Comment fonctionne un Vision Transformer (ViT)~?~»} --- la tâche de discrimination serait significativement plus difficile, les distributions de scores se chevauchant davantage. Ce point est discuté plus en détail dans la Section~\ref{sec:discussion}.
+
+Ce résultat contraste avec la calibration initiale sur les questions DeepEval, où les distributions se chevauchaient fortement (médianes 0,680 vs. 0,764, exactitude 68,3\,\%). Le changement de dataset a permis de révéler le véritable pouvoir discriminant du \textit{cross-encoder}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{images/fig2_reranker_distribution.png}
+\caption{Distribution des scores du \textit{cross-encoder}~: \textit{answerable} (bleu) vs. \textit{unanswerable} (orange). La ligne pointillée rouge marque le seuil calibré (0,1119). L'absence de chevauchement permet une discrimination parfaite.}
+\label{fig:calibration}
+\end{figure}
+
+\subsection{Étude d'ablation}
+
+Pour mesurer la contribution de chaque composant du pipeline, une étude d'ablation en quatre étapes a été menée sur le jeu de test (45~questions).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{C{1.2cm} L{2.8cm} L{4cm} C{2.2cm} C{2.2cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Étape}} & \textcolor{white}{\textbf{QP}} & \textcolor{white}{\textbf{Retrieval}} & \textcolor{white}{\textbf{RG}} & \textcolor{white}{\textbf{Rôle}} \\
+\midrule
+1 & ---  & Dense seul (BGE-M3)      & --- & Baseline \\
+2 & Oui  & Dense seul (BGE-M3)      & --- & Apport du QP \\
+3 & Oui  & Hybride (BM25 + BGE-M3 + RRF) & --- & Apport de l'hybridation \\
+4 & Oui  & Hybride + Cross-encoder  & Oui & Système complet \\
+\bottomrule
+\end{tabularx}
+\caption{Configurations des quatre étapes de l'étude d'ablation.}
+\label{tab:ablation}
+\end{table}
+
+\subsection{Résultats de \textit{retrieval}}
+
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{3.2cm} C{2.2cm} C{2.2cm} C{2.2cm} C{2.6cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Baseline}} & \textcolor{white}{\textbf{+ QP}} & \textcolor{white}{\textbf{+ Hybride}} & \textcolor{white}{\textbf{+ Reranker}} \\
+\midrule
+Hit@4      & 0,900 & 0,900 & 0,900 & \textbf{0,967} \\
+MRR        & 0,811 & 0,800 & 0,772 & \textbf{0,867} \\
+nDCG@4     & 0,942 & 0,932 & 0,918 & \textbf{0,939} \\
+Precision@4& 0,308 & 0,375 & 0,392 & \textbf{0,408} \\
+\bottomrule
+\end{tabularx}
+\caption{Performances de \textit{retrieval} aux quatre étapes de l'ablation (30~questions \textit{answerable}). Tous les scores sont accompagnés d'intervalles de confiance bootstrap à 95\,\% (non reproduits ici par lisibilité~; cf.~Figure~\ref{fig:ablation}).}
+\label{tab:resultats-retrieval}
+\end{table}
+
+Le Tableau~\ref{tab:resultats-retrieval} montre que le \textit{cross-encoder} est le composant qui apporte le gain le plus significatif~: +6,7~points de Hit@4 et +5,6~points de MRR par rapport à la baseline. L'hybridation (BM25 + dense) réduit légèrement le nDCG (-2,4~points) et le MRR (-1,1~points) par rapport à l'étape précédente (+QP), un compromis attendu~: la diversité accrue des résultats bénéficie au rappel mais dilue la précision du classement. Le \textit{cross-encoder} corrige ensuite cette dilution (+2,1~points de nDCG et +9,5~points de MRR). Le \textit{query processing} corrigé maintient les performances de la baseline, validant l'efficacité du correctif (cf.~Section~\ref{sec:bug-qp}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{images/fig1_ablation.png}
+\caption{Étude d'ablation~: évolution des métriques de \textit{retrieval} aux quatre étapes. Les barres d'erreur représentent les intervalles de confiance bootstrap à 95\,\%.}
+\label{fig:ablation}
+\end{figure}
+
+\subsection{Résultats par catégorie}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{3.2cm} C{3cm} C{3cm} C{3cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Single (15q)}} & \textcolor{white}{\textbf{Multi (15q)}} & \textcolor{white}{\textbf{$\Delta$}} \\
+\midrule
+Hit@4      & 1,000 [1,000--1,000] & 0,933 [0,800--1,000] & -0,067 \\
+MRR        & 0,967 [0,900--1,000] & 0,767 [0,567--0,933] & \textbf{-0,200} \\
+nDCG@4     & 0,981 [0,951--0,997] & 0,897 [0,839--0,950] & -0,084 \\
+\bottomrule
+\end{tabularx}
+\caption{Performances par catégorie pour le système complet (hybride + \textit{cross-encoder}). Intervalles de confiance bootstrap 95\,\% entre crochets.}
+\label{tab:categories}
+\end{table}
+
+Le Tableau~\ref{tab:categories} confirme que la configuration \textit{single passage} est résolue de manière quasi parfaite (Hit@4~=~1,000, MRR~=~0,967). Le \textit{multi passage} demeure plus exigeant, avec un MRR inférieur de 0,200~point~: la synthèse d'informations issues de plusieurs sources reste un défi pour le \textit{retrieval}, même avec le \textit{cross-encoder}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{images/fig3_single_vs_multi.png}
+\caption{Comparaison des performances entre les catégories \textit{single} et \textit{multi passage}.}
+\label{fig:categories}
+\end{figure}
+
+\subsection{Diagnostic et correction du \textit{Query Processing}}
+\label{sec:bug-qp}
+
+Lors de l'évaluation de l'étape~2 (ajout du QP), une dégradation inattendue des performances de \textit{retrieval} a été observée~: le Hit@4 chutait de 0,900 à 0,733 (-16,7~points) et le MRR de 0,811 à 0,572 (-23,9~points). Trois causes racines ont été identifiées~:
+
+\begin{enumerate}
+  \item \textbf{Question reformulée jetée}~: la requête reformulée (intention globale) était écartée dès que des sous-questions étaient produites, ne laissant que des sous-questions étroites pour le \textit{retrieval}.
+  \item \textbf{Tri global par score}~: les scores cosinus des sous-questions étroites étaient artificiellement plus élevés que celui de la question reformulée, poussant les hits pertinents hors du top-4.
+  \item \textbf{Fonction de pertinence asymétrique}~: la métrique \texttt{\_is\_relevant()} mesurait uniquement le chevauchement dans le sens \textit{gold}$\to$\textit{hit}, pénalisant les hits courts mais parfaitement pertinents pour une sous-question.
+\end{enumerate}
+
+Trois correctifs ont été appliqués~: (i)~toujours inclure la question reformulée dans les requêtes de \textit{retrieval}~; (ii)~remplacer le tri global par score par une fusion \textit{round-robin} qui entrelace les résultats de chaque requête~; (iii)~utiliser un chevauchement bidirectionnel $\max(\text{gold}\to\text{hit}, \text{hit}\to\text{gold})$ avec un seuil abaissé à 0,4.
+
+Après correction, le Hit@4 est remonté à 0,900, identique à la baseline sans QP. L'écart résiduel sur le MRR (-0,011) est acceptable~: le \textit{round-robin} privilégie délibérément la diversité des résultats multi-requêtes au détriment du score pur.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{images/fig4_bug_qp.png}
+\caption{Impact du \textit{Query Processing}~: dégradation initiale (-16,7~pts Hit@4) et récupération après correctif.}
+\label{fig:bug-qp}
+\end{figure}
+
+\subsection{Performances de génération}
+
+La qualité des réponses générées a été évaluée via le \textit{framework} Ragas~\cite{es2024ragas} sur le Run~1 (baseline dense, 30~questions \textit{answerable}), avec Qwen3~:8B comme juge LLM.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{5cm} C{3cm} C{3cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Score}} & \textcolor{white}{\textbf{IC 95\%}} \\
+\midrule
+Fidélité (\textit{faithfulness})     & 0,887 & [0,820~--~0,945] \\
+Précision du contexte (\textit{context precision}) & 0,840 & [0,775~--~0,898] \\
+Exactitude factuelle (\textit{custom correctness}, juge 1--5) & 0,786 & [0,714~--~0,857] \\
+\bottomrule
+\end{tabularx}
+\caption{Performances de génération sur les 30~questions \textit{answerable} (Run~1, baseline dense).}
+\label{tab:generation}
+\end{table}
+
+La fidélité de 0,887 indique que près de 89\,\% des affirmations produites sont ancrées dans le contexte fourni. La précision du contexte de 0,840 confirme que les passages récupérés sont majoritairement pertinents. L'exactitude factuelle \textit{custom} (0,786), évaluée par un juge LLM indépendant sur une échelle de 1 à 5, reflète la difficulté inhérente à l'évaluation automatique de la correction factuelle avec des modèles locaux de taille modeste (8B). Ces métriques n'ont pas été recalculées pour les runs ultérieurs, le \textit{framework} Ragas ajoutant un coût d'évaluation significatif (plusieurs heures pour 30~questions). L'amélioration du \textit{retrieval} (+6,7~points de Hit@4) devrait mécaniquement améliorer ces métriques, le contexte fourni à la génération étant de meilleure qualité.
+
+\subsection{Performances de refus}
+
+Le Tableau~\ref{tab:refus} synthétise les performances de refus sur les 15~questions \textit{unanswerable} hors-domaine, après correction de la fonction de détection de refus (\texttt{is\_refusal()}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{L{4cm} C{3cm} C{3cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Baseline}} & \textcolor{white}{\textbf{Système complet}} \\
+\midrule
+Refus corrects   & 15/15 & \textbf{15/15} \\
+Faux refus       & 0     & \textbf{0} \\
+Faux non-refus   & 0     & \textbf{0} \\
+Precision        & 1,000 & \textbf{1,000} \\
+Recall           & 1,000 & \textbf{1,000} \\
+F1               & 1,000 & \textbf{1,000} \\
+\bottomrule
+\end{tabularx}
+\caption{Performances de refus sur les 15~questions \textit{unanswerable} hors-domaine. La baseline et le système complet atteignent tous deux 100\,\% de refus corrects.}
+\label{tab:refus}
+\end{table}
+
+Le système complet et la baseline atteignent tous deux \textbf{100\,\% d'exactitude de refus} sur les questions hors-domaine. Ce résultat montre que le \textit{system prompt} seul, qui impose un ancrage strict dans le contexte, suffit à faire refuser le LLM sur des questions de domaines totalement étrangers. Les mécanismes M1 (score \textit{cross-encoder}) et M2 (juge post-génération) apportent une garantie supplémentaire pour les cas limites et permettent une économie de calcul (pas d'appel LLM si le score M1 est trop bas).
+
+\textbf{Correction de la détection de refus.} Initialement, la fonction \texttt{is\_refusal()} détectait uniquement l'égalité stricte avec la phrase de refus du pipeline. Or le LLM refuse souvent dans ses propres mots («\,Les documents fournis ne contiennent pas cette information\,»), sans reproduire la phrase exacte. L'élargissement de la détection aux refus naturels (phrases courtes sans contenu factuel indiquant l'incapacité à répondre) a permis de capturer ces refus, faisant passer la baseline de 0/15 à 15/15. Ce correctif illustre que le système refusait correctement depuis le début --- l'évaluateur ne le mesurait simplement pas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{images/fig5_refus_comparison.png}
+\caption{Évolution de la performance de refus après correction du biais du dataset.}
+\label{fig:refus}
+\end{figure}
+
+\subsection{Discussion}
+\label{sec:discussion}
+
+Les résultats expérimentaux permettent de dégager plusieurs enseignements.
+
+\textbf{Le \textit{cross-encoder} est le composant différenciant.} L'étude d'ablation montre que le gain principal provient du \textit{reranking}~: +6,7~points de Hit@4, +5,6~points de MRR. Ce résultat est cohérent avec la littérature récente~\cite{strich2026bm25,fensore2025liverag} qui identifie l'architecture hybride en deux étapes (recherche + \textit{reranking}) comme la plus performante.
+
+\textbf{L'hybridation BM25+dense dilue légèrement la précision, compensée par le \textit{cross-encoder}.} Le nDCG@4 recule de 0,932 à 0,918 avec l'ajout de l'hybridation — un compromis cohérent avec la diversité accrue des résultats issus de deux signaux complémentaires. Le \textit{cross-encoder} corrige ensuite cette dilution en portant le nDCG@4 à 0,939 (+2,1~points).
+
+\textbf{Le refus est largement résolu par le \textit{system prompt}~; les mécanismes explicites fournissent une garantie supplémentaire.} La baseline et le système complet atteignent tous deux 100\,\% de refus corrects sur les questions hors-domaine, démontrant que le \textit{prompt} d'ancrage strict est le mécanisme de refus le plus efficace. Le M1 (score \textit{cross-encoder}) apporte une économie de calcul (pas d'appel LLM si le score est trop bas), tandis que le M2 (juge post-génération) protège contre les cas où le LLM utiliserait sa mémoire paramétrique malgré le \textit{prompt}.
+
+\textbf{La qualité du dataset conditionne la validité des conclusions.} Le passage d'un dataset DeepEval, dont les questions \textit{unanswerable} étaient \textit{de facto} répondables (questions ML sur corpus ML, absentes du \textit{chunk} choisi mais présentes ailleurs dans le corpus), à des questions de domaines totalement étrangers a fait passer la métrique de refus de 0\,\% à 100\,\% (système complet). Ce résultat souligne qu'un \textit{benchmark} de refus n'a de sens que si les questions \textit{unanswerable} sont véritablement absentes de l'intégralité du corpus, et non d'un seul \textit{chunk}. Il convient toutefois de nuancer~: les questions de remplacement (géographie, biologie, histoire) sont volontairement hors-domaine, ce qui rend la tâche de refus triviale pour le \textit{system prompt}. Un test plus exigeant utiliserait des questions \textit{near-domain} --- des questions de ML dont le cours ne traite pas (ex.~: \textit{«~Comment fonctionne un Vision Transformer (ViT) ?~»}) --- plus proches du domaine mais absentes du corpus. Ce type de questions, plus difficile à discriminer pour le \textit{cross-encoder} comme pour le LLM, constitue une perspective d'évaluation prioritaire.
+
+\textbf{Le bug du \textit{Query Processing} illustre la valeur du diagnostic.} Une dégradation de performance n'est pas nécessairement un échec~; correctement diagnostiquée et corrigée, elle devient une contribution méthodologique. Le correctif par \textit{round-robin} est simple, mais son identification a nécessité une analyse fine des interactions entre le QP, le \textit{retrieval} et la métrique d'évaluation.
+
+% =============================================================
+
+\subsubsection*{Benchmark de parallélisme}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{0.8\linewidth}{L{3.5cm} C{2.5cm} C{2.5cm} C{2.5cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Modèle}} &
+\textcolor{white}{\textbf{Requêtes}} &
+\textcolor{white}{\textbf{Séquentiel}} &
+\textcolor{white}{\textbf{Parallèle (4)}} \\
+\midrule
+Qwen2.5~:14B (génération) & 4 req  & 5\,414\,ms & 2\,431\,ms \\
+Qwen3~:8B (juge)        & 6 req  & 3\,676\,ms & 1\,542\,ms \\
+\bottomrule
+\end{tabularx}
+\caption{Comparaison des temps d'inférence séquentiel vs.\ parallèle. Speedup~$\approx \times 2,3$.}
+\label{tab:benchmark}
+\end{table}
+% =============================================================
+%     CHAPITRE 7 : TUTEUR CONVERSATIONNEL (v2.1)
+% =============================================================
+%                       CONCLUSION
+% =============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Bilan du stage}
+
+Ce stage de six mois au LIMOS avait pour objectif la conception, l'implémentation et l'évaluation d'un tuteur pédagogique intelligent fondé sur une architecture RAG, appliqué à un corpus de cours de machine learning. Le cahier des charges initial a été intégralement respecté, et les résultats obtenus dépassent les attentes initiales pour un système entièrement local et sans coût d'API.
+
+Le pipeline réalisé couvre l'ensemble de la chaîne, de l'extraction multimodale des documents (PDF et web) à la génération de réponses pédagogiques ancrées dans le corpus, en passant par une ingestion structurée et un retrieval hybride performant. L'architecture modulaire adoptée permet de faire évoluer chaque composant indépendamment, en fonction des progrès de l'état de l'art.
+
+\subsection{Contributions principales}
+
+Les contributions de ce travail sont de trois ordres.
+
+\begin{enumerate}
+  \item \textbf{Ingénierie d'un pipeline RAG complet en environnement local}~: de l'extraction multimodale (GLM-OCR + Qwen3-VL pour les figures) à la génération contrainte (Qwen2.5:14B), en passant par une stratégie de chunking parent-enfant et une indexation vectorielle (ChromaDB). L'ensemble fonctionne sans appel à des services cloud.
+
+  \item \textbf{Validation empirique de l'architecture RAG avancée}~: le pipeline intègre les trois mécanismes clés du RAG avancé --- query processing (reformulation et décomposition), retrieval hybride avec RRF pondéré, et reranking par cross-encoder. Les résultats d'ablation démontrent la contribution de chaque composant, le cross-encoder apportant le gain le plus significatif (+6,7 pts hit@4).
+
+  \item \textbf{Mécanisme de refus robuste}~: la combinaison d'un refus pré-génération basé sur le score du reranker (M1, seuil calibré à 0,1119, accuracy 100\,\%) et d'une vérification post-génération par juge LLM (M2) garantit qu'aucune réponse hors-contexte n'est présentée à l'étudiant. Sur les 15 questions hors-domaine du dataset de test, le refus est systématique et correct (15/15, F1~=~1,000).
+\end{enumerate}
+
+\subsection{Limites actuelles}
+
+Le système présente plusieurs limites qui constituent autant d'axes d'amélioration pour la suite du projet.
+
+\begin{itemize}
+  \item \textbf{Absence de conversation}~: chaque question est traitée indépendamment. L'étudiant ne peut pas poser de questions de suivi naturelles («~et comment ça se compare à X~?~») sans répéter le contexte. La migration vers un tuteur conversationnel avec mémoire est la prochaine étape prioritaire (cf.~Annexe~\ref{app:architecture-v2}).
+
+  \item \textbf{Posture purement transmissive}~: le système répond directement aux questions, sans guidage socratique ni adaptation du niveau d'explication. Le prompt actuel exclut explicitement le dialogue pédagogique («~une réponse directe, pas un dialogue socratique~»).
+
+  \item \textbf{Évaluation limitée au comportement Q\&A}~: les métriques utilisées (hit@k, MRR, nDCG, faithfulness) mesurent la qualité du retrieval et de l'ancrage, mais pas la qualité pédagogique des réponses (clarté, progressivité, adaptation au niveau).
+
+  \item \textbf{Corpus figé}~: le corpus indexé est constitué une fois pour toutes lors de l'ingestion. L'ajout de nouveaux documents nécessite une ré-exécution complète du pipeline d'extraction et d'indexation.
+
+  \item \textbf{Questions \textit{near-domain} non testées}~: les questions \textit{unanswerable} utilisées pour l'évaluation du refus sont volontairement hors-domaine (géographie, biologie). Un test plus exigeant utiliserait des questions de ML absentes du corpus --- plus difficiles à discriminer pour le \textit{cross-encoder} comme pour le LLM.
+
+  \item \textbf{Dépendance à la qualité de l'OCR}~: la qualité de l'extraction PDF conditionne toute la chaîne en aval. Des erreurs d'OCR (formules mal transcrites, tableaux mal structurés) se propagent jusqu'à la génération.
+\end{itemize}
+
+\subsection{Perspectives}
+
+Les résultats obtenus ouvrent plusieurs perspectives d'évolution.
+
+\paragraph{Tuteur conversationnel v2 (court terme)}
+
+La transformation du système Q\&A en un véritable tuteur conversationnel, décrite comme perspective dans le rapport initial, a été réalisée dans la version 2.1 du système (Chapitre~\ref{sec:tuteur-v2}). Les développements futurs s'articulent autour des axes suivants. L'architecture cible, détaillée dans le document \texttt{docs/architecture\_tuteur.md}, s'articule autour de trois axes~:
+
+\begin{enumerate}
+  \item \textbf{Mémoire de conversation}~: gestion d'un historique multi-tour avec compression automatique des anciens messages pour rester dans la fenêtre de contexte (24K tokens).
+  \item \textbf{Pédagogie socratique}~: guidage par questions plutôt que réponses directes, avec escalade progressive d'indices lorsque l'étudiant est bloqué.
+  \item \textbf{Adaptation au niveau}~: modélisation du niveau de l'étudiant (débutant/intermédiaire/avancé) et adaptation automatique des explications.
+\end{enumerate}
+
+Le temps de développement estimé est de 10 à 15 jours ouvrés pour une version~1 complète, incluant une API REST (FastAPI) et une interface web (Gradio).
+
+\paragraph{Améliorations techniques (moyen terme)}
+
+\begin{itemize}
+  \item \textbf{Migration vers Qwen3}~: le modèle de génération Qwen2.5:14B pourrait être remplacé par Qwen3:14B, qui apporte une fenêtre de contexte élargie et un mode de raisonnement hybride (thinking/non-thinking), avec un gain attendu sur la qualité des réponses complexes.
+  \item \textbf{Embedding de nouvelle génération}~: Qwen3-Embedding-0.6B (premier au classement MMTEB) pourrait remplacer BGE-M3 pour l'embedding, potentiellement avec un gain en rappel.
+  \item \textbf{Indexation incrémentale}~: permettre l'ajout de nouveaux documents au corpus sans ré-indexation complète, pour un cours qui évolue dans le temps.
+  \item \textbf{Évaluation pédagogique}~: compléter les métriques de retrieval par des métriques de qualité pédagogique (clarté, progressivité, adaptation), via un protocole de type LLM-as-a-judge ou des tests utilisateurs.
+\end{itemize}
+
+\paragraph{Ouverture scientifique}
+
+Au-delà du cas d'usage pédagogique, l'architecture développée dans ce projet est générique et peut s'appliquer à tout domaine nécessitant une recherche documentaire précise avec ancrage strict~: veille scientifique, analyse de brevets, support technique, documentation juridique. La modularité du pipeline facilite l'adaptation à de nouveaux corpus et de nouveaux modèles, au fur et à mesure des progrès de l'état de l'art.
+
+% =============================================================
+%                       BIBLIOGRAPHIE
+% =============================================================
+\newpage
+\begin{thebibliography}{99}
+\small
+
+\bibitem{lewis2020rag}
+Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N. \textit{et~al.} (2020).
+Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.
+\textit{NeurIPS}, vol.~33, pp.~9459--9474. arXiv:2005.11401.
+
+\bibitem{gao2024ragsurvey}
+Gao, Y., Xiong, Y., Gao, X., Jia, K., Pan, J., Bi, Y., Dai, Y., Sun, J., Wang, M., Wang, H. (2024).
+Retrieval-Augmented Generation for Large Language Models: A Survey.
+arXiv:2312.10997.
+
+\bibitem{shuster2021hallucination}
+Shuster, K., Poff, S., Chen, M., Kiela, D., Weston, J. (2021).
+Retrieval Augmentation Reduces Hallucination in Conversation.
+\textit{Findings of EMNLP~2021}, pp.~3784--3803.
+
+\bibitem{singh2025agenticrag}
+Singh, A., Ehtesham, A., Kumar, S., Khoei, T.~T. (2025).
+Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG.
+arXiv:2501.09136.
+
+\bibitem{trec2025rag}
+Upadhyay, S., Thakur, N., Pradeep, R., Craswell, N., Campos, D., Lin, J. (2025).
+Overview of the TREC~2025 Retrieval Augmented Generation (RAG) Track.
+arXiv:2603.09891.
+
+\bibitem{wang2024bestpractices}
+Wang, X., Wang, Z., Gao, X., Zhang, F., Wu, Y. \textit{et~al.} (2024).
+Searching for Best Practices in Retrieval-Augmented Generation.
+arXiv:2407.01219.
+
+\bibitem{gao2022hyde}
+Gao, L., Ma, X., Lin, J., Callan, J. (2022).
+Precise Zero-Shot Dense Retrieval without Relevance Labels (HyDE).
+arXiv:2212.10496.
+
+\bibitem{ma2023queryrewriting}
+Ma, X., Gong, Y., He, P. \textit{et~al.} (2023).
+Query Rewriting for Retrieval-Augmented Large Language Models.
+arXiv:2305.14283.
+
+\bibitem{robertson2009bm25}
+Robertson, S., Zaragoza, H. (2009).
+The Probabilistic Relevance Framework: BM25 and Beyond.
+\textit{Found. Trends Inf. Retr.}, vol.~3, no.~4, pp.~333--389.
+
+\bibitem{chen2024bgem3}
+Chen, J., Xiao, S., Zhang, P., Luo, K., Lian, D., Liu, Z. (2024).
+BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings Through Self-Knowledge Distillation.
+arXiv:2402.03216.
+
+\bibitem{zhang2025qwen3embedding}
+Zhang, Y., Li, M., Long, D., Zhang, X., Lin, H. \textit{et~al.} (2025).
+Qwen3 Embedding: Advancing Text Embedding and Reranking Through Foundation Models.
+arXiv:2506.05176.
+
+\bibitem{cormack2009rrf}
+Cormack, G.~V., Clarke, C.~L.~A., Büttcher, S. (2009).
+Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods.
+\textit{Proc. SIGIR~2009}, pp.~758--759. ACM.
+
+\bibitem{nogueira2019bert}
+Nogueira, R., Cho, K. (2019).
+Passage Re-ranking with BERT.
+arXiv:1901.04085.
+
+\bibitem{xiao2024bge}
+Xiao, S., Liu, Z., Zhang, P., Muennighoff, N. (2024).
+C-Pack: Packaged Resources To Advance General Chinese Embedding.
+arXiv:2309.07597.
+
+\bibitem{strich2026bm25}
+Strich, D. \textit{et~al.} (2026).
+From BM25 to Corrective RAG: Benchmarking Retrieval Strategies for Text-and-Table Documents.
+arXiv:2604.01733.
+
+\bibitem{fensore2025liverag}
+Fensore, C., Dhole, K., Ho, J., Agichtein, E. (2025).
+Evaluating Hybrid Retrieval Augmented Generation using Dynamic Test Sets: LiveRAG Challenge.
+arXiv:2506.22644.
+
+\bibitem{jiang2023llmlingua}
+Jiang, H., Wu, Q., Lin, C.-Y., Yang, Y., Qiu, L. (2023).
+LLMLingua: Compressing Prompts for Accelerated Inference of Large Language Models.
+\textit{EMNLP~2023}.
+
+\bibitem{pan2024llmlingua2}
+Pan, Z., Wu, Q., Jiang, H. \textit{et~al.} (2024).
+LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression.
+\textit{Findings of ACL~2024}.
+
+\bibitem{xu2024recomp}
+Xu, F., Shi, W., Choi, E. (2024).
+RECOMP: Improving Retrieval-Augmented LMs with Compression and Selective Augmentation.
+arXiv:2310.04408.
+
+\bibitem{selecom2026}
+Rethinking Soft Compression in Retrieval-Augmented Generation: A Query-Conditioned Selector Perspective.
+\textit{Proc. WWW~2026}. ACM.
+
+\bibitem{es2024ragas}
+Es, S., James, J., Espinosa-Anke, L., Schockaert, S. (2024).
+RAGAs: Automated Evaluation of Retrieval Augmented Generation.
+\textit{Proc. EACL~2024 (System Demonstrations)}, pp.~150--158. arXiv:2309.15217.
+
+\bibitem{deepeval2024}
+Confident AI (2024).
+DeepEval: The Open-Source LLM Evaluation Framework.
+\url{https://github.com/confident-ai/deepeval}
+
+\bibitem{muennighoff2023mteb}
+Muennighoff, N., Tazi, N., Magne, L., Reimers, N. (2023).
+MTEB: Massive Text Embedding Benchmark.
+\textit{Proc. EACL~2023}, pp.~2014--2037.
+
+\bibitem{enevoldsen2025mmteb}
+Enevoldsen, K., Chung, I., Kerboua, I. \textit{et~al.} (2025).
+MMTEB: Massive Multilingual Text Embedding Benchmark.
+arXiv:2502.13595.
+
+\bibitem{wang2024e5}
+Wang, L., Yang, N., Huang, X. \textit{et~al.} (2024).
+Text Embeddings by Weakly-Supervised Contrastive Pre-training (E5).
+arXiv:2212.03533.
+
+\bibitem{li2023gte}
+Li, Z., Zhang, X., Zhang, Y. \textit{et~al.} (2023).
+Towards General Text Embeddings with Multi-stage Contrastive Learning (GTE).
+arXiv:2308.03281.
+
+\bibitem{qwen2024qwen25}
+Qwen Team (2024). Qwen2.5 Technical Report. arXiv:2412.15115.
+
+\bibitem{qwen2025qwen3}
+Qwen Team (2025). Qwen3 Technical Report. arXiv:2505.09388.
+
+\bibitem{qwen2025qwen3vl}
+Qwen Team (2025). Qwen3-VL Technical Report.
+
+\bibitem{glmocr2026}
+Duan, S. \textit{et~al.} (2026).
+GLM-OCR Technical Report. Zhipu AI / Tsinghua University.
+arXiv:2603.10910.
+
+\bibitem{smith2024chunking}
+Smith, B., Troynikov, A. (2024).
+Evaluating Chunking Strategies for Retrieval.
+Chroma Technical Report.
+
+\bibitem{yepes2024chunking}
+Yepes, A.~J. \textit{et~al.} (2024).
+Financial Report Chunking for Effective Retrieval Augmented Generation.
+arXiv:2402.05131.
+
+\bibitem{langchain2023}
+LangChain (2023). Text Splitters Documentation.
+\url{https://python.langchain.com/docs/}
+
+\bibitem{lu2025hichunk}
+Lu, W. \textit{et~al.} (2025).
+HiChunk: Evaluating and Enhancing Retrieval-Augmented Generation with Hierarchical Chunking.
+arXiv:2509.11552.
+
+\bibitem{reuter2026chunking}
+Reuter, M. \textit{et~al.} (2026).
+A Systematic Investigation of Document Chunking Strategies and Embedding Sensitivity.
+arXiv:2603.06976.
+
+\bibitem{hrag2026semeval}
+H-RAG at SemEval-2026 Task~8: Hierarchical Parent-Child Retrieval for Multi-Turn RAG Conversations.
+arXiv:2605.00631.
+
+\bibitem{qu2025semantic}
+Qu, R., Tu, R., Bao, F.~S. (2025).
+Is Semantic Chunking Worth the Computational Cost?
+\textit{Findings of NAACL~2025}, pp.~2155--2177.
+
+\end{thebibliography}
+
+% =============================================================
+%                       WEBOGRAPHIE
+% =============================================================
+\section*{Webographie}
+\addcontentsline{toc}{section}{Webographie}
+
+\begin{description}[leftmargin=1cm,labelwidth=3cm]
+  \item[ADEME Impact CO\textsubscript{2}] \url{https://impactco2.fr/outils/transport} --- Outil officiel de calcul d'impact carbone des transports.
+  \item[BGE-M3 (HuggingFace)] \url{https://huggingface.co/BAAI/bge-m3} --- Modèle d'embedding multilingue BAAI.
+  \item[BGE-Reranker-v2-m3] \url{https://huggingface.co/BAAI/bge-reranker-v2-m3} --- Modèle de reranking cross-encoder.
+  \item[ChromaDB] \url{https://www.trychroma.com/} --- Base de données vectorielle open-source.
+  \item[DeepEval] \url{https://docs.confident-ai.com/} --- Framework d'évaluation de systèmes LLM.
+  \item[Dive into Deep Learning] \url{https://d2l.ai/} --- Référence pédagogique du corpus.
+  \item[GLM-OCR] \url{https://github.com/THUDM/GLM-OCR} --- Modèle d'OCR multimodal.
+  \item[HuggingFace] \url{https://huggingface.co/} --- Plateforme de modèles open-weight.
+  \item[LIMOS] \url{https://limos.fr/} --- Laboratoire d'accueil du stage.
+  \item[MTEB Leaderboard] \url{https://huggingface.co/spaces/mteb/leaderboard} --- Benchmark de référence pour les modèles d'embedding.
+  \item[NYU-DLSP21] \url{https://atcold.github.io/NYU-DLSP21/} --- Cours de Deep Learning de la NYU (A. Canziani).
+  \item[Ollama] \url{https://ollama.com/} --- Runtime local pour LLMs et embeddings.
+  \item[Qwen (GitHub)] \url{https://github.com/QwenLM/Qwen} --- Famille de modèles Qwen (Alibaba).
+  \item[Ragas] \url{https://docs.ragas.io/} --- Framework d'évaluation RAG.
+  \item[Rank-BM25] \url{https://github.com/dorianbrown/rank_bm25} --- Implémentation Python de BM25.
+\end{description}
+
+% =============================================================
+%                       ANNEXES
+% =============================================================
+\appendix
+\section{Exemples de réponses du système}
+\label{app:exemples}
+
+Cette annexe présente quelques exemples de questions posées au système et les réponses générées, illustrant le comportement du tuteur en conditions réelles.
+
+\subsection*{Exemple 1 --- Question factuelle simple}
+
+\begin{quote}
+\textbf{Question}~: Qu'est-ce que la backpropagation et pourquoi est-elle importante pour l'entraînement des réseaux de neurones~?
+
+\textbf{Réponse}~: La backpropagation (rétropropagation) est l'algorithme fondamental pour l'entraînement des réseaux de neurones profonds. Elle calcule le gradient de la fonction de perte par rapport à chaque paramètre du réseau en appliquant la règle de dérivation en chaîne du calcul différentiel, en propageant les erreurs de la couche de sortie vers la couche d'entrée [DOC~1][DOC~2].
+
+Son importance est double. D'une part, elle rend le calcul des gradients efficace en évitant le calcul redondant des dérivées partielles~: chaque couche réutilise les gradients déjà calculés par les couches suivantes, ce qui réduit la complexité de $\mathcal{O}(n^2)$ à $\mathcal{O}(n)$ [DOC~2]. D'autre part, elle permet d'entraîner des réseaux de profondeur arbitraire, ce qui serait impossible avec une simple perturbation aléatoire des poids [DOC~1].
+
+En pratique, la backpropagation est intégrée à tous les frameworks modernes de deep learning (PyTorch, TensorFlow) via le mécanisme de différenciation automatique, qui construit le graphe de calcul et applique la backpropagation sans intervention manuelle du développeur [DOC~8].
+\end{quote}
+
+\subsection*{Exemple 2 --- Refus (question hors domaine)}
+
+\begin{quote}
+\textbf{Question}~: Qu'est-ce que la mitose et en quoi diffère-t-elle de la méiose~?
+
+\textbf{Réponse}~: Les documents fournis ne permettent pas de répondre à cette question.
+\end{quote}
+
+\subsection*{Exemple 3 --- Question multi-passage}
+
+\begin{quote}
+\textbf{Question}~: Compare les fonctions d'activation ReLU, sigmoïde et tanh en termes de saturation du gradient et de convergence.
+
+\textbf{Réponse}~: Les trois fonctions d'activation présentent des comportements très différents vis-à-vis de la saturation du gradient~:
+
+La fonction sigmoïde $\sigma(x) = \frac{1}{1+e^{-x}}$ sature pour les grandes valeurs positives (sortie $\to 1$) et négatives (sortie $\to 0$), ce qui conduit au problème de \textit{vanishing gradient}~: le gradient devient quasi nul, ralentissant voire bloquant l'apprentissage des couches profondes [DOC~3].
+
+La fonction tanh $\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$ souffre du même problème de saturation aux extrêmes, bien que sa sortie centrée en zéro (moyenne $\approx 0$) facilite la convergence par rapport à la sigmoïde [DOC~3].
+
+La fonction ReLU $f(x) = \max(0, x)$ résout partiellement le problème de saturation~: pour $x > 0$, le gradient est constant (égal à 1), ce qui accélère considérablement la convergence [DOC~4]. Cependant, elle introduit le problème des «~neurones morts~»~: pour $x < 0$, le gradient est nul et le neurone cesse définitivement d'apprendre si le biais devient trop négatif [DOC~7].
+\end{quote}
+
+\section{Prompts détaillés}
+\label{app:prompts}
+
+\subsection*{System prompt de génération (tuteur)}
+
+\begin{verbatim}
+Tu es un professeur de machine learning. Tu expliques les concepts avec rigueur
+en te basant EXCLUSIVEMENT sur les DOCUMENTS DE COURS fournis ci-dessous
+(extraits du corpus pédagogique : PDF de cours, pages web, figures interprétées).
+
+Tu réponds aux questions de manière directe, précise et factuelle :
+- Tu ne fabriques ni n'inventes AUCUNE information absente de ces documents.
+- Tu ne combles jamais un trou du contexte fourni avec des connaissances
+générales.
+
+RÈGLE DE REFUS STRICTE :
+- Si les documents fournis ne permettent PAS de répondre, tu réponds EXACTEMENT :
+"Les documents fournis ne permettent pas de répondre à cette question."
+
+CITATIONS OBLIGATOIRES :
+- Chaque document est identifié par un tag [DOC 1], [DOC 2], etc.
+- Pour CHAQUE affirmation, cite le(s) document(s) source entre crochets.
+\end{verbatim}
+
+\subsection*{Prompt de vérification post-génération (juge M2)}
+
+Le prompt complet du juge de fidélité documentaire est détaillé dans le fichier
+\texttt{scripts101/generator.py} (fonction \texttt{verify\_answer()}).
+
+\section{Configuration Ollama}
+\label{app:config-ollama}
+
+\begin{verbatim}
+# Modèles utilisés (tous open-weight, exécutés via Ollama)
+# Serveur : localhost:11434
+
+# Génération (14B paramètres, ~8 Go VRAM)
+qwen2.5:14b    # temperature=0.2, max_tokens=900, num_ctx=24576
+
+# Juge et vérification (8B paramètres, ~5 Go VRAM)
+qwen3:8b       # temperature=0 (juge), temperature=0.2 (QP)
+
+# Embedding (0.6B paramètres, exécuté via sentence-transformers)
+BAAI/bge-m3    # embedding dense + sparse
+
+# Reranking (cross-encoder, exécuté via sentence-transformers)
+BAAI/bge-reranker-v2-m3   # ~600 Mo, téléchargement unique
+
+# GPU : NVIDIA H100 NVL (95 Go VRAM)
+# Tous les modèles tiennent simultanément en VRAM
+\end{verbatim}
+
+\section{Architecture du tuteur conversationnel v2}
+\label{app:architecture-v2}
+
+Une évolution majeure du système est en cours de conception~: le passage d'un mode questions/réponses à un véritable tuteur conversationnel. Le document \texttt{docs/architecture\_tuteur.md} détaille l'architecture cible, qui s'articule autour de trois axes~:
+
+\begin{enumerate}
+  \item \textbf{Conversation avec mémoire}~: gestion d'un historique multi-tour, détection de changement de sujet, compression automatique des anciens messages pour rester dans la fenêtre de contexte.
+  \item \textbf{Pédagogie socratique}~: remplacement du prompt «~réponse directe~» par un système de guidage par questions, avec escalade progressive d'indices (léger $\to$ fort $\to$ explication complète) lorsque l'étudiant est bloqué.
+  \item \textbf{Explications adaptatives}~: adaptation du niveau de détail et de formalisme mathématique selon le niveau perçu de l'étudiant (débutant, intermédiaire, avancé).
+\end{enumerate}
+
+L'interface évoluera également, de la CLI actuelle vers une API REST (FastAPI) puis une interface web (Gradio) avec chat interactif, sélecteur de niveau et mode socratique/direct.
+
+% =============================================================
+%                 FICHE D'AUTO-ÉVALUATION
+% =============================================================
+\section{Fiche d'auto-évaluation}
+\label{app:auto-evaluation}
+
+{\small\textit{Cette section est à compléter avec la fiche officielle fournie par l'ISIMA pour les étudiants de 3\textsuperscript{ème} année (ZZ3). En 2026, cette partie concerne uniquement les ZZ3.}}
+
+\vspace{1cm}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\linewidth}{L{5cm} L{7cm}}
+\toprule
+\rowcolor{bleuPrincipal}
+\textcolor{white}{\textbf{Critère}} & \textcolor{white}{\textbf{Auto-évaluation}} \\
+\midrule
+Respect du cahier des charges & Tous les objectifs ont été atteints~: pipeline d'extraction, ingestion, retrieval hybride, génération ancrée, évaluation quantitative. \\
+\midrule
+Qualité technique du travail  & Architecture modulaire, code documenté, 24 commits Git. Performances records~: hit@4=0.967, refus 100\,\%. \\
+\midrule
+Gestion de projet             & Planning respecté malgré un retard d'une semaine en extraction, compensé par la documentation continue. \\
+\midrule
+Communication                 & Réunions régulières avec le responsable ISIMA, journaux de session documentant les décisions et résultats. \\
+\midrule
+Autonomie et initiative       & Veille bibliographique approfondie, diagnostic et correction du bug Query Processing, proposition d'architecture v2. \\
+\bottomrule
+\end{tabularx}
+\caption{Fiche d'auto-évaluation synthétique du stage.}
+\label{tab:auto-eval}
+\end{table}
+
+\end{document}

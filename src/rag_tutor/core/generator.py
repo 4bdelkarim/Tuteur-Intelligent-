@@ -43,10 +43,10 @@ RÈGLE DE REFUS STRICTE :
 - Soit tu réponds avec les documents, soit tu dis EXACTEMENT la phrase de refus. Il n'y a PAS de troisième option.
 
 CITATIONS OBLIGATOIRES (chaque paragraphe doit citer au moins une source) :
-- Chaque document est identifié par un tag [DOC 1], [DOC 2], etc. dans l'en-tête.
-- Pour CHAQUE affirmation dans ta réponse, cite le(s) document(s) source entre crochets, exemple : « La backpropagation utilise la règle de dérivation en chaîne [DOC 2]. »
-- Si tu utilises plusieurs documents pour une affirmation, cite-les tous : [DOC 1][DOC 3].
-- Si une information ne vient d'AUCUN document, NE L'ÉCRIS PAS — cela t'aidera à détecter les informations hors-contexte.
+- Chaque document est identifie par son numero de section du cours entre crochets (ex: "[§9.1 — Long Short-Term Memory (LSTM)]").
+- Pour CHAQUE affirmation dans ta reponse, cite la section source entre crochets avec juste le numero de section, exemple : « La backpropagation utilise la regle de derivation en chaine [§5.3]. »
+- Si tu utilises plusieurs sections pour une affirmation, cite-les toutes : [§9.1][§9.2].
+- Si une information ne vient d'AUCUN document, NE L'ECRIS PAS — cela t'aidera a detecter les informations hors-contexte.
 """
 
 
@@ -54,10 +54,20 @@ def _format_context(hits):
     if not hits:
         return "(aucun document pertinent recupere)"
     blocks = []
-    for i, h in enumerate(hits, start=1):
+    for h in hits:
         m = h.get("meta", {})
-        pages = f"p{m.get('page_start')}-{m.get('page_end')}" if m.get("page_start") else "web"
-        blocks.append(f"[DOC {i}] [{m.get('source')} | {m.get('section')} | {pages}]\n{h['text']}")
+        section = m.get('section', '')
+        pages = f"p{m.get('page_start')}-{m.get('page_end')}" if m.get("page_start") else ""
+        # Construire un label propre : numero de section + pages si dispo
+        if section and pages:
+            label = f"{section} ({pages})"
+        elif section:
+            label = section
+        elif pages:
+            label = pages
+        else:
+            label = m.get('source', 'document')
+        blocks.append(f"[§{label}]\n{h['text']}")
     return "\n\n---\n\n".join(blocks)
 
 
@@ -97,7 +107,7 @@ Un étudiant pose une question. Un premier LLM a généré une réponse en utili
 
 1. Pour chaque phrase ou affirmation distincte de la réponse, cherche si le CONTENU EXACT (faits, formules, code, noms de fonctions, valeurs numériques) apparaît dans les documents.
 2. Une simple similarité thématique NE SUFFIT PAS. Exemple : si la réponse dit « torch.zeros(batch_size, hidden_size) » et que le document parle de PyTorch en général mais ne mentionne JAMAIS `torch.zeros`, c'est HORS-CONTEXTE.
-3. Si la réponse cite [DOC X], vérifie que le document X contient RÉELLEMENT l'information citée. Une citation incorrecte est un flag HORS-CONTEXTE.
+3. Si la reponse cite [§X.Y], verifie que la section X.Y contient REELLEMENT l'information citee. Une citation incorrecte est un flag HORS-CONTEXTE.
 4. Les formules mathématiques, extraits de code, noms de classes/fonctions PyTorch, valeurs de paramètres sont les INFORMATIONS LES PLUS SOUVENT INVENTÉES — sois particulièrement vigilant sur ces éléments.
 5. Si le document mentionne un concept sans donner de détails, et que la réponse donne des détails précis → HORS-CONTEXTE.
 6. PIÈGE FRÉQUENT : une réponse qui commence par « Cette question n'est pas dans le corpus... » ou « Je ne peux pas répondre avec les documents, mais... » puis donne QUAND MÊME une réponse — c'est HORS-CONTEXTE. Le fait d'admettre que c'est hors-sujet NE REND PAS la réponse légitime. Vérifie CHAQUE information après le « mais... ».
@@ -120,36 +130,36 @@ VERDICT: HORS-CONTEXTE
 --- EXEMPLE 1 : ANCRÉ ---
 
 Documents :
-[DOC 1] La backpropagation calcule les gradients de la fonction de perte par rapport à chaque poids en utilisant la règle de dérivation en chaîne, en propageant les erreurs de la couche de sortie vers la couche d'entrée.
+[§5.3] La backpropagation calcule les gradients de la fonction de perte par rapport à chaque poids en utilisant la règle de dérivation en chaîne, en propageant les erreurs de la couche de sortie vers la couche d'entrée.
 
 Question : Comment fonctionne la backpropagation ?
 
 Réponse à vérifier :
-La backpropagation utilise la règle de dérivation en chaîne pour calculer les gradients [DOC 1]. Les erreurs sont propagées de la sortie vers l'entrée [DOC 1].
+La backpropagation utilise la règle de dérivation en chaîne pour calculer les gradients [§5.3]. Les erreurs sont propagées de la sortie vers l'entrée [§5.3].
 
 Analyse :
-- Affirmation 1: "utilise la règle de dérivation en chaîne pour calculer les gradients" → présent dans DOC 1 ✓
-- Affirmation 2: "erreurs propagées de la sortie vers l'entrée" → présent dans DOC 1 ✓
+- Affirmation 1: "utilise la règle de dérivation en chaîne pour calculer les gradients" → présent dans §5.3 ✓
+- Affirmation 2: "erreurs propagées de la sortie vers l'entrée" → présent dans §5.3 ✓
 VERDICT: ANCRÉ
 
 --- EXEMPLE 2 : HORS-CONTEXTE (code inventé) ---
 
 Documents :
-[DOC 1] Les LSTM utilisent des portes pour contrôler le flux d'information. La porte d'oubli détermine quelles informations de l'état précédent doivent être conservées.
+[§10.1] Les LSTM utilisent des portes pour contrôler le flux d'information. La porte d'oubli détermine quelles informations de l'état précédent doivent être conservées.
 
 Question : Comment initialiser l'état caché d'un LSTM en PyTorch ?
 
 Réponse à vérifier :
-Pour initialiser l'état caché d'un LSTM, on utilise `h0 = torch.zeros(num_layers, batch_size, hidden_size)` [DOC 1].
+Pour initialiser l'état caché d'un LSTM, on utilise `h0 = torch.zeros(num_layers, batch_size, hidden_size)` [§10.1].
 
 Analyse :
-- Affirmation: "h0 = torch.zeros(num_layers, batch_size, hidden_size)" → DOC 1 parle des portes LSTM mais ne mentionne JAMAIS `torch.zeros` ni l'initialisation de l'état caché. Le code est inventé. ✗
+- Affirmation: "h0 = torch.zeros(num_layers, batch_size, hidden_size)" → §10.1 parle des portes LSTM mais ne mentionne JAMAIS `torch.zeros` ni l'initialisation de l'état caché. Le code est inventé. ✗
 VERDICT: HORS-CONTEXTE
 
 --- EXEMPLE 3 : HORS-CONTEXTE (détails inventés) ---
 
 Documents :
-[DOC 1] Les fonctions de perte basées sur des marges identifient la réponse incorrecte la plus pertinente dans les modèles EBMs.
+[§7.2] Les fonctions de perte basées sur des marges identifient la réponse incorrecte la plus pertinente dans les modèles EBMs.
 
 Question : Comment les fonctions de perte basées sur des marges fonctionnent-elles ?
 
@@ -157,15 +167,15 @@ Réponse à vérifier :
 Les fonctions de perte basées sur des marges fonctionnent en calculant la différence entre le score de la réponse correcte et celui de la réponse incorrecte la plus proche. La marge est typiquement fixée à 1.0, et on utilise une hinge loss : L = max(0, marge - score_correct + score_incorrect).
 
 Analyse :
-- Affirmation 1: "différence entre le score de la réponse correcte et celui de la réponse incorrecte" → DOC 1 mentionne le concept de "most offending incorrect answer" ✓
-- Affirmation 2: "marge fixée à 1.0" → DOC 1 ne mentionne AUCUNE valeur de marge ✗
-- Affirmation 3: "hinge loss : L = max(0, marge - score_correct + score_incorrect)" → DOC 1 ne donne AUCUNE formule ✗
+- Affirmation 1: "différence entre le score de la réponse correcte et celui de la réponse incorrecte" → §7.2 mentionne le concept de "most offending incorrect answer" ✓
+- Affirmation 2: "marge fixée à 1.0" → §7.2 ne mentionne AUCUNE valeur de marge ✗
+- Affirmation 3: "hinge loss : L = max(0, marge - score_correct + score_incorrect)" → §7.2 ne donne AUCUNE formule ✗
 VERDICT: HORS-CONTEXTE
 
 --- EXEMPLE 4 : HORS-CONTEXTE ("pas dans le corpus mais...") ---
 
 Documents :
-[DOC 1] Les processus gaussiens sont une approche bayésienne non paramétrique pour la régression et la classification.
+[§18.1] Les processus gaussiens sont une approche bayésienne non paramétrique pour la régression et la classification.
 
 Question : Qu'est-ce que la mitose et en quoi diffère-t-elle de la méiose ?
 

@@ -266,7 +266,6 @@ RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 | `RECENT_WINDOW` | 6 | `memory.py` | Tours récents gardés intacts avant compression |
 | `MAX_SUMMARY_TOKENS` | 500 | `memory.py` | Tokens max pour le résumé (fallback troncature) |
 | `HISTORY_MAX_TOKENS` | 4000 | `memory.py` | Tokens max pour l'historique formaté dans le prompt |
-| `TOPIC_CHANGE_THRESHOLD` | 0.3 | `memory.py` | Seuil de chevauchement lexical pour détection de changement de sujet |
 
 ---
 
