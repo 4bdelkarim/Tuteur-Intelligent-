@@ -78,7 +78,7 @@ géographie, biologie, histoire, informatique hors-ML, physique, économie.
 
 | Métrique | Baseline (dense, RG=off) | Full system (hybrid_rerank, M1+M2) |
 |----------|--------------------------|-------------------------------------|
-| **Refus corrects** | 0/15 → 15/15 (après fix is_refusal) | **15/15** |
+| **Refus corrects** | 0/15 → 14/15 (après fix is_refusal) | **15/15** |
 | **Faux refus** | 0 | 0 |
 | **Faux non-refus** | 0 (après fix) | 0 |
 | **Precision** | 1.000 | **1.000** |
@@ -88,7 +88,7 @@ géographie, biologie, histoire, informatique hors-ML, physique, économie.
 **Note :** La baseline brute (RG=off, ancien is_refusal) donnait 0/15 car le LLM refusait
 dans ses propres mots (« Les documents fournis ne permettent pas de répondre ») sans
 reproduire la phrase exacte attendue par l'évaluateur. La correction de `is_refusal()`
-(détection des refus naturels) a rétabli la métrique à 15/15 pour la baseline également.
+(détection des refus naturels) a rétabli la métrique à 14/15 pour la baseline et 15/15 pour le système complet.
 Ceci démontre que le système prompt seul suffit à refuser les questions hors-domaine
 — les mécanismes M1/M2 sont un filet de sécurité.
 

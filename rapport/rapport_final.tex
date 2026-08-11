@@ -1,6 +1,6 @@
 % =============================================================
 %  Rapport de stage ISIMA — Tuteur Pédagogique Intelligent par RAG
-%  Rapport complet — Juillet 2026
+%  Rapport complet — Août 2026
 %  Auteur : Abdelkarim TOUNGOUT
 % =============================================================
 
@@ -157,8 +157,8 @@
 \textbf{Responsable ISIMA}     & Vincent BARRA \\
 \textbf{Laboratoire d'accueil} & LIMOS --- Clermont-Ferrand \\
 \textbf{Adresse}               & 1 rue de la Chebarde, 63178 Aubière \\
-\textbf{Date de présentation}  & Juillet 2026 \\
-\textbf{Durée du stage}        & Février -- Juillet 2026 (6 mois) \\
+\textbf{Date de présentation}  & 24 août 2026 \\
+\textbf{Durée du stage}        & Avril -- Août 2026 \\
 \bottomrule
 \end{tabular}
 
@@ -319,7 +319,7 @@ Le projet répond à un cahier des charges articulé autour de spécifications f
 
 \subsection{Plan du rapport}
 
-Le chapitre~\ref{sec:rse} présente les considérations de responsabilité sociétale et environnementale (pratiques RSE du LIMOS, impact environnemental du projet, bilan carbone des déplacements). Le chapitre~\ref{sec:organisation} décrit l'organisation du projet, incluant les diagrammes de Gantt prévisionnel et réalisé, ainsi que l'analyse des écarts. Le chapitre~\ref{sec:etat-art} présente l'état de l'art du domaine, structuré par phase du pipeline RAG. Le chapitre~\ref{sec:methodologie} détaille la réalisation technique, de l'extraction des données à la génération des réponses. Le chapitre~\ref{sec:evaluation} présente le protocole d'évaluation et les résultats obtenus. Enfin, la conclusion synthétise les contributions et identifie les perspectives d'évolution, notamment vers un tuteur conversationnel de seconde génération.
+Le chapitre~\ref{sec:rse} présente les considérations de responsabilité sociétale et environnementale (pratiques RSE du LIMOS, impact environnemental du projet, bilan carbone des déplacements). Le chapitre~\ref{sec:organisation} décrit l'organisation du projet, incluant l'évolution du sujet, le diagramme de Gantt réalisé et l'analyse des écarts. Le chapitre~\ref{sec:etat-art} présente l'état de l'art du domaine, structuré par phase du pipeline RAG. Le chapitre~\ref{sec:methodologie} détaille la réalisation technique, de l'extraction des données à la génération des réponses. Le chapitre~\ref{sec:evaluation} présente le protocole d'évaluation et les résultats obtenus. Enfin, la conclusion synthétise les contributions et identifie les perspectives d'évolution, notamment vers un tuteur conversationnel de seconde génération.
 
 % =============================================================
 %             CHAPITRE 2 : RSE
@@ -371,17 +371,17 @@ Le stage s'est déroulé au LIMOS, sur le campus des Cézeaux à Aubière. Le tr
 \textcolor{white}{\textbf{Facteur (gCO\textsubscript{2}eq/km)}} &
 \textcolor{white}{\textbf{Total (kgCO\textsubscript{2}eq)}} \\
 \midrule
-Tramway        & 10\,km (A/R) & 80 jours  & 3,8  & 3,04 \\
+Tramway        & 10\,km (A/R) & 90 jours  & 3,8  & 3,42 \\
 Marche à pied  & 10\,km (A/R) & 10 jours  & 0    & 0    \\
 \midrule
-\textbf{Total} &             &           &      & \textbf{3,04} \\
+\textbf{Total} &             &           &      & \textbf{3,42} \\
 \bottomrule
 \end{tabularx}
 \caption{Bilan carbone des déplacements domicile--LIMOS (source~: ADEME Impact CO\textsubscript{2}, \url{impactco2.fr}).}
 \label{tab:carbone-deplacements}
 \end{table}
 
-Le bilan carbone total des déplacements s'élève à environ \textbf{3,0\,kg CO\textsubscript{2}eq} sur l'ensemble de la période de stage, soit l'équivalent d'environ 15\,km en voiture thermique. Ce résultat, très modeste, reflète le choix d'une mobilité douce (transports en commun et marche à pied), cohérent avec la politique de développement durable de l'UCA et du LIMOS.
+Le bilan carbone total des déplacements s'élève à environ \textbf{3,4\,kg CO\textsubscript{2}eq} sur l'ensemble de la période de stage, soit l'équivalent d'environ 15\,km en voiture thermique. Ce résultat, très modeste, reflète le choix d'une mobilité douce (transports en commun et marche à pied), cohérent avec la politique de développement durable de l'UCA et du LIMOS.
 
 \paragraph{Déplacements annexes}
 
@@ -391,9 +391,9 @@ Aucun déplacement professionnel supplémentaire (conférence, réunion extérie
 
 Le bilan carbone total du stage se décompose comme suit~:
 \begin{itemize}
-  \item Déplacements domicile--LIMOS~: 3,04\,kg CO\textsubscript{2}eq.
+  \item Déplacements domicile--LIMOS~: 3,42\,kg CO\textsubscript{2}eq.
 \end{itemize}
-Soit un total d'environ \textbf{3,0\,kg CO\textsubscript{2}eq} pour l'ensemble du stage, un impact carbone négligeable, représentant moins de 0,04\,\% de l'empreinte carbone annuelle moyenne d'un Français (environ 9\,t CO\textsubscript{2}eq/an).
+Soit un total d'environ \textbf{3,4\,kg CO\textsubscript{2}eq} pour l'ensemble du stage, un impact carbone négligeable, représentant moins de 0,04\,\% de l'empreinte carbone annuelle moyenne d'un Français (environ 9\,t CO\textsubscript{2}eq/an).
 
 
 % =============================================================
@@ -402,148 +402,98 @@ Soit un total d'environ \textbf{3,0\,kg CO\textsubscript{2}eq} pour l'ensemble d
 \section{Organisation du projet}
 \label{sec:organisation}
 
+\subsection{Évolution du sujet}
+\label{sec:evolution-sujet}
+
+Le sujet initialement proposé pour ce stage portait sur l'analyse multimodale de documents numérisés par des méthodes d'Intelligence Artificielle frugales. L'objectif était d'étudier une méthode multimodale récente, GLM-OCR, pour implémenter une solution locale et souveraine d'extraction et de structuration de connaissances à partir d'une base de données multimodale de documents. Les étapes prévues comportaient~:
+
+\begin{itemize}
+  \item une revue de l'état de l'art dans le domaine~;
+  \item une compréhension de l'architecture du modèle GLM-OCR~;
+  \item une récupération et une appropriation des sources du projet (\url{https://github.com/zai-org/GLM-OCR})~;
+  \item une implémentation en local avec Ollama~;
+  \item des tests sur des documents variés, une évaluation et une analyse critique des résultats.
+\end{itemize}
+
+Cette première phase a été conduite avec succès~: le modèle GLM-OCR a été déployé localement et testé sur divers types de documents, validant sa capacité à extraire texte, tableaux, formules et figures depuis des PDF natifs et scannés.
+
+Cependant, l'indisponibilité de la base de données cible a conduit à une réorientation du projet vers la conception d'un système RAG complet, couplé à GLM-OCR pour la phase d'extraction documentaire.
+
 \subsection{Phasage du projet}
 
-Le projet s'est déroulé sur un semestre (février--juillet 2026) et s'est articulé en quatre phases principales~:
+Le projet s'est déroulé d'avril à août 2026 et s'est articulé en quatre phases principales, reflétant l'évolution du sujet décrite ci-dessus~:
 
 \begin{enumerate}
-  \item \textbf{Phase 1 --- Recherche et conception (février--mars)}~: étude bibliographique de l'état de l'art, analyse des besoins, choix technologiques, conception de l'architecture modulaire.
-  \item \textbf{Phase 2 --- Implémentation du pipeline de préparation (mars--avril)}~: extraction PDF (GLM-OCR), extraction web, normalisation, \textit{chunking} parent-enfant, \textit{embedding} et indexation.
-  \item \textbf{Phase 3 --- Implémentation du pipeline d'exécution (mai--juin)}~: \textit{retrieval} hybride, \textit{reranking}, traitement de la requête, génération, interface CLI.
-  \item \textbf{Phase 4 --- Évaluation et rédaction (juin--juillet)}~: constitution du \textit{golden dataset}, évaluation quantitative (Ragas), optimisation des performances, rédaction du rapport.
+  \item \textbf{Phase 1 --- Sujet initial : GLM-OCR (avril--mai)}~: état de l'art des méthodes d'OCR multimodales, prise en main de GLM-OCR, déploiement local avec Ollama, tests sur documents variés (PDF natifs, scannés, figures, tableaux).
+  \item \textbf{Phase 2 --- Réorientation et conception RAG (mai)}~: étude de faisabilité du couplage GLM-OCR + RAG, état de l'art des architectures RAG, conception de l'architecture modulaire du pipeline.
+  \item \textbf{Phase 3 --- Implémentation du pipeline (juin--juillet)}~: extraction PDF et web, \textit{chunking} parent-enfant, \textit{embedding} et indexation, \textit{retrieval} hybride avec \textit{reranking}, traitement de la requête, génération et interface CLI.
+  \item \textbf{Phase 4 --- Évaluation et rédaction (juillet--août)}~: constitution du \textit{golden dataset}, évaluation quantitative (Ragas), optimisation, rédaction du rapport, soutenance le 24 août 2026.
 \end{enumerate}
 
 \subsection{Diagramme de Gantt prévisionnel}
 \label{sec:gantt-previsionnel}
 
-Le diagramme de Gantt prévisionnel (Figure~\ref{fig:gantt-prev}) a été établi en début de stage (février 2026) sur la base des objectifs initiaux et des contraintes calendaires connues. Il reflète une estimation prudente des durées de chaque phase, avec une marge de deux semaines en fin de projet pour absorber les imprévus.
+Le diagramme de Gantt prévisionnel (Figure~\ref{fig:gantt-prev}) a été établi en avril 2026 pour le sujet initial GLM-OCR. Il reflète le planning envisagé avant la réorientation du projet vers le RAG.
 
 \begin{figure}[H]
 \centering
-\begin{ganttchart}[
-  hgrid,
-  vgrid,
-  x unit=0.35cm,
-  y unit title=0.7cm,
-  y unit chart=0.65cm,
-  title height=1,
-  bar height=0.5,
-  bar top shift=0.1,
-  group top shift=0.3,
-  milestone top shift=0.35,
-  time slot format=isodate,
-  title/.style={fill=bleuSecondaire, draw=bleuSecondaire}
-]{2026-02-03}{2026-07-10}
-\gantttitlecalendar{month=name} \\
-
-\ganttgroup{Phase 1 : Recherche \& Conception}{2026-02-03}{2026-03-13} \\
-\ganttbar{État de l'art}{2026-02-03}{2026-02-28} \\
-\ganttbar{Analyse des besoins}{2026-02-24}{2026-03-13} \\
-
-\ganttgroup{Phase 2 : Implémentation (préparation)}{2026-03-09}{2026-04-24} \\
-\ganttbar{Extraction PDF}{2026-03-09}{2026-04-03} \\
-\ganttbar{Extraction Web}{2026-03-16}{2026-04-03} \\
-\ganttbar{Chunking + Embedding}{2026-04-06}{2026-04-24} \\
-
-\ganttgroup{Phase 3 : Implémentation (exécution)}{2026-04-20}{2026-06-12} \\
-\ganttbar{Retrieval hybride}{2026-04-20}{2026-05-15} \\
-\ganttbar{Reranking + QP}{2026-05-11}{2026-05-29} \\
-\ganttbar{Génération + CLI}{2026-05-25}{2026-06-12} \\
-
-\ganttgroup{Phase 4 : Évaluation \& Rédaction}{2026-06-08}{2026-07-10} \\
-\ganttbar{Golden dataset}{2026-06-08}{2026-06-19} \\
-\ganttbar{Évaluation}{2026-06-15}{2026-06-26} \\
-\ganttbar{Rédaction du rapport}{2026-06-22}{2026-07-10} \\
-
-\ganttmilestone{Soutenance}{2026-07-10}
-\end{ganttchart}
-\caption{Diagramme de Gantt prévisionnel du stage, établi en février 2026.}
+\includegraphics[width=\textwidth]{images/gantt_previsionnel.png}
+\caption{Diagramme de Gantt prévisionnel — Sujet initial GLM-OCR (avril--août 2026).}
 \label{fig:gantt-prev}
 \end{figure}
 
 \subsection{Diagramme de Gantt réalisé}
 \label{sec:gantt-reel}
 
-Le diagramme de Gantt ci-dessous (Figure~\ref{fig:gantt-reel}) synthétise la planification réelle du projet.
+La Figure~\ref{fig:gantt-reel} synthétise le déroulement réel du projet, intégrant la réorientation du sujet GLM-OCR vers le système RAG final.
 
 \begin{figure}[H]
 \centering
-\begin{ganttchart}[
-  hgrid,
-  vgrid,
-  x unit=0.35cm,
-  y unit title=0.7cm,
-  y unit chart=0.65cm,
-  title height=1,
-  bar height=0.5,
-  bar top shift=0.1,
-  group top shift=0.3,
-  milestone top shift=0.35,
-  time slot format=isodate,
-  title/.style={fill=bleuPrincipal, draw=bleuPrincipal}
-]{2026-02-03}{2026-07-10}
-\gantttitlecalendar{month=name} \\
-
-\ganttgroup{Phase 1 : Recherche \& Conception}{2026-02-03}{2026-03-20} \\
-\ganttbar{État de l'art}{2026-02-03}{2026-03-06} \\
-\ganttbar{Analyse des besoins}{2026-03-02}{2026-03-20} \\
-
-\ganttgroup{Phase 2 : Implémentation (préparation)}{2026-03-16}{2026-05-01} \\
-\ganttbar{Extraction PDF (GLM-OCR)}{2026-03-16}{2026-04-17} \\
-\ganttbar{Extraction Web}{2026-03-23}{2026-04-10} \\
-\ganttbar{Chunking + Embedding}{2026-04-13}{2026-05-01} \\
-
-\ganttgroup{Phase 3 : Implémentation (exécution)}{2026-04-27}{2026-06-19} \\
-\ganttbar{Retrieval hybride}{2026-04-27}{2026-05-22} \\
-\ganttbar{Reranking + Query Processing}{2026-05-18}{2026-06-05} \\
-\ganttbar{Génération + CLI}{2026-06-01}{2026-06-19} \\
-
-\ganttgroup{Phase 4 : Évaluation \& Rédaction}{2026-06-15}{2026-07-10} \\
-\ganttbar{Golden dataset}{2026-06-15}{2026-06-26} \\
-\ganttbar{Évaluation Ragas}{2026-06-22}{2026-07-03} \\
-\ganttbar{Rédaction du rapport}{2026-06-29}{2026-07-10} \\
-
-\ganttmilestone{Soutenance}{2026-07-10}
-\end{ganttchart}
-\caption{Diagramme de Gantt réalisé du stage.}
+\includegraphics[width=\textwidth]{images/gantt_realise.png}
+\caption{Diagramme de Gantt réalisé — Tuteur Pédagogique RAG (avril--août 2026). La réorientation du sujet (Phase~2) marque la transition du projet GLM-OCR initial vers le système RAG final.}
 \label{fig:gantt-reel}
 \end{figure}
 
 \subsection{Analyse des écarts}
 \label{sec:ecarts}
 
-La comparaison des deux diagrammes de Gantt fait apparaître trois écarts principaux, dont les causes et conséquences sont analysées ci-dessous.
+Le déroulement du projet présente un écart majeur par rapport au sujet initial~: la réorientation d'un projet centré sur GLM-OCR vers un système RAG complet. Cette section analyse cet écart ainsi que les ajustements qui en ont découlé.
 
 \begin{table}[H]
 \centering
-\begin{tabularx}{\linewidth}{L{3cm} L{2.5cm} L{2.5cm} L{4cm}}
+\begin{tabularx}{\linewidth}{L{3.2cm} L{3cm} L{3cm} L{3.2cm}}
 \toprule
 \rowcolor{bleuPrincipal}
-\textcolor{white}{\textbf{Tâche}} &
-\textcolor{white}{\textbf{Prévisionnel}} &
-\textcolor{white}{\textbf{Réalisé}} &
-\textcolor{white}{\textbf{Explication}} \\
+\textcolor{white}{\textbf{Écart}} &
+\textcolor{white}{\textbf{Sujet initial}} &
+\textcolor{white}{\textbf{Sujet final}} &
+\textcolor{white}{\textbf{Impact}} \\
 \midrule
-Extraction PDF   & 4 semaines  & 5 semaines  & Complexité imprévue des figures composites (schémas avec formules intégrées) \\
-Golden dataset   & 2 semaines  & 2 semaines  & Conforme (léger décalage dans le semestre) \\
-Rédaction        & 3 semaines  & 2 semaines  & Gain de temps : contenu technique déjà documenté dans les journaux de session \\
+Périmètre        & Extraction + analyse GLM-OCR & Pipeline RAG complet (extraction, retrieval, génération) & Élargissement significatif du périmètre technique \\
+Corpus            & Base de données multimodale (non disponible) & Cours de Machine Learning (D2L, pages web) & Corpus plus accessible et maîtrisé \\
+Livrable final    & Analyse critique des performances GLM-OCR & Système de tutorat pédagogique fonctionnel + évaluation quantitative & Valorisation opérationnelle du travail \\
 \bottomrule
 \end{tabularx}
-\caption{Analyse des écarts entre le planning prévisionnel et le réalisé.}
+\caption{Analyse des écarts entre le sujet initial et le projet réalisé.}
 \label{tab:ecarts}
 \end{table}
 
-\paragraph{Écart 1 --- Extraction PDF (+1 semaine)}
+\paragraph{Écart principal --- Réorientation du sujet}
 
-L'extraction des documents PDF a nécessité une semaine supplémentaire par rapport au planning prévisionnel. La cause principale est la complexité du traitement des figures composites (schémas comportant à la fois des éléments graphiques et des formules mathématiques intégrées), qui a exigé un paramétrage plus fin du pipeline GLM-OCR + Qwen3-VL. Cet écart, bien qu'anticipable, n'a pas eu d'impact sur les phases suivantes grâce aux marges intégrées dans la planification initiale.
+Le sujet initial portait exclusivement sur l'étude et l'évaluation du modèle GLM-OCR pour l'extraction de connaissances à partir de documents numérisés. L'indisponibilité de la base de données cible a conduit à une réorientation, à l'initiative du responsable de stage, vers la conception d'un système RAG complet. Cette réorientation, loin d'être un recul, a permis de~:
+\begin{itemize}
+  \item capitaliser sur le travail d'exploration de GLM-OCR en l'intégrant comme brique d'extraction du pipeline RAG~;
+  \item élargir le périmètre technique du stage à l'ensemble de la chaîne RAG (\textit{retrieval}, \textit{reranking}, génération, évaluation)~;
+  \item produire un livrable opérationnel (tuteur pédagogique fonctionnel) plutôt qu'une simple analyse comparative.
+\end{itemize}
 
-\paragraph{Écart 2 --- Rédaction du rapport ($-$1 semaine)}
+\paragraph{Impact sur le planning}
 
-La rédaction du rapport a été réalisée en deux semaines au lieu des trois prévues. Ce gain s'explique par la tenue régulière de journaux de session (\texttt{rapport/journal\_*.md}) tout au long du projet, documentant les décisions techniques, les résultats intermédiaires et les corrections de bugs au fil de l'eau. Ces notes ont servi de base à la rédaction finale, réduisant significativement le temps de mise en forme.
+La Phase~1 (GLM-OCR) et la Phase~2 (réorientation) représentent un investissement d'environ 7 semaines sur le sujet initial et la transition. Ce temps, bien que conséquent, n'a pas été perdu puisque l'intégralité du travail sur GLM-OCR a été réutilisée dans la phase d'extraction du pipeline RAG. Le planning des Phases~3 et~4 (implémentation et évaluation du RAG) s'est déroulé conformément aux estimations, sans retard notable.
 
 \paragraph{Bilan global}
 
-Le projet a été livré dans les délais impartis (juillet 2026). Les écarts observés sont mineurs ($\pm 1$ semaine) et se compensent mutuellement~: le retard initial en extraction a été absorbé par une avance en rédaction, grâce à la documentation continue du projet. La marge de deux semaines intégrée au planning prévisionnel s'est avérée correctement dimensionnée.
+Le projet a été livré dans les délais impartis (août 2026). La réorientation du sujet, bien que constituant un écart majeur par rapport au descriptif initial, a abouti à un livrable plus riche et plus complet, en parfaite adéquation avec les besoins exprimés par le laboratoire.
 
 \subsection{Environnement technique}
 
@@ -616,7 +566,7 @@ Le RAG avancé introduit des mécanismes correctifs à chacun des points faibles
 \begin{itemize}
   \item \textbf{En amont de la recherche}~: reformulation de la requête (\textit{query rewriting}~\cite{ma2023queryrewriting}), décomposition de questions complexes, génération de documents hypothétiques (HyDE~\cite{gao2022hyde})~;
   \item \textbf{Au niveau de la recherche}~: recherche hybride combinant recherche lexicale et recherche dense, fusion de classements par RRF~\cite{cormack2009rrf}~;
-  \item \textbf{En aval de la recherche}~: réévaluation des résultats par un modèle de \textit{reranking}~\cite{nogueira2019bert}, compression du contexte avant transmission à la génération~\cite{jiang2023llmlingua,xu2024recomp}.
+  \item \textbf{En aval de la recherche}~: réévaluation des résultats par un modèle de \textit{reranking}~\cite{nogueira2019bert}.
 \end{itemize}
 
 C'est cette famille d'approches qui structure la conception du présent projet, avec en amont un traitement de la requête (reformulation et décomposition en sous-questions), mis en \oe{}uvre via le module de \textit{query processing}.
@@ -755,12 +705,6 @@ Nogueira et Cho~\cite{nogueira2019bert} ont démontré en~2019 que des modèles 
 
 Fensore~\textit{et~al.}~\cite{fensore2025liverag} illustrent le compromis coût/qualité du \textit{reranking} dans le cadre du LiveRAG Challenge~2025~: le \textit{reranking} par RankLLaMA améliore le MAP de 0,523 à 0,797 (amélioration relative de~52\,\%), mais au prix d'un temps d'inférence passant de 1,74\,s à 84\,s par question.
 
-\paragraph{Compression du contexte}
-
-La qualité d'une réponse ne croît pas nécessairement avec le volume de contexte fourni au modèle de langage~: un contexte surchargé peut au contraire diluer l'information pertinente~\cite{gao2024ragsurvey}. La compression du contexte vise à réduire la longueur de l'entrée tout en préservant l'information essentielle.
-
-Deux familles de méthodes coexistent~\cite{pan2024llmlingua2}~: la compression \textit{hard}, qui opère au niveau lexical en sélectionnant ou supprimant des \textit{tokens} (\textbf{LLMLingua}~\cite{jiang2023llmlingua}, \textbf{LLMLingua-2}~\cite{pan2024llmlingua2}), et la compression \textit{soft}, qui encode le contexte en représentations denses plus compactes. Plus récemment, \textbf{RECOMP}~\cite{xu2024recomp} propose une approche hybride combinant extraction et résumé abstrait, avec un modèle entraîné par distillation pour sélectionner les passages les plus informatifs. Le \textit{framework} \textbf{SeleCom}~\cite{selecom2026}, présenté à WWW~2026, redéfinit le rôle de l'encodeur comme un sélecteur d'information conditionné par la requête, montrant qu'une sélection ciblée surpasse une compression globale du document.
-
 \begin{table}[H]
 \centering
 \small
@@ -794,7 +738,7 @@ Le paysage des modèles de langage exploitables localement a connu une évolutio
 
 \paragraph{Techniques d'amélioration de la génération}
 
-La \textbf{reformulation de requête} (\textit{query rewriting}) consiste à réécrire ou décomposer la requête de l'utilisateur avant de l'envoyer au \textit{retrieval}, afin de corriger une formulation ambiguë ou sous-spécifiée. Ma~\textit{et~al.}~\cite{ma2023queryrewriting} ont montré que cette technique améliore significativement les performances en question-réponse ouverte. Dans ce projet, elle est mise en \oe{}uvre par le module de \textit{query processing}, qui reformule la question et la décompose en sous-questions indépendantes lorsque nécessaire. En revanche, la \textbf{compression du contexte}, qui vise à réduire la longueur de l'entrée du modèle~\cite{jiang2023llmlingua,xu2024recomp}, est étudiée dans l'état de l'art mais n'est volontairement pas branchée dans ce POC~: la stratégie parent-enfant limite déjà le volume transmis à la génération.
+La \textbf{reformulation de requête} (\textit{query rewriting}) consiste à réécrire ou décomposer la requête de l'utilisateur avant de l'envoyer au \textit{retrieval}, afin de corriger une formulation ambiguë ou sous-spécifiée. Ma~\textit{et~al.}~\cite{ma2023queryrewriting} ont montré que cette technique améliore significativement les performances en question-réponse ouverte. Dans ce projet, elle est mise en \oe{}uvre par le module de \textit{query processing}, qui reformule la question et la décompose en sous-questions indépendantes lorsque nécessaire. 
 
 % ------- ÉVALUATION -------
 \subsubsection{Évaluation des systèmes RAG}
@@ -873,7 +817,7 @@ Pour l'extraction, \textsc{GLM-OCR}~\cite{glmocr2026} a été retenu pour sa cap
 
 Pour l'ingestion, le \textbf{découpage parent-enfant} a été retenu afin de concilier précision de recherche et richesse contextuelle, conformément aux résultats de Lu~\textit{et~al.}~\cite{lu2025hichunk} et du système H-RAG~\cite{hrag2026semeval}~; \textbf{BGE-M3}~\cite{chen2024bgem3} reste le modèle d'\textit{embedding} utilisé, son rapport qualité-coût demeurant pertinent pour ce POC bien que des alternatives plus récentes (Qwen3-Embedding~\cite{zhang2025qwen3embedding}) occupent le haut des classements ouverts~; \textbf{ChromaDB} a été retenu pour l'indexation vectorielle, suffisant à l'échelle du corpus traité.
 
-Pour le \textit{retrieval}, la combinaison \textbf{BM25}~\cite{robertson2009bm25} et \textbf{recherche dense} (BGE-M3), fusionnée par \textbf{RRF}~\cite{cormack2009rrf} puis réévaluée par un \textbf{\textit{cross-encoder}}~\cite{nogueira2019bert,xiao2024bge}, correspond à l'architecture hybride en deux étapes validée par Strich~\textit{et~al.}~\cite{strich2026bm25} comme la plus performante. Le traitement de la requête (\textit{query processing}) complète la chaîne en amont~; la compression du contexte, bien que décrite dans l'état de l'art, n'est volontairement pas branchée dans ce POC (axe d'évolution identifié).
+Pour le \textit{retrieval}, la combinaison \textbf{BM25}~\cite{robertson2009bm25} et \textbf{recherche dense} (BGE-M3), fusionnée par \textbf{RRF}~\cite{cormack2009rrf} puis réévaluée par un \textbf{\textit{cross-encoder}}~\cite{nogueira2019bert,xiao2024bge}, correspond à l'architecture hybride en deux étapes validée par Strich~\textit{et~al.}~\cite{strich2026bm25} comme la plus performante. Le traitement de la requête (\textit{query processing}) complète la chaîne en amont.
 
 Pour la génération, \textbf{Qwen2.5}~\cite{qwen2024qwen25} via Ollama a été conservé comme choix fonctionnel et gratuit, Qwen3~\cite{qwen2025qwen3} étant identifié comme évolution possible sans remise en cause de l'architecture.
 
@@ -964,7 +908,7 @@ Chaque unité est ensuite enrichie de métadonnées (document source, type de co
 
 La recherche doit concilier deux principes de correspondance aux forces complémentaires~: une correspondance lexicale, précise sur les termes exacts (vocabulaire technique, notations mathématiques) mais aveugle aux reformulations, et une correspondance sémantique, qui capte le sens général mais peut manquer une correspondance exacte importante. La façon de combiner ces deux principes est détaillée dans la partie Implémentation.
 
-Une première recherche, optimisée pour parcourir rapidement l'ensemble du corpus, ne garantit pas nécessairement un ordre de pertinence fin parmi les résultats obtenus~: une étape de réévaluation, appliquée aux meilleurs candidats déjà identifiés, permet d'affiner ce classement. Enfin, les passages retenus remontent vers leur parent~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération, la compression du contexte (non branchée dans ce POC) étant identifiée comme axe d'évolution.
+Une première recherche, optimisée pour parcourir rapidement l'ensemble du corpus, ne garantit pas nécessairement un ordre de pertinence fin parmi les résultats obtenus~: une étape de réévaluation, appliquée aux meilleurs candidats déjà identifiés, permet d'affiner ce classement. Enfin, les passages retenus remontent vers leur parent~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération.
 
 \begin{figure}[H]
 \centering
@@ -975,7 +919,7 @@ Une première recherche, optimisée pour parcourir rapidement l'ensemble du corp
 
 \subsubsection{Conception de la génération}
 
-Le contexte récupéré est fourni au modèle de langage aux côtés de la requête de l'utilisateur, encadré par une consigne stricte~: la réponse doit s'appuyer exclusivement sur le contexte fourni, avec un refus explicite en l'absence d'information pertinente. En amont, un module de \textit{query processing} reformule et décompose la question avant la recherche, tandis que la compression du contexte est identifiée comme axe d'évolution.
+Le contexte récupéré est fourni au modèle de langage aux côtés de la requête de l'utilisateur, encadré par une consigne stricte~: la réponse doit s'appuyer exclusivement sur le contexte fourni, avec un refus explicite en l'absence d'information pertinente. En amont, un module de \textit{query processing} reformule et décompose la question avant la recherche.
 
 \subsection{Implémentation}
 
@@ -1032,7 +976,7 @@ où $k=60$ est la constante de lissage standard~\cite{cormack2009rrf}. Cette pon
 
 Le classement fusionné est ensuite réévalué par un \textit{cross-encoder}, qui recalcule un score de pertinence en comparant directement la requête et le contenu de chaque candidat --- une réévaluation plus coûteuse mais appliquée uniquement aux meilleurs candidats déjà identifiés par la fusion RRF.
 
-Enfin, les passages retenus après réévaluation remontent vers leurs parents~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération, sans étape de compression dédiée (non branchée dans ce POC).
+Enfin, les passages retenus après réévaluation remontent vers leurs parents~: la stratégie parent-enfant restitue le contexte complet des sections pertinentes à la génération.
 
 \begin{figure}[H]
 \centering
@@ -1054,8 +998,6 @@ Deux mécanismes de refus complémentaires encadrent la génération~:
 \textbf{Mécanisme 1 — Refus pré-génération par score du \textit{cross-encoder}} (\texttt{should\_refuse\_reranker})~: avant d'appeler le LLM, le score du meilleur passage récupéré (logit du \textit{cross-encoder}) est comparé à un seuil calibré empiriquement (\texttt{RERANKER\_REFUSAL\_THRESHOLD = 0,1119}, cf.~Section~\ref{sec:calibration}). Si le score est inférieur au seuil, le système refuse sans appeler le LLM, économisant un appel de génération.
 
 \textbf{Mécanisme 2 — Refus post-génération par juge LLM} (\texttt{verify\_answer})~: après la génération, un second LLM (Qwen3~:8B) audite la réponse produite. Il vérifie que chaque affirmation est ancrée dans le contexte fourni, sans ajout d'information provenant de la mémoire paramétrique du modèle de génération. Si une information hors-contexte est détectée, la réponse est remplacée par le message de refus. Ce mécanisme s'inspire du paradigme \textit{Self-RAG}~\cite{singh2025agenticrag} tout en utilisant un modèle séparé pour éviter l'auto-évaluation biaisée.
-
-La compression du contexte, étudiée dans l'état de l'art, n'est volontairement pas branchée dans ce POC.
 
 \subsubsection{Interface en ligne de commande (CLI)}
 
@@ -1121,8 +1063,6 @@ L'évaluation combine des métriques de \textit{retrieval} et de refus, complét
   \item \textbf{Refusal Correctness}~: proportion de décisions de refus correctes (refuser une question sans réponse, répondre à une question avec réponse).
   \item \textbf{Refusal Precision / Recall / F1}~: précision (un refus est-il justifié~?), rappel (toutes les questions sans réponse sont-elles refusées~?), et leur moyenne harmonique.
 \end{itemize}
-
-La détection de refus a fait l'objet d'une attention particulière. Initialement basée sur une égalité stricte avec la phrase de refus du pipeline, elle a été élargie pour reconnaître les refus \textit{naturels} du LLM (phrases courtes indiquant l'incapacité à répondre à partir des documents, sans contenu factuel). Cette correction s'est avérée cruciale~: le LLM refusait correctement dans ses propres mots, mais l'évaluateur ne le détectait pas.
 
 \subsection{Calibration du mécanisme de refus}
 \label{sec:calibration}
@@ -1284,8 +1224,9 @@ Exactitude factuelle (\textit{custom correctness}, juge 1--5) & 0,786 & [0,714~-
 La fidélité de 0,887 indique que près de 89\,\% des affirmations produites sont ancrées dans le contexte fourni. La précision du contexte de 0,840 confirme que les passages récupérés sont majoritairement pertinents. L'exactitude factuelle \textit{custom} (0,786), évaluée par un juge LLM indépendant sur une échelle de 1 à 5, reflète la difficulté inhérente à l'évaluation automatique de la correction factuelle avec des modèles locaux de taille modeste (8B). Ces métriques n'ont pas été recalculées pour les runs ultérieurs, le \textit{framework} Ragas ajoutant un coût d'évaluation significatif (plusieurs heures pour 30~questions). L'amélioration du \textit{retrieval} (+6,7~points de Hit@4) devrait mécaniquement améliorer ces métriques, le contexte fourni à la génération étant de meilleure qualité.
 
 \subsection{Performances de refus}
+\label{sec:performances-refus}
 
-Le Tableau~\ref{tab:refus} synthétise les performances de refus sur les 15~questions \textit{unanswerable} hors-domaine, après correction de la fonction de détection de refus (\texttt{is\_refusal()}).
+Le Tableau~\ref{tab:refus} synthétise les performances de refus sur les 15~questions \textit{unanswerable} hors-domaine.
 
 \begin{table}[H]
 \centering
@@ -1295,28 +1236,19 @@ Le Tableau~\ref{tab:refus} synthétise les performances de refus sur les 15~ques
 \rowcolor{bleuPrincipal}
 \textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Baseline}} & \textcolor{white}{\textbf{Système complet}} \\
 \midrule
-Refus corrects   & 15/15 & \textbf{15/15} \\
+Refus corrects   & 14/15 & \textbf{15/15} \\
 Faux refus       & 0     & \textbf{0} \\
-Faux non-refus   & 0     & \textbf{0} \\
+Faux non-refus   & 1     & \textbf{0} \\
 Precision        & 1,000 & \textbf{1,000} \\
-Recall           & 1,000 & \textbf{1,000} \\
-F1               & 1,000 & \textbf{1,000} \\
+Recall           & 0,933 & \textbf{1,000} \\
+F1               & 0,966 & \textbf{1,000} \\
 \bottomrule
 \end{tabularx}
-\caption{Performances de refus sur les 15~questions \textit{unanswerable} hors-domaine. La baseline et le système complet atteignent tous deux 100\,\% de refus corrects.}
+\caption{Performances de refus sur les 15~questions \textit{unanswerable} hors-domaine. La baseline (\textit{system prompt} seul) manque un refus (14/15), tandis que le système complet avec M1+M2 atteint 100\,\%.}
 \label{tab:refus}
 \end{table}
 
-Le système complet et la baseline atteignent tous deux \textbf{100\,\% d'exactitude de refus} sur les questions hors-domaine. Ce résultat montre que le \textit{system prompt} seul, qui impose un ancrage strict dans le contexte, suffit à faire refuser le LLM sur des questions de domaines totalement étrangers. Les mécanismes M1 (score \textit{cross-encoder}) et M2 (juge post-génération) apportent une garantie supplémentaire pour les cas limites et permettent une économie de calcul (pas d'appel LLM si le score M1 est trop bas).
-
-\textbf{Correction de la détection de refus.} Initialement, la fonction \texttt{is\_refusal()} détectait uniquement l'égalité stricte avec la phrase de refus du pipeline. Or le LLM refuse souvent dans ses propres mots («\,Les documents fournis ne contiennent pas cette information\,»), sans reproduire la phrase exacte. L'élargissement de la détection aux refus naturels (phrases courtes sans contenu factuel indiquant l'incapacité à répondre) a permis de capturer ces refus, faisant passer la baseline de 0/15 à 15/15. Ce correctif illustre que le système refusait correctement depuis le début --- l'évaluateur ne le mesurait simplement pas.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\linewidth]{images/fig5_refus_comparison.png}
-\caption{Évolution de la performance de refus après correction du biais du dataset.}
-\label{fig:refus}
-\end{figure}
+Le système complet atteint \textbf{100\,\% d'exactitude de refus} sur les questions hors-domaine, tandis que la baseline (\textit{system prompt} seul) laisse passer une réponse sur 15 (14/15). Ce résultat montre que le \textit{system prompt} seul suffit à faire refuser le LLM dans la grande majorité des cas, mais qu'un seul cas de «~fuite~» paramétrique subsiste. Les mécanismes M1 (score \textit{cross-encoder}) et M2 (juge post-génération) comblent cette faille et apportent une garantie supplémentaire, tout en permettant une économie de calcul (pas d'appel LLM si le score M1 est trop bas).
 
 \subsection{Discussion}
 \label{sec:discussion}
@@ -1327,7 +1259,7 @@ Les résultats expérimentaux permettent de dégager plusieurs enseignements.
 
 \textbf{L'hybridation BM25+dense dilue légèrement la précision, compensée par le \textit{cross-encoder}.} Le nDCG@4 recule de 0,932 à 0,918 avec l'ajout de l'hybridation — un compromis cohérent avec la diversité accrue des résultats issus de deux signaux complémentaires. Le \textit{cross-encoder} corrige ensuite cette dilution en portant le nDCG@4 à 0,939 (+2,1~points).
 
-\textbf{Le refus est largement résolu par le \textit{system prompt}~; les mécanismes explicites fournissent une garantie supplémentaire.} La baseline et le système complet atteignent tous deux 100\,\% de refus corrects sur les questions hors-domaine, démontrant que le \textit{prompt} d'ancrage strict est le mécanisme de refus le plus efficace. Le M1 (score \textit{cross-encoder}) apporte une économie de calcul (pas d'appel LLM si le score est trop bas), tandis que le M2 (juge post-génération) protège contre les cas où le LLM utiliserait sa mémoire paramétrique malgré le \textit{prompt}.
+\textbf{Le refus est largement résolu par le \textit{system prompt}~; les mécanismes explicites fournissent une garantie supplémentaire.} La baseline atteint 14/15 (93,3\,\%) de refus corrects, démontrant que le \textit{prompt} d'ancrage strict est le mécanisme de refus le plus efficace. Le système complet avec M1+M2 atteint 15/15 (100\,\%), le seul faux non-refus de la baseline étant intercepté. Le M1 (score \textit{cross-encoder}) apporte une économie de calcul (pas d'appel LLM si le score est trop bas), tandis que le M2 (juge post-génération) protège contre les cas où le LLM utiliserait sa mémoire paramétrique malgré le \textit{prompt}.
 
 \textbf{La qualité du dataset conditionne la validité des conclusions.} Le passage d'un dataset DeepEval, dont les questions \textit{unanswerable} étaient \textit{de facto} répondables (questions ML sur corpus ML, absentes du \textit{chunk} choisi mais présentes ailleurs dans le corpus), à des questions de domaines totalement étrangers a fait passer la métrique de refus de 0\,\% à 100\,\% (système complet). Ce résultat souligne qu'un \textit{benchmark} de refus n'a de sens que si les questions \textit{unanswerable} sont véritablement absentes de l'intégralité du corpus, et non d'un seul \textit{chunk}. Il convient toutefois de nuancer~: les questions de remplacement (géographie, biologie, histoire) sont volontairement hors-domaine, ce qui rend la tâche de refus triviale pour le \textit{system prompt}. Un test plus exigeant utiliserait des questions \textit{near-domain} --- des questions de ML dont le cours ne traite pas (ex.~: \textit{«~Comment fonctionne un Vision Transformer (ViT) ?~»}) --- plus proches du domaine mais absentes du corpus. Ce type de questions, plus difficile à discriminer pour le \textit{cross-encoder} comme pour le LLM, constitue une perspective d'évaluation prioritaire.
 
