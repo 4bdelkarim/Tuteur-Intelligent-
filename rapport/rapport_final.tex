@@ -1250,6 +1250,13 @@ F1               & 0,966 & \textbf{1,000} \\
 
 Le système complet atteint \textbf{100\,\% d'exactitude de refus} sur les questions hors-domaine, tandis que la baseline (\textit{system prompt} seul) laisse passer une réponse sur 15 (14/15). Ce résultat montre que le \textit{system prompt} seul suffit à faire refuser le LLM dans la grande majorité des cas, mais qu'un seul cas de «~fuite~» paramétrique subsiste. Les mécanismes M1 (score \textit{cross-encoder}) et M2 (juge post-génération) comblent cette faille et apportent une garantie supplémentaire, tout en permettant une économie de calcul (pas d'appel LLM si le score M1 est trop bas).
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{images/fig5_refus_comparison.png}
+\caption{Évolution de la performance de refus après correction du biais du dataset.}
+\label{fig:refus}
+\end{figure}
+
 \subsection{Discussion}
 \label{sec:discussion}
 
