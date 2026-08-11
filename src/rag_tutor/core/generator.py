@@ -43,11 +43,34 @@ RÈGLE DE REFUS STRICTE :
 - Soit tu réponds avec les documents, soit tu dis EXACTEMENT la phrase de refus. Il n'y a PAS de troisième option.
 
 CITATIONS OBLIGATOIRES (chaque paragraphe doit citer au moins une source) :
-- Chaque document est identifie par son numero de section du cours entre crochets (ex: "[§9.1 — Long Short-Term Memory (LSTM)]").
-- Pour CHAQUE affirmation dans ta reponse, cite la section source entre crochets avec juste le numero de section, exemple : « La backpropagation utilise la regle de derivation en chaine [§5.3]. »
-- Si tu utilises plusieurs sections pour une affirmation, cite-les toutes : [§9.1][§9.2].
+- Chaque document est identifie par un label entre crochets indiquant la source, le chapitre et la section (ex: "[D2L, Ch. 9 (Modern Recurrent Neural Networks), §9.1 Long Short-Term Memory (LSTM)]").
+- Pour CHAQUE affirmation dans ta reponse, cite la section source entre crochets avec le meme format, exemple : « La backpropagation utilise la regle de derivation en chaine [D2L, Ch. 5 (Multilayer Perceptrons), §5.3.3 Backpropagation]. »
+- Si tu utilises plusieurs sections pour une affirmation, cite-les toutes : [D2L, Ch. 9 (Modern RNN), §9.1][D2L, Ch. 9 (Modern RNN), §9.2].
 - Si une information ne vient d'AUCUN document, NE L'ECRIS PAS — cela t'aidera a detecter les informations hors-contexte.
 """
+
+
+def _chapter_name(section):
+    """Extrait le numero de chapitre du champ section et retourne le nom D2L."""
+    import re
+    m = re.match(r'(\d+)\.', section or '')
+    if not m:
+        return None
+    ch = int(m.group(1))
+    chapters = {
+        2: "Preliminaries", 3: "Linear Neural Networks for Regression",
+        4: "Linear Neural Networks for Classification", 5: "Multilayer Perceptrons",
+        6: "Builders Guide", 7: "Convolutional Neural Networks",
+        8: "Modern Convolutional Neural Networks", 9: "Modern Recurrent Neural Networks",
+        10: "Modern RNN", 11: "Attention Mechanisms and Transformers",
+        12: "Optimization Algorithms", 13: "Computational Performance",
+        14: "Computer Vision", 15: "Natural Language Processing — Pretraining",
+        16: "Natural Language Processing — Applications", 17: "Reinforcement Learning",
+        18: "Gaussian Processes", 19: "Hyperparameter Optimization",
+        20: "Generative Adversarial Networks", 21: "Recommender Systems",
+        22: "Appendix: Mathematics for Deep Learning", 23: "Appendix: Tools for Deep Learning",
+    }
+    return chapters.get(ch)
 
 
 def _format_context(hits):
@@ -57,17 +80,24 @@ def _format_context(hits):
     for h in hits:
         m = h.get("meta", {})
         section = m.get('section', '')
+        source = m.get('source', '')
         pages = f"p{m.get('page_start')}-{m.get('page_end')}" if m.get("page_start") else ""
-        # Construire un label propre : numero de section + pages si dispo
-        if section and pages:
-            label = f"{section} ({pages})"
-        elif section:
-            label = section
+        # Construire un label verifiable : source, chapitre, section
+        if section:
+            ch_name = _chapter_name(section)
+            if ch_name:
+                label = f"D2L, Ch. {section.split('.')[0]} ({ch_name}), §{section}"
+            elif source.startswith('atcold') or 'NYU' in source:
+                label = f"NYU-DLSP20, {source}, §{section}"
+            else:
+                label = f"{source}, §{section}"
+            if pages:
+                label += f" ({pages})"
         elif pages:
             label = pages
         else:
             label = m.get('source', 'document')
-        blocks.append(f"[§{label}]\n{h['text']}")
+        blocks.append(f"[{label}]\n{h['text']}")
     return "\n\n---\n\n".join(blocks)
 
 
@@ -107,7 +137,7 @@ Un étudiant pose une question. Un premier LLM a généré une réponse en utili
 
 1. Pour chaque phrase ou affirmation distincte de la réponse, cherche si le CONTENU EXACT (faits, formules, code, noms de fonctions, valeurs numériques) apparaît dans les documents.
 2. Une simple similarité thématique NE SUFFIT PAS. Exemple : si la réponse dit « torch.zeros(batch_size, hidden_size) » et que le document parle de PyTorch en général mais ne mentionne JAMAIS `torch.zeros`, c'est HORS-CONTEXTE.
-3. Si la reponse cite [§X.Y], verifie que la section X.Y contient REELLEMENT l'information citee. Une citation incorrecte est un flag HORS-CONTEXTE.
+3. Si la reponse cite [D2L, Ch. X, §X.Y], verifie que la section X.Y contient REELLEMENT l'information citee. Une citation incorrecte est un flag HORS-CONTEXTE.
 4. Les formules mathématiques, extraits de code, noms de classes/fonctions PyTorch, valeurs de paramètres sont les INFORMATIONS LES PLUS SOUVENT INVENTÉES — sois particulièrement vigilant sur ces éléments.
 5. Si le document mentionne un concept sans donner de détails, et que la réponse donne des détails précis → HORS-CONTEXTE.
 6. PIÈGE FRÉQUENT : une réponse qui commence par « Cette question n'est pas dans le corpus... » ou « Je ne peux pas répondre avec les documents, mais... » puis donne QUAND MÊME une réponse — c'est HORS-CONTEXTE. Le fait d'admettre que c'est hors-sujet NE REND PAS la réponse légitime. Vérifie CHAQUE information après le « mais... ».
@@ -130,36 +160,36 @@ VERDICT: HORS-CONTEXTE
 --- EXEMPLE 1 : ANCRÉ ---
 
 Documents :
-[§5.3] La backpropagation calcule les gradients de la fonction de perte par rapport à chaque poids en utilisant la règle de dérivation en chaîne, en propageant les erreurs de la couche de sortie vers la couche d'entrée.
+[D2L, Ch. 5 (Multilayer Perceptrons), §5.3.3 Backpropagation] La backpropagation calcule les gradients de la fonction de perte par rapport à chaque poids en utilisant la règle de dérivation en chaîne, en propageant les erreurs de la couche de sortie vers la couche d'entrée.
 
 Question : Comment fonctionne la backpropagation ?
 
 Réponse à vérifier :
-La backpropagation utilise la règle de dérivation en chaîne pour calculer les gradients [§5.3]. Les erreurs sont propagées de la sortie vers l'entrée [§5.3].
+La backpropagation utilise la règle de dérivation en chaîne pour calculer les gradients [D2L, Ch. 5 (Multilayer Perceptrons), §5.3.3 Backpropagation]. Les erreurs sont propagées de la sortie vers l'entrée [D2L, Ch. 5 (Multilayer Perceptrons), §5.3.3 Backpropagation].
 
 Analyse :
-- Affirmation 1: "utilise la règle de dérivation en chaîne pour calculer les gradients" → présent dans §5.3 ✓
-- Affirmation 2: "erreurs propagées de la sortie vers l'entrée" → présent dans §5.3 ✓
+- Affirmation 1: "utilise la règle de dérivation en chaîne pour calculer les gradients" → présent dans §5.3.3 ✓
+- Affirmation 2: "erreurs propagées de la sortie vers l'entrée" → présent dans §5.3.3 ✓
 VERDICT: ANCRÉ
 
 --- EXEMPLE 2 : HORS-CONTEXTE (code inventé) ---
 
 Documents :
-[§10.1] Les LSTM utilisent des portes pour contrôler le flux d'information. La porte d'oubli détermine quelles informations de l'état précédent doivent être conservées.
+[D2L, Ch. 10 (Modern RNN), §10.1.1 Gated Memory Cell] Les LSTM utilisent des portes pour contrôler le flux d'information. La porte d'oubli détermine quelles informations de l'état précédent doivent être conservées.
 
 Question : Comment initialiser l'état caché d'un LSTM en PyTorch ?
 
 Réponse à vérifier :
-Pour initialiser l'état caché d'un LSTM, on utilise `h0 = torch.zeros(num_layers, batch_size, hidden_size)` [§10.1].
+Pour initialiser l'état caché d'un LSTM, on utilise `h0 = torch.zeros(num_layers, batch_size, hidden_size)` [D2L, Ch. 10 (Modern RNN), §10.1.1 Gated Memory Cell].
 
 Analyse :
-- Affirmation: "h0 = torch.zeros(num_layers, batch_size, hidden_size)" → §10.1 parle des portes LSTM mais ne mentionne JAMAIS `torch.zeros` ni l'initialisation de l'état caché. Le code est inventé. ✗
+- Affirmation: "h0 = torch.zeros(num_layers, batch_size, hidden_size)" → §10.1.1 parle des portes LSTM mais ne mentionne JAMAIS `torch.zeros` ni l'initialisation de l'état caché. Le code est inventé. ✗
 VERDICT: HORS-CONTEXTE
 
 --- EXEMPLE 3 : HORS-CONTEXTE (détails inventés) ---
 
 Documents :
-[§7.2] Les fonctions de perte basées sur des marges identifient la réponse incorrecte la plus pertinente dans les modèles EBMs.
+[D2L, Ch. 7 (Convolutional Neural Networks), §7.2] Les fonctions de perte basées sur des marges identifient la réponse incorrecte la plus pertinente dans les modèles EBMs.
 
 Question : Comment les fonctions de perte basées sur des marges fonctionnent-elles ?
 
@@ -175,7 +205,7 @@ VERDICT: HORS-CONTEXTE
 --- EXEMPLE 4 : HORS-CONTEXTE ("pas dans le corpus mais...") ---
 
 Documents :
-[§18.1] Les processus gaussiens sont une approche bayésienne non paramétrique pour la régression et la classification.
+[D2L, Ch. 18 (Gaussian Processes), §18.1] Les processus gaussiens sont une approche bayésienne non paramétrique pour la régression et la classification.
 
 Question : Qu'est-ce que la mitose et en quoi diffère-t-elle de la méiose ?
 

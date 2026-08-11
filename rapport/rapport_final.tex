@@ -53,9 +53,6 @@
 \usepackage{listings}
 \usepackage{xcolor}
 
-% ===================== DIAGRAMME DE GANTT =====================
-\usepackage{pgfgantt}
-
 % ===================== GRAPHIQUES =====================
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.16}
@@ -1324,11 +1321,17 @@ Le projet s'est déroulé en deux phases. La première (v1) a livré un pipeline
 \subsection{Limites actuelles}
 
 \begin{itemize}
-  \item \textbf{M2 désactivé en streaming}~: la vérification post-génération nécessite la réponse complète et n'est pas exécutée en mode conversationnel. Seul le M1 protège activement.
+  \item \textbf{M2 désactivé en streaming}~: la vérification post-génération nécessite la réponse complète et n'est pas exécutée en mode conversationnel. Seul le M1 protège activement contre les réponses hors-contexte.
 
-  \item \textbf{Évaluation pédagogique limitée}~: les métriques utilisées (hit@k, MRR, faithfulness) mesurent la qualité du retrieval et de l'ancrage, mais pas la qualité pédagogique des réponses (clarté, progressivité, adaptation au niveau). L'évaluation multi-tour reste également à développer.
+  \item \textbf{Détection de changement de sujet non activée}~: la méthode est implémentée mais pas encore branchée dans le flux principal. Elle permettrait de réinitialiser automatiquement la mémoire lors d'un changement radical de sujet.
 
-  \item \textbf{Questions \textit{near-domain} non testées}~: l'évaluation du refus utilise des questions volontairement hors-domaine. Un test plus exigeant utiliserait des questions de ML absentes du corpus, plus difficiles à discriminer.
+  \item \textbf{Format de citation encore instable}~: le LLM cite parfois le titre complet de la section au lieu du seul numéro (ex.~: «~[\S{}LSTM]~» au lieu de «~[\S{}10.1]~»). Un raffinement du \textit{prompt} est nécessaire pour garantir des citations compactes et uniformes.
+
+  \item \textbf{Score \textit{cross-encoder} limité par le contenu du corpus}~: sur les questions de suivi comparatif, le score du \textit{cross-encoder} reste faible en l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores.
+
+  \item \textbf{Évaluation multi-tour absente}~: les métriques actuelles sont conçues pour des questions isolées. Une évaluation spécifique au multi-tour (rétention de contexte, cohérence inter-tours) reste à développer.
+
+  \item \textbf{Questions \textit{near-domain} non testées}~: l'évaluation du refus utilise des questions volontairement hors-domaine. Un test plus exigeant utiliserait des questions de ML absentes du corpus, plus difficiles à discriminer pour le \textit{cross-encoder} comme pour le LLM.
 \end{itemize}
 
 \subsection{Perspectives}
@@ -1359,18 +1362,18 @@ Au-delà du cas d'usage pédagogique, l'architecture développée est génériqu
 Cette annexe présente quelques exemples de questions posées au système et les réponses générées, illustrant le comportement du tuteur en conditions réelles.
 
 \smallskip
-{\footnotesize\textbf{Note sur les références :} dans les réponses réelles du tuteur, les sources sont citées par leur numéro de section du cours (ex: [\S{}10.1], [\S{}5.3]). Chaque section correspond à un passage du corpus indexé --- pages web (D2L, atcold/NYU-DLSP21) ou supports de cours PDF. Les intitulés explicites [D2L, \S{}X.Y --- Titre] ci-dessous sont ajoutés pour la lisibilité du rapport et indiquent la source lorsqu'elle est identifiable.}
+{\footnotesize\textbf{Note sur les références :} les citations entre crochets suivent le format \textit{Source, Chapitre, Section --- Titre}. Elles renvoient au manuel \textit{Dive into Deep Learning} (D2L, d2l.ai), utilisé comme corpus principal. Chaque référence est vérifiable en consultant le chapitre et la section indiqués sur d2l.ai. Les exemples ci-dessous reproduisent le comportement réel du tuteur~: les réponses sont ancrées dans le corpus et chaque affirmation est sourcée.}
 
 \subsection*{Exemple 1 --- Question factuelle simple}
 
 \begin{quote}
 \textbf{Question}~: Qu'est-ce que la backpropagation et pourquoi est-elle importante pour l'entraînement des réseaux de neurones~?
 
-\textbf{Réponse}~: La backpropagation (rétropropagation) est l'algorithme fondamental pour l'entraînement des réseaux de neurones profonds. Elle calcule le gradient de la fonction de perte par rapport à chaque paramètre du réseau en appliquant la règle de dérivation en chaîne du calcul différentiel, en propageant les erreurs de la couche de sortie vers la couche d'entrée [D2L, \S{}5.3 — Rétropropagation][D2L, \S{}5.4 — Calcul efficace].
+\textbf{Réponse}~: La backpropagation (rétropropagation) est l'algorithme fondamental pour l'entraînement des réseaux de neurones profonds. Elle calcule le gradient de la fonction de perte par rapport à chaque paramètre du réseau en appliquant la règle de dérivation en chaîne du calcul différentiel, en propageant les erreurs de la couche de sortie vers la couche d'entrée [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.3.3 Backpropagation][D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.4.1 Vanishing and Exploding Gradients].
 
-Son importance est double. D'une part, elle rend le calcul des gradients efficace en évitant le calcul redondant des dérivées partielles~: chaque couche réutilise les gradients déjà calculés par les couches suivantes, ce qui réduit la complexité de $\mathcal{O}(n^2)$ à $\mathcal{O}(n)$ [D2L, \S{}5.4 — Complexité algorithmique]. D'autre part, elle permet d'entraîner des réseaux de profondeur arbitraire, ce qui serait impossible avec une simple perturbation aléatoire des poids [D2L, \S{}5.3 — Fondements].
+Son importance est double. D'une part, elle rend le calcul des gradients efficace en évitant le calcul redondant des dérivées partielles~: chaque couche réutilise les gradients déjà calculés par les couches suivantes [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.4.1 Vanishing and Exploding Gradients]. D'autre part, elle permet d'entraîner des réseaux de profondeur arbitraire, ce qui serait impossible avec une simple perturbation aléatoire des poids [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.3.3 Backpropagation].
 
-En pratique, la backpropagation est intégrée à tous les frameworks modernes de deep learning (PyTorch, TensorFlow) via le mécanisme de différenciation automatique, qui construit le graphe de calcul et applique la backpropagation sans intervention manuelle du développeur [D2L, \S{}2.5 — Différentiation automatique].
+En pratique, la backpropagation est intégrée à tous les frameworks modernes de deep learning (PyTorch, TensorFlow) via le mécanisme de différenciation automatique, qui construit le graphe de calcul et applique la backpropagation sans intervention manuelle du développeur [D2L, Ch.~2 (Preliminaries), \S{}2.5 Automatic Differentiation].
 \end{quote}
 
 \subsection*{Exemple 2 --- Refus (question hors domaine)}
@@ -1388,11 +1391,11 @@ En pratique, la backpropagation est intégrée à tous les frameworks modernes d
 
 \textbf{Réponse}~: Les trois fonctions d'activation présentent des comportements très différents vis-à-vis de la saturation du gradient~:
 
-La fonction sigmoïde $\sigma(x) = \frac{1}{1+e^{-x}}$ sature pour les grandes valeurs positives (sortie $\to 1$) et négatives (sortie $\to 0$), ce qui conduit au problème de \textit{vanishing gradient}~: le gradient devient quasi nul, ralentissant voire bloquant l'apprentissage des couches profondes [D2L, \S{}5.1.2 — Sigmoïde et « vanishing gradient »].
+La fonction sigmoïde $\sigma(x) = \frac{1}{1+e^{-x}}$ sature pour les grandes valeurs positives (sortie $\to 1$) et négatives (sortie $\to 0$), ce qui conduit au problème de \textit{vanishing gradient}~: le gradient devient quasi nul, ralentissant voire bloquant l'apprentissage des couches profondes [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.1.2 Activation Functions].
 
-La fonction tanh $\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$ souffre du même problème de saturation aux extrêmes, bien que sa sortie centrée en zéro (moyenne $\approx 0$) facilite la convergence par rapport à la sigmoïde [D2L, \S{}5.1.2 — Tanh].
+La fonction tanh $\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$ souffre du même problème de saturation aux extrêmes, bien que sa sortie centrée en zéro (moyenne $\approx 0$) facilite la convergence par rapport à la sigmoïde [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.1.2 Activation Functions].
 
-La fonction ReLU $f(x) = \max(0, x)$ résout partiellement le problème de saturation~: pour $x > 0$, le gradient est constant (égal à 1), ce qui accélère considérablement la convergence [D2L, \S{}5.1.3 — ReLU]. Cependant, elle introduit le problème des «~neurones morts~»~: pour $x < 0$, le gradient est nul et le neurone cesse définitivement d'apprendre si le biais devient trop négatif [D2L, \S{}5.1.3 — Neurones morts].
+La fonction ReLU $f(x) = \max(0, x)$ résout partiellement le problème de saturation~: pour $x > 0$, le gradient est constant (égal à 1), ce qui accélère considérablement la convergence [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.1.2 Activation Functions]. Cependant, elle introduit le problème des «~neurones morts~»~: pour $x < 0$, le gradient est nul et le neurone cesse définitivement d'apprendre si le biais devient trop négatif [D2L, Ch.~5 (Multilayer Perceptrons), \S{}5.1.2 Activation Functions].
 \end{quote}
 
 \section{Prompts détaillés}
@@ -1415,15 +1418,15 @@ RÈGLE DE REFUS STRICTE :
 "Les documents fournis ne permettent pas de répondre à cette question."
 
 CITATIONS OBLIGATOIRES :
-- Chaque document est identifié par le numéro de sa section du cours entre crochets (ex: « [\S{}10.1 — LSTM] »).
-- Pour CHAQUE affirmation, cite la section source avec son numéro, exemple : « La backpropagation [...] [\S{}5.3]. »
-- Citations multiples : [\S{}10.1][\S{}5.3].
+- Chaque document est identifié par un label entre crochets indiquant la source, le chapitre et la section (ex: « [D2L, Ch. 10 (Modern RNN), \S{}10.1 LSTM] »).
+- Pour CHAQUE affirmation, cite la section source avec le même format, exemple : « La backpropagation [...] [D2L, Ch. 5 (Multilayer Perceptrons), \S{}5.3.3 Backpropagation]. »
+- Citations multiples : [D2L, Ch. 10 (Modern RNN), \S{}10.1][D2L, Ch. 5 (Multilayer Perceptrons), \S{}5.3.3].
 \end{verbatim}
 
 \subsection*{Prompt de vérification post-génération (juge M2)}
 
 Le prompt complet du juge de fidélité documentaire est détaillé dans le fichier
-\texttt{scripts101/generator.py} (fonction \texttt{verify\_answer()}).
+\texttt{src/rag\_tutor/core/generator.py} (fonction \texttt{verify\_answer()}).
 
 \section{Configuration Ollama}
 \label{app:config-ollama}
@@ -1448,22 +1451,6 @@ BAAI/bge-reranker-v2-m3   # ~600 Mo, téléchargement unique
 # Tous les modèles tiennent simultanément en VRAM
 \end{verbatim}
 
-\section{Architecture du tuteur conversationnel v2}
-\label{app:architecture-v2}
-
-Une évolution majeure du système est en cours de conception~: le passage d'un mode questions/réponses à un véritable tuteur conversationnel. Le document \texttt{docs/architecture\_tuteur.md} détaille l'architecture cible, qui s'articule autour de trois axes~:
-
-\begin{enumerate}
-  \item \textbf{Conversation avec mémoire}~: gestion d'un historique multi-tour, détection de changement de sujet, compression automatique des anciens messages pour rester dans la fenêtre de contexte.
-  \item \textbf{Pédagogie socratique}~: remplacement du prompt «~réponse directe~» par un système de guidage par questions, avec escalade progressive d'indices (léger $\to$ fort $\to$ explication complète) lorsque l'étudiant est bloqué.
-  \item \textbf{Explications adaptatives}~: adaptation du niveau de détail et de formalisme mathématique selon le niveau perçu de l'étudiant (débutant, intermédiaire, avancé).
-\end{enumerate}
-
-L'interface évoluera également, de la CLI actuelle vers une API REST (FastAPI) puis une interface web (Gradio) avec chat interactif, sélecteur de niveau et mode socratique/direct.
-
-% =============================================================
-%                 FICHE D'AUTO-ÉVALUATION
-% =============================================================
 \newpage
 \bibliographystyle{plain}
 \bibliography{references}
