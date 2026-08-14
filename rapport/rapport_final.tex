@@ -120,11 +120,13 @@
 \usepackage[textsize=small,color=yellow!30]{todonotes}
 
 % ===================== NOMS FRANÇAIS (babel-french indisponible) =====================
-\renewcommand{\contentsname}{Sommaire}
-\renewcommand{\listfigurename}{Liste des figures}
-\renewcommand{\listtablename}{Liste des tableaux}
-\renewcommand{\tablename}{Tableau}
-\renewcommand{\refname}{Références}
+\addto\captionsenglish{%
+  \renewcommand{\contentsname}{Sommaire}%
+  \renewcommand{\listfigurename}{Liste des figures}%
+  \renewcommand{\listtablename}{Liste des tableaux}%
+  \renewcommand{\tablename}{Tableau}%
+  \renewcommand{\refname}{Références}%
+}
 \DeclareCaptionLabelSeparator{colonfr}{ : }
 \captionsetup{labelsep=colonfr}
 
