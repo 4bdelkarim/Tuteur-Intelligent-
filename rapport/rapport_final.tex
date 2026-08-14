@@ -194,11 +194,11 @@ This report presents the design and implementation of an intelligent pedagogical
 
 Je tiens à exprimer ma gratitude envers toutes les personnes qui ont contribué à la réalisation de ce projet.
 
-en premier lieu, je remercie chaleureusement M.~Vincent~BARRA, Professeur à l'ISIMA et responsable de ce stage, pour sa disponibilité, ses conseils avisés et la confiance qu'il m'a accordée tout au long de ce projet. Ses orientations m'ont permis de structurer ce travail et d'en approfondir les dimensions techniques avec rigueur.
+Je remercie tout d'abord M.~Jonas~KOKO, responsable de la filière F4, pour m'avoir présenté cette opportunité et permis de réaliser ce stage au sein du LIMOS.
 
-Je remercie également l'ensemble de l'équipe pédagogique de la filière F4 pour la qualité de la formation dispensée, qui m'a fourni les bases théoriques et pratiques nécessaires à la conduite de ce projet, en particulier dans les domaines du traitement automatique du langage naturel et de l'apprentissage profond.
+Je remercie chaleureusement M.~Vincent~BARRA, Professeur à l'ISIMA et tuteur de ce stage, pour son accompagnement tout au long du projet, ses conseils avisés et la confiance qu'il m'a accordée.
 
-Je tiens à remercier le LIMOS pour l'accès à l'infrastructure de calcul ayant permis la phase d'évaluation de ce projet, ainsi que la communauté \textit{open-source} dont les outils et modèles (Ollama, ChromaDB, LangChain, BGE-M3, Qwen) constituent le socle technique de ce travail.
+Je tiens également à remercier M.~William~GUYOT pour sa réactivité et les ressources qu'il a mises en place, qui m'ont permis de travailler dans des conditions optimales tout au long de ce stage.
 
 Enfin, mes remerciements vont à mes camarades de promotion pour les échanges stimulants qui ont jalonné ce semestre, et à ma famille pour son soutien indéfectible.
 
@@ -209,17 +209,12 @@ Enfin, mes remerciements vont à mes camarades de promotion pour les échanges s
 \begin{description}[leftmargin=3.5cm,labelwidth=3cm]
   \item[BM25] \textit{Best Matching 25} --- algorithme de recherche lexicale probabiliste
   \item[CLI]  \textit{Command-Line Interface} --- interface en ligne de commande
-  \item[D2L]  \textit{Dive into Deep Learning} --- manuel de référence (d2l.ai) constituant le corpus principal
   \item[LLM]  \textit{Large Language Model} --- grand modèle de langage
   \item[MRR]  \textit{Mean Reciprocal Rank} --- moyenne de l'inverse du rang
-  \item[MTEB] \textit{Massive Text Embedding Benchmark}
   \item[OCR]  \textit{Optical Character Recognition} --- reconnaissance optique de caractères
   \item[POC]  \textit{Proof of Concept} --- preuve de concept
   \item[RAG]  \textit{Retrieval-Augmented Generation} --- génération augmentée par récupération
   \item[RRF]  \textit{Reciprocal Rank Fusion} --- fusion de rang réciproque
-  \item[RSE]  Responsabilité Sociétale et Environnementale
-  \item[TER]  Travail d'Étude et de Recherche
-  \item[UCA]  Université Clermont Auvergne
   \item[VLM]  \textit{Vision-Language Model} --- modèle vision-langage
 \end{description}
 
@@ -240,18 +235,8 @@ Enfin, mes remerciements vont à mes camarades de promotion pour les échanges s
 \subsection{Présentation du laboratoire d'accueil}
 \label{sec:limos}
 
-Le Laboratoire d'Informatique, de Modélisation et d'Optimisation des Systèmes (LIMOS, UMR~6158) est une unité mixte de recherche du CNRS et de l'Université Clermont Auvergne (UCA), située sur le campus des Cézeaux à Aubière. Créé en 1982, le LIMOS rassemble aujourd'hui plus de 250 membres (chercheurs, enseignants-chercheurs, doctorants et personnels administratifs) répartis en six équipes de recherche.
+Le \textbf{LIMOS (Laboratoire d'Informatique, de Modélisation et d'Optimisation des Systèmes)} est une unité mixte de recherche (UMR 6158) spécialisée en informatique, modélisation et optimisation. Fondé en 1995, il est placé sous la tutelle du \textbf{CNRS, de l'Université Clermont Auvergne (UCA) et de l'École des Mines de Saint-Étienne (EMSE)}, avec la participation de Clermont Auvergne INP. Le laboratoire contribue activement à la recherche et à la formation dans plusieurs domaines, notamment l'algorithmique, l'intelligence artificielle, les données, les réseaux, la sécurité et l'optimisation. Il participe également à plusieurs projets et collaborations scientifiques avec des partenaires académiques et industriels. Le LIMOS compte actuellement \textbf{207 membres}, dont des enseignants-chercheurs, chercheurs, doctorants, postdoctorants et personnels d'appui à la recherche.
 
-Le laboratoire structure ses activités autour de trois axes scientifiques principaux~:
-\begin{itemize}
-  \item \textbf{Systèmes Informatiques et Réseaux}~: optimisation des réseaux, systèmes distribués, cybersécurité~;
-  \item \textbf{Modélisation, Optimisation et Aide à la Décision}~: recherche opérationnelle, optimisation combinatoire, logistique~;
-  \item \textbf{Science des Données et Intelligence Artificielle}~: apprentissage automatique, fouille de données, traitement du langage naturel.
-\end{itemize}
-
-C'est au sein de ce troisième axe que s'inscrit le présent stage, sous la responsabilité de M.~Vincent~BARRA, Professeur à l'ISIMA et chercheur au LIMOS. Ses travaux portent sur l'apprentissage profond, l'analyse de données multimodales et les systèmes de traitement automatique du langage naturel.
-
-Le LIMOS met à disposition de ses chercheurs et stagiaires une infrastructure de calcul mutualisée, dont un serveur équipé d'un GPU NVIDIA H100 NVL (95~Go de VRAM). C'est sur cette infrastructure que l'ensemble des expérimentations du projet a été conduit, en cohérence avec la politique de mutualisation des ressources promue par le laboratoire.
 
 \subsection{Contexte}
 
@@ -297,7 +282,7 @@ Le projet répond à un cahier des charges articulé autour de spécifications f
 \subsubsection{Spécifications techniques}
 
 \begin{enumerate}
-  \item \textbf{Déploiement local}~: l'intégralité du pipeline doit s'exécuter sur l'infrastructure locale du laboratoire, sans dépendance à des API externes payantes.
+  \item \textbf{Déploiement local}~: l'intégralité du pipeline doit s'exécuter localement, sans dépendance à des API externes payantes.
   \item \textbf{Modèles \textit{open-weight}}~: tous les modèles utilisés (OCR, vision, embedding, génération) doivent être libres de droits et exécutables localement.
   \item \textbf{Modularité}~: chaque composant du pipeline doit être indépendant et remplaçable sans impact sur les autres modules.
   \item \textbf{Performance}~: le temps de réponse complet (traitement de la requête + retrieval + génération) ne doit pas excéder 30~secondes par question en conditions normales d'utilisation.
@@ -326,71 +311,14 @@ Le chapitre~\ref{sec:rse} présente les considérations de responsabilité soci�
 
 \subsection{Pratiques RSE du laboratoire d'accueil}
 
-Le Laboratoire d'Informatique, de Modélisation et d'Optimisation des Systèmes (LIMOS, UMR~6158) est une unité mixte de recherche du CNRS et de l'Université Clermont Auvergne. Le laboratoire s'inscrit dans la démarche de développement durable du CNRS, déclinée dans son Plan de Transition Écologique adopté en 2021. Cette démarche se traduit par plusieurs axes concrets~: rationalisation de l'usage des infrastructures de calcul mutualisées (serveurs partagés du mésocentre), politique d'achat de matériel reconditionné pour les postes de travail, et encouragement au calcul éco-responsable via l'optimisation des algorithmes et la réduction des redondances de calcul.
-
-Le projet s'est déroulé sur l'infrastructure mutualisée du laboratoire, contribuant ainsi à une utilisation plus efficace des ressources de calcul existantes plutôt qu'à l'acquisition de matériel dédié supplémentaire.
-
-\subsection{Impact environnemental du projet}
-
-Le choix d'un déploiement entièrement local limite l'empreinte environnementale du projet par rapport à une solution reposant sur des API cloud~: aucune sollicitation de datacenter distant, pas de transfert de données sur le réseau. Les modèles retenus (0,6B à 14B paramètres) sont dimensionnés pour fonctionner sur du matériel accessible, ce qui réduit la consommation énergétique par rapport à des modèles plus volumineux.
-
-\subsubsection{Estimation de la consommation énergétique}
-
-Les phases de calcul intensif du projet se répartissent comme suit~:
-
-\begin{itemize}
-  \item \textbf{Extraction et ingestion}~: exécutées une fois, durée cumulée d'environ 3\,h.
-  \item \textbf{Génération du jeu de données d'évaluation}~: environ 1\,h.
-  \item \textbf{Évaluation complète}~: environ 2\,h.
-\end{itemize}
-
-Pour un total d'environ \textbf{6\,h de calcul GPU}. Le mix électrique français émet environ 50--60\,g de CO\textsubscript{2}eq par kWh (ADEME 2025), ce qui représente un impact carbone négligeable pour l'ensemble du projet.
-
-En comparaison, l'utilisation d'une API cloud (GPT-4o par exemple) aurait engendré des transferts réseau répétés et une consommation dans un datacenter dont le mix énergétique est moins favorable (moyenne mondiale~: $\sim$400\,g CO\textsubscript{2}eq/kWh). Le déploiement local présente donc un double avantage~: économique (coût d'API nul) et environnemental (pas de transfert réseau, mix électrique français).
+Le \textbf{LIMOS} intègre la responsabilité sociale et environnementale dans ses activités en combinant \textbf{éthique scientifique, ouverture des connaissances et développement durable}. Le laboratoire favorise notamment l'\textbf{Open Science} et l'accès libre aux publications, tout en veillant à la confidentialité et à la gestion responsable des données. Il met également en œuvre des actions pour \textbf{réduire son impact environnemental}, notamment par le recyclage du matériel et la prise en compte de la consommation énergétique dans ses choix techniques. Enfin, le LIMOS participe à des \textbf{projets de recherche à vocation durable} et contribue à la sensibilisation du public à travers des événements scientifiques et environnementaux.
 
 \subsection{Bilan carbone des déplacements}
 \label{sec:bilan-carbone}
 
-Le bilan carbone des déplacements a été calculé à l'aide de l'outil officiel de l'ADEME (\url{https://impactco2.fr/outils/transport}), conformément aux recommandations ISIMA. Les déplacements liés au stage se décomposent en deux catégories~:
+Le bilan carbone des déplacements liés au stage a été calculé à l'aide de l'outil officiel de l'ADEME (\url{https://impactco2.fr/outils/transport}), conformément aux recommandations ISIMA.
 
-\paragraph{Trajets domicile--lieu de stage}
-
-Le stage s'est déroulé au LIMOS, sur le campus des Cézeaux à Aubière. Le trajet domicile--campus est d'environ 5\,km, effectué quotidiennement en tramway (ligne A, station «~Campus~») ou à pied. Le Tableau~\ref{tab:carbone-deplacements} synthétise le calcul~:
-
-\begin{table}[H]
-\centering
-\begin{tabularx}{\linewidth}{L{3.5cm} C{2cm} C{2cm} C{2.5cm} C{2.5cm}}
-\toprule
-\rowcolor{bleuPrincipal}
-\textcolor{white}{\textbf{Mode}} &
-\textcolor{white}{\textbf{Distance/jour}} &
-\textcolor{white}{\textbf{Jours}} &
-\textcolor{white}{\textbf{Facteur (gCO\textsubscript{2}eq/km)}} &
-\textcolor{white}{\textbf{Total (kgCO\textsubscript{2}eq)}} \\
-\midrule
-Tramway        & 10\,km (A/R) & 90 jours  & 3,8  & 3,42 \\
-Marche à pied  & 10\,km (A/R) & 10 jours  & 0    & 0    \\
-\midrule
-\textbf{Total} &             &           &      & \textbf{3,42} \\
-\bottomrule
-\end{tabularx}
-\caption{Bilan carbone des déplacements domicile--LIMOS (source~: ADEME Impact CO\textsubscript{2}, \url{impactco2.fr}).}
-\label{tab:carbone-deplacements}
-\end{table}
-
-Le bilan carbone total des déplacements s'élève à environ \textbf{3,4\,kg CO\textsubscript{2}eq} sur l'ensemble de la période de stage, soit l'équivalent d'environ 15\,km en voiture thermique. Ce résultat, très modeste, reflète le choix d'une mobilité douce (transports en commun et marche à pied), cohérent avec la politique de développement durable de l'UCA et du LIMOS.
-
-\paragraph{Déplacements annexes}
-
-Aucun déplacement professionnel supplémentaire (conférence, réunion extérieure) n'a été effectué dans le cadre de ce stage. L'ensemble du projet s'est déroulé sur le site du laboratoire, en télétravail partiel pour les phases de rédaction, limitant ainsi l'empreinte carbone globale.
-
-\paragraph{Bilan carbone global}
-
-Le bilan carbone total du stage se décompose comme suit~:
-\begin{itemize}
-  \item Déplacements domicile--LIMOS~: 3,42\,kg CO\textsubscript{2}eq.
-\end{itemize}
-Soit un total d'environ \textbf{3,4\,kg CO\textsubscript{2}eq} pour l'ensemble du stage, un impact carbone négligeable, représentant moins de 0,04\,\% de l'empreinte carbone annuelle moyenne d'un Français (environ 9\,t CO\textsubscript{2}eq/an).
+Le stage s'est déroulé au LIMOS, sur le campus des Cézeaux à Aubière. Sur la période d'avril au 24 juillet, le trajet domicile--campus était d'environ 5\,km, effectué en tramway. Le bilan carbone total des déplacements s'élève à environ \textbf{2,9\,kg CO\textsubscript{2}eq}, un niveau négligeable reflétant le choix d'une mobilité douce cohérente avec la politique de développement durable de l'UCA et du LIMOS.
 
 
 % =============================================================
@@ -434,7 +362,7 @@ Le diagramme de Gantt prévisionnel (Figure~\ref{fig:gantt-prev}) a été établ
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{images/gantt_previsionnel.png}
+\includegraphics[width=\textwidth]{images/gantt-pre.png}
 \caption{Diagramme de Gantt prévisionnel — Sujet initial GLM-OCR (avril--août 2026).}
 \label{fig:gantt-prev}
 \end{figure}
@@ -446,7 +374,7 @@ La Figure~\ref{fig:gantt-reel} synthétise le déroulement réel du projet, int�
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{images/gantt_realise.png}
+\includegraphics[width=\textwidth]{images/gantt_realise-1.png}
 \caption{Diagramme de Gantt réalisé — Tuteur Pédagogique RAG (avril--août 2026). La réorientation du sujet (Phase~2) marque la transition du projet GLM-OCR initial vers le système RAG final.}
 \label{fig:gantt-reel}
 \end{figure}
@@ -467,7 +395,7 @@ Le déroulement du projet présente un écart majeur par rapport au sujet initia
 \textcolor{white}{\textbf{Impact}} \\
 \midrule
 Périmètre        & Extraction + analyse GLM-OCR & Pipeline RAG complet (extraction, retrieval, génération) & Élargissement significatif du périmètre technique \\
-Corpus            & Base de données multimodale (non disponible) & Cours de Machine Learning (D2L, pages web) & Corpus plus accessible et maîtrisé \\
+Corpus            & Base de données multimodale (non disponible) & Contenu web et PDF & Corpus plus accessible et maîtrisé \\
 Livrable final    & Analyse critique des performances GLM-OCR & Système de tutorat pédagogique fonctionnel + évaluation quantitative & Valorisation opérationnelle du travail \\
 \bottomrule
 \end{tabularx}
@@ -487,10 +415,6 @@ Le sujet initial portait exclusivement sur l'étude et l'évaluation du modèle 
 \paragraph{Impact sur le planning}
 
 La Phase~1 (GLM-OCR) et la Phase~2 (réorientation) représentent un investissement d'environ 7 semaines sur le sujet initial et la transition. Ce temps, bien que conséquent, n'a pas été perdu puisque l'intégralité du travail sur GLM-OCR a été réutilisée dans la phase d'extraction du pipeline RAG. Le planning des Phases~3 et~4 (implémentation et évaluation du RAG) s'est déroulé conformément aux estimations, sans retard notable.
-
-\paragraph{Bilan global}
-
-Le projet a été livré dans les délais impartis (août 2026). La réorientation du sujet, bien que constituant un écart majeur par rapport au descriptif initial, a abouti à un livrable plus riche et plus complet, en parfaite adéquation avec les besoins exprimés par le laboratoire.
 
 \subsection{Environnement technique}
 
@@ -840,7 +764,7 @@ De cette nature des données découlent des exigences d'extraction spécifiques 
 
 Pour les PDF~: (i)~extraction du texte brut, (ii)~extraction structurée des formules mathématiques et des tableaux, (iii)~interprétation sémantique des figures par transcription en langage naturel.
 
-Pour les sites web~: (i)~extraction du texte et conversion en un format structuré exploitable, (ii)~extraction des blocs de code, (iii)~élimination du bruit non pédagogique.
+Pour les sites web~: (i)~extraction du texte et conversion en un format structuré exploitable, (ii)~extraction des blocs de code et des formules mathématiques, (iii)~élimination du bruit non pédagogique.
 
 \subsubsection{Contraintes du projet}
 
@@ -879,7 +803,7 @@ Le pipeline se structure en deux temps~: une phase de préparation des données,
 
 \subsubsection{Conception du traitement des données}
 
-Le traitement des données se compose de deux pipelines d'extraction distincts --- l'un pour les PDF, l'autre pour les pages web --- qui convergent vers une étape commune de normalisation, garantissant que la suite du système manipule un format homogène, indépendamment de la source d'origine. Le pipeline PDF traite trois natures de contenu en parallèle~: le texte brut, les éléments structurés (formules mathématiques, tableaux), et les figures. Le pipeline web traite le texte, les blocs de code, et élimine le bruit structurel du HTML.
+Le traitement des données se compose de deux pipelines d'extraction distincts --- l'un pour les PDF, l'autre pour les pages web --- qui convergent vers une étape commune de normalisation, garantissant que la suite du système manipule un format homogène, indépendamment de la source d'origine. Le pipeline PDF traite trois natures de contenu en parallèle~: le texte brut, les éléments structurés (formules mathématiques, tableaux), et les figures. Le pipeline web traite le texte, les blocs de code, les formules mathématiques, et élimine le bruit structurel du HTML.
 
 \begin{figure}[H]
 \centering
@@ -909,7 +833,7 @@ Une première recherche, optimisée pour parcourir rapidement l'ensemble du corp
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{images/retrieval-sycle.png}
+\includegraphics[width=\linewidth]{images/retrieval_cycle.png}
 \caption{Flux conceptuel du \textit{retrieval}.}
 \label{fig:flux-retrieval}
 \end{figure}
@@ -930,7 +854,7 @@ Le fichier Markdown final est ensuite constitué en insérant les interprétatio
 
 \subsubsection{Extraction --- Web}
 
-L'extraction web repose sur un pipeline personnalisé~: un \textit{scraper} convertit le contenu HTML en Markdown, un \textit{crawler} parcourt l'ensemble des pages pertinentes du site ciblé, et un nettoyeur applique un ensemble de traitements sur le Markdown produit --- suppression des balises de mise en forme non porteuses de sens, remplacement des images par des espaces réservés, normalisation des délimiteurs de formules mathématiques vers un format unique, et exclusion automatique des sections d'exercices. Les blocs de code sont conservés tels quels lors de ce nettoyage.
+L'extraction web repose sur un pipeline personnalisé~: un \textit{scraper} convertit le contenu HTML en Markdown, un \textit{crawler} parcourt l'ensemble des pages pertinentes du site ciblé, et un nettoyeur applique un ensemble de traitements sur le Markdown produit --- suppression des balises de mise en forme non porteuses de sens, remplacement des images par des espaces réservés, normalisation des délimiteurs de formules mathématiques vers un format unique, et exclusion automatique des sections d'exercices. Les blocs de code et les formules mathématiques sont conservés tels quels lors de ce nettoyage.
 
 \subsubsection{\textit{Chunking} parent-enfant}
 
@@ -988,6 +912,13 @@ Le contexte parent (section complète du document source) est transmis au modèl
 
 En amont de la recherche, un module de \textit{query processing} reformule la question de l'étudiant et la décompose en sous-questions indépendantes lorsqu'elle porte sur plusieurs notions distinctes~; chaque sous-question est ensuite recherchée séparément, puis les résultats sont fusionnés avant génération.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/generation_flow.png}
+\caption{Flux de génération pédagogique~: de la question utilisateur à la réponse contextualisée.}
+\label{fig:generation-flow}
+\end{figure}
+
 \subsubsection{Mécanismes de refus}
 
 Deux mécanismes de refus complémentaires encadrent la génération~:
@@ -995,6 +926,13 @@ Deux mécanismes de refus complémentaires encadrent la génération~:
 \textbf{Mécanisme 1 — Refus pré-génération par score du \textit{cross-encoder}} (\texttt{should\_refuse\_reranker})~: avant d'appeler le LLM, le score du meilleur passage récupéré (logit du \textit{cross-encoder}) est comparé à un seuil calibré empiriquement (\texttt{RERANKER\_REFUSAL\_THRESHOLD = 0,1119}, cf.~Section~\ref{sec:calibration}). Si le score est inférieur au seuil, le système refuse sans appeler le LLM, économisant un appel de génération.
 
 \textbf{Mécanisme 2 — Refus post-génération par juge LLM} (\texttt{verify\_answer})~: après la génération, un second LLM (Qwen3~:8B) audite la réponse produite. Il vérifie que chaque affirmation est ancrée dans le contexte fourni, sans ajout d'information provenant de la mémoire paramétrique du modèle de génération. Si une information hors-contexte est détectée, la réponse est remplacée par le message de refus. Ce mécanisme s'inspire du paradigme \textit{Self-RAG}~\cite{singh2025agenticrag} tout en utilisant un modèle séparé pour éviter l'auto-évaluation biaisée.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/refusal_mechanisms.png}
+\caption{Double mécanisme de refus~: refus pré-génération par score du \textit{cross-encoder} (M1) et refus post-génération par juge LLM (M2).}
+\label{fig:refusal-mechanisms}
+\end{figure}
 
 \subsubsection{Interface en ligne de commande (CLI)}
 
@@ -1043,7 +981,7 @@ Les 60~questions sont réparties en un jeu de calibration (15~questions : 10~ans
 
 \subsubsection{Métriques d'évaluation}
 
-L'évaluation combine des métriques de \textit{retrieval} et de refus, complétées par des intervalles de confiance bootstrap à 95\,\% (1000~réplications).
+L'évaluation combine des métriques de \textit{retrieval} et de refus.
 
 \paragraph{Métriques de \textit{retrieval}}
 
@@ -1134,7 +1072,7 @@ nDCG@4     & 0,942 & 0,932 & 0,918 & \textbf{0,939} \\
 Precision@4& 0,308 & 0,375 & 0,392 & \textbf{0,408} \\
 \bottomrule
 \end{tabularx}
-\caption{Performances de \textit{retrieval} aux quatre étapes de l'ablation (30~questions \textit{answerable}). Tous les scores sont accompagnés d'intervalles de confiance bootstrap à 95\,\% (non reproduits ici par lisibilité~; cf.~Figure~\ref{fig:ablation}).}
+\caption{Performances de \textit{retrieval} aux quatre étapes de l'ablation (30~questions \textit{answerable}). }
 \label{tab:resultats-retrieval}
 \end{table}
 
@@ -1143,7 +1081,7 @@ Le Tableau~\ref{tab:resultats-retrieval} montre que le \textit{cross-encoder} es
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{images/fig1_ablation.png}
-\caption{Étude d'ablation~: évolution des métriques de \textit{retrieval} aux quatre étapes. Les barres d'erreur représentent les intervalles de confiance bootstrap à 95\,\%.}
+\caption{Étude d'ablation~: évolution des métriques de \textit{retrieval} aux quatre étapes.}
 \label{fig:ablation}
 \end{figure}
 
@@ -1162,7 +1100,7 @@ MRR        & 0,967 [0,900--1,000] & 0,767 [0,567--0,933] & \textbf{-0,200} \\
 nDCG@4     & 0,981 [0,951--0,997] & 0,897 [0,839--0,950] & -0,084 \\
 \bottomrule
 \end{tabularx}
-\caption{Performances par catégorie pour le système complet (hybride + \textit{cross-encoder}). Intervalles de confiance bootstrap 95\,\% entre crochets.}
+\caption{Performances par catégorie pour le système complet (hybride + \textit{cross-encoder}).}
 \label{tab:categories}
 \end{table}
 
@@ -1204,14 +1142,14 @@ La qualité des réponses générées a été évaluée via le \textit{framework
 \begin{table}[H]
 \centering
 \small
-\begin{tabularx}{\linewidth}{L{5cm} C{3cm} C{3cm}}
+\begin{tabularx}{\linewidth}{L{5cm} C{3cm}}
 \toprule
 \rowcolor{bleuPrincipal}
-\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Score}} & \textcolor{white}{\textbf{IC 95\%}} \\
+\textcolor{white}{\textbf{Métrique}} & \textcolor{white}{\textbf{Score}} \\
 \midrule
-Fidélité (\textit{faithfulness})     & 0,887 & [0,820~--~0,945] \\
-Précision du contexte (\textit{context precision}) & 0,840 & [0,775~--~0,898] \\
-Exactitude factuelle (\textit{custom correctness}, juge 1--5) & 0,786 & [0,714~--~0,857] \\
+Fidélité (\textit{faithfulness})     & 0,887 \\
+Précision du contexte (\textit{context precision}) & 0,840 \\
+Exactitude factuelle (\textit{custom correctness}, juge 1--5) & 0,786 \\
 \bottomrule
 \end{tabularx}
 \caption{Performances de génération sur les 30~questions \textit{answerable} (Run~1, baseline dense).}
@@ -1323,9 +1261,7 @@ Le projet s'est déroulé en deux phases. La première (v1) a livré un pipeline
 \begin{itemize}
   \item \textbf{M2 désactivé en streaming}~: la vérification post-génération nécessite la réponse complète et n'est pas exécutée en mode conversationnel. Seul le M1 protège activement contre les réponses hors-contexte.
 
-  \item \textbf{Détection de changement de sujet non activée}~: la méthode est implémentée mais pas encore branchée dans le flux principal. Elle permettrait de réinitialiser automatiquement la mémoire lors d'un changement radical de sujet.
 
-  \item \textbf{Format de citation encore instable}~: le LLM cite parfois le titre complet de la section au lieu du seul numéro (ex.~: «~[\S{}LSTM]~» au lieu de «~[\S{}10.1]~»). Un raffinement du \textit{prompt} est nécessaire pour garantir des citations compactes et uniformes.
 
   \item \textbf{Score \textit{cross-encoder} limité par le contenu du corpus}~: sur les questions de suivi comparatif, le score du \textit{cross-encoder} reste faible en l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores.
 
@@ -1452,7 +1388,7 @@ BAAI/bge-reranker-v2-m3   # ~600 Mo, téléchargement unique
 \end{verbatim}
 
 \newpage
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \bibliography{references}
 
 \end{document}
