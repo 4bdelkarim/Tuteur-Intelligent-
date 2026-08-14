@@ -119,6 +119,15 @@
 % ===================== TODO NOTES (à supprimer pour la version finale) =====================
 \usepackage[textsize=small,color=yellow!30]{todonotes}
 
+% ===================== NOMS FRANÇAIS (babel-french indisponible) =====================
+\renewcommand{\contentsname}{Sommaire}
+\renewcommand{\listfigurename}{Liste des figures}
+\renewcommand{\listtablename}{Liste des tableaux}
+\renewcommand{\tablename}{Tableau}
+\renewcommand{\refname}{Références}
+\DeclareCaptionLabelSeparator{colonfr}{ : }
+\captionsetup{labelsep=colonfr}
+
 % =============================================================
 \begin{document}
 
@@ -146,16 +155,16 @@
 
 {\large\textbf{Institut Supérieur d'Informatique,}\\\textbf{de Modélisation et de leurs Applications}\par}
 \vspace{0.3cm}
-{\normalsize Rapport de stage de 2\textsuperscript{ème} année\par}
+{\normalsize Rapport de stage de 2e année\par}
 {\normalsize Cycle ingénieur ISIMA\par}
 \vspace{0.3cm}
-{\normalsize\textit{Filière~: F4 --- Optimisation et Intelligence Artificielle}\par}
+{\normalsize\textit{Filière~: F4 --- optimisation et intelligence artificielle}\par}
 
 \vspace{2cm}
 
 {\color{bleuPrincipal}\LARGE\bfseries Tuteur Pédagogique Intelligent\par}
 \vspace{0.4cm}
-{\color{bleuSecondaire}\large Conception et implémentation d'un tuteur IA à base d'un système RAG\par}
+{\color{bleuSecondaire}\large Conception et implémentation d'un tuteur IA fondé sur un système RAG\par}
 
 \vspace{2.5cm}
 
@@ -166,7 +175,7 @@
 \textbf{Laboratoire d'accueil} & LIMOS --- Clermont-Ferrand \\
 \textbf{Adresse}               & 1 rue de la Chebarde, 63178 Aubière \\
 \textbf{Date de présentation}  & 24 août 2026 \\
-\textbf{Durée du stage}        & Avril -- Août 2026 \\
+\textbf{Durée du stage}        & avril -- août 2026 \\
 \bottomrule
 \end{tabular}
 
@@ -179,7 +188,7 @@
 {\color{bleuSecondaire}\textbf{LIMOS} --- UMR 6158 CNRS / Université Clermont Auvergne\par}
 
 {\footnotesize\color{grisTexte}
-Version du \today
+Version du 14 août 2026
 }
 
 \end{titlepage}
@@ -341,7 +350,7 @@ Le stage s'est déroulé au LIMOS, sur le campus des Cézeaux à Aubière. Sur l
 \subsection{Évolution du sujet}
 \label{sec:evolution-sujet}
 
-Le sujet initialement proposé pour ce stage portait sur l'analyse multimodale de documents numérisés par des méthodes d'Intelligence Artificielle frugales. L'objectif était d'étudier une méthode multimodale récente, GLM-OCR, pour implémenter une solution locale et souveraine d'extraction et de structuration de connaissances à partir d'une base de données multimodale de documents. Les étapes prévues comportaient~:
+Le sujet initialement proposé pour ce stage portait sur l'analyse multimodale de documents numérisés par des méthodes d'intelligence artificielle frugales. L'objectif était d'étudier une méthode multimodale récente, GLM-OCR, pour implémenter une solution locale et souveraine d'extraction et de structuration de connaissances à partir d'une base de données multimodale de documents. Les étapes prévues comportaient~:
 
 \begin{itemize}
   \item une revue de l'état de l'art dans le domaine~;
@@ -1274,7 +1283,7 @@ Le projet s'est déroulé en deux phases. La première (v1) a livré un pipeline
 
 
 
-  \item \textbf{Score \textit{cross-encoder} limité par le contenu du corpus}~: sur les questions de suivi comparatif, le score du \textit{cross-encoder} reste faible en l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores.
+  \item \textbf{Score \textit{cross-encoder} limité par le contenu du corpus}~: sur les questions de suivi comparatives, le score du \textit{cross-encoder} reste faible en l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores.
 
   \item \textbf{Évaluation multi-tour absente}~: les métriques actuelles sont conçues pour des questions isolées. Une évaluation spécifique au multi-tour (rétention de contexte, cohérence inter-tours) reste à développer.
 

@@ -59,7 +59,7 @@ Historique $>$ 4000 tokens & Les tours les plus anciens sont supprimés (minimum
 \label{fig:compression-memoire}
 \end{figure}
 
-Le résumé par LLM produit des synthèses denses et pertinentes. Par exemple, après plusieurs tours d'échange sur les LSTM, le résumé capture l'essentiel : \textit{<< L'étudiant a exploré les LSTM, leurs portes (oubli, entrée, sortie) et la différence avec les RNN classiques. >>}
+Le résumé par LLM produit des synthèses denses et pertinentes. Par exemple, après plusieurs tours d'échange sur les LSTM, le résumé capture l'essentiel : \textit{« L'étudiant a exploré les LSTM, leurs portes (oubli, entrée, sortie) et la différence avec les RNN classiques. »}
 
 \subsubsection{Formatage et injection dans le prompt}
 
@@ -93,7 +93,7 @@ Le prompt du tuteur (\texttt{TUTOR\_SYSTEM\_PROMPT}, dans \texttt{conversation/p
 \textbf{Posture}    & Réponse directe et factuelle & Expliquer, puis relancer \\
 \textbf{Structure}  & Une réponse, pas de dialogue & Deux temps : explication + question \\
 \textbf{Adaptation} & Aucune                      & Détection du niveau (débutant/intermédiaire/avancé) \\
-\textbf{Erreur}     & Non gérée                   & \textit{<< Presque ! Il y a une nuance... >>} \\
+\textbf{Erreur}     & Non gérée                   & \textit{« Presque ! Il y a une nuance... »} \\
 \textbf{Blocage}    & Non géré                    & Simplification avec analogie \\
 \textbf{Ancrage}    & Citations [\S{}X.Y]            & Citations [\S{}X.Y] (identique) \\
 \textbf{Refus}      & Phrase de refus stricte     & Phrase de refus stricte (identique) \\
@@ -116,7 +116,7 @@ Le streaming est implémenté via \texttt{chat\_stream()} dans \texttt{llm\_clie
 \subsection{Query processing contextuel}
 \label{sec:qp-contextuel}
 
-Dans la version 2 initiale, le \textit{query processing} (reformulation et décomposition de la question) opérait sans connaissance de l'historique de conversation. Une question comme \textit{<< compare-la avec le CNN >>} était reformulée sans savoir que le pronom \textit{<< la >>} désignait une LSTM. Le LLM comprenait la référence uniquement via l'historique injecté dans le prompt de génération --- mais le \textit{retrieval}, qui intervient avant la génération, utilisait une requête ambiguë.
+Dans la version 2 initiale, le \textit{query processing} (reformulation et décomposition de la question) opérait sans connaissance de l'historique de conversation. Une question comme \textit{« compare-la avec le CNN »} était reformulée sans savoir que le pronom \textit{« la »} désignait une LSTM. Le LLM comprenait la référence uniquement via l'historique injecté dans le prompt de génération --- mais le \textit{retrieval}, qui intervient avant la génération, utilisait une requête ambiguë.
 
 La version 2 finale introduit le \textbf{\textit{query processing} contextuel} : l'historique de conversation est désormais transmis au module \texttt{process\_query()} en plus du \texttt{generator}. Le system prompt du QP a été enrichi pour instruire le LLM de résoudre les anaphores et références implicites avant la reformulation.
 
@@ -142,7 +142,7 @@ def process_query(query, history=None, model=None):
     raw = chat(_SYSTEM_PROMPT, user_message)
 \end{lstlisting}
 
-Le system prompt du QP inclut désormais une instruction explicite de résolution d'anaphores : \textit{<< Si un HISTORIQUE DE CONVERSATION est fourni, utilise-le pour résoudre les références implicites (pronoms, anaphores, ellipses) AVANT de reformuler. >>}
+Le system prompt du QP inclut désormais une instruction explicite de résolution d'anaphores : \textit{« Si un HISTORIQUE DE CONVERSATION est fourni, utilise-le pour résoudre les références implicites (pronoms, anaphores, ellipses) AVANT de reformuler. »}
 
 L'impact de cette amélioration est analysé dans la section validation (\ref{sec:validation-qp}).
 
@@ -151,7 +151,7 @@ L'impact de cette amélioration est analysé dans la section validation (\ref{se
 \begin{itemize}
   \item \textbf{M2 désactivé en streaming} : la vérification post-génération nécessite la réponse complète et n'est pas exécutée en mode streaming. Seul le M1 protège activement contre les réponses hors-contexte en mode conversationnel.
 
-  \item \textbf{Score reranker limité par le contenu du corpus} : le QP contextuel résout correctement les anaphores (cf. section~\ref{sec:validation-qp}), mais le score du cross-encoder reste limité par l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores sur les questions de type follow-up comparatif.
+  \item \textbf{Score reranker limité par le contenu du corpus} : le QP contextuel résout correctement les anaphores (cf. Section~\ref{sec:validation-qp}), mais le score du cross-encoder reste limité par l'absence de contenu explicitement comparatif dans le corpus. L'enrichissement du corpus avec des sections dédiées aux comparaisons d'architectures améliorerait les scores sur les questions de suivi (*follow-up*) comparatives.
 
   \item \textbf{Évaluation multi-tour absente} : les métriques actuelles (Hit@k, MRR, refus) sont conçues pour un dataset de questions isolées. Une évaluation spécifique au multi-tour (métriques de rétention de contexte, de cohérence inter-tours) reste à développer.
 \end{itemize}
@@ -191,7 +191,7 @@ Pour valider le fonctionnement du tuteur conversationnel, une session de test a 
 
 \subsubsection{Question 1 : question initiale}
 
-La première question est une demande d'explication ouverte : \textit{<< c'est quoi une LSTM ? >>}. Le système doit retrouver les passages pertinents, générer une explication structurée avec citations, et terminer par une relance socratique.
+La première question est une demande d'explication ouverte : \textit{« c'est quoi une LSTM ? »}. Le système doit retrouver les passages pertinents, générer une explication structurée avec citations, et terminer par une relance socratique.
 
 \begin{table}[H]
 \centering
@@ -214,7 +214,7 @@ Temps de génération     & 4,0 s  & Confortable pour l'interactif \\
 
 \subsubsection{Question 2 : suivi avec référence implicite}
 
-La seconde question est un follow-up : \textit{<< compare-la avec le CNN >>}. Sans mémoire conversationnelle, le pronom \textit{<< la >>} serait inintelligible pour le système. Avec la mémoire active, le tuteur comprend que la référence désigne la LSTM du tour précédent.
+La seconde question est une question de suivi (*follow-up*) : \textit{« compare-la avec le CNN »}. Sans mémoire conversationnelle, le pronom \textit{« la »} serait inintelligible pour le système. Avec la mémoire active, le tuteur comprend que la référence désigne la LSTM du tour précédent.
 
 \begin{table}[H]
 \centering
@@ -225,7 +225,7 @@ La seconde question est un follow-up : \textit{<< compare-la avec le CNN >>}. Sa
 \midrule
 Query processing         & 1 reformulée + 2 sous-questions & La décomposition fonctionne malgré une question courte \\
 Score reranker (top)     & 0,488  & Correct mais 2$\times$ plus faible que Q1 --- attendu pour une question comparative \\
-Score reranker (moy, étendue) & 0,336 [0,145--0,494] & Le sujet << CNN vs LSTM >> est plus dispersé dans le corpus \\
+Score reranker (moy, étendue) & 0,336 [0,145--0,494] & Le sujet « CNN vs LSTM » est plus dispersé dans le corpus \\
 Contextes               & 4 (4 parents uniques) & Bonne diversité malgré des scores plus bas \\
 Volume contextes        & 13 513 car. & Contexte abondant, compense les scores moyens \\
 Longueur réponse        & 2 987 car. & Réponse très complète (comparaison structurée) \\
@@ -243,7 +243,7 @@ Cette session de validation met en évidence trois points :
 \begin{enumerate}
   \item \textbf{La mémoire conversationnelle fonctionne} : le tuteur a correctement interprété la question de suivi en résolvant la référence implicite grâce à l'historique.
 
-  \item \textbf{Le score reranker baisse sur les follow-ups} : 0,986 $\rightarrow$ 0,488. Cette dégradation est attendue pour les questions comparatives, qui mobilisent des passages plus dispersés dans le corpus. Le \textit{query processing} compense partiellement en générant des sous-questions plus ciblées.
+  \item \textbf{Le score reranker baisse sur les questions de suivi} : 0,986 $\rightarrow$ 0,488. Cette dégradation est attendue pour les questions comparatives, qui mobilisent des passages plus dispersés dans le corpus. Le \textit{query processing} compense partiellement en générant des sous-questions plus ciblées.
 
   \item \textbf{L'évaluation en temps réel est un outil de diagnostic} : sans \texttt{--show-eval}, la baisse de qualité du retrieval entre Q1 et Q2 serait invisible. Le rapport par question rend cette information accessible et actionnable pour l'amélioration du retriever.
 \end{enumerate}
@@ -251,7 +251,7 @@ Cette session de validation met en évidence trois points :
 \subsubsection{Impact du QP contextuel}
 \label{sec:validation-qp}
 
-Pour mesurer l'effet du \textit{query processing} contextuel (section~\ref{sec:qp-contextuel}), la même session de test a été exécutée avant et après l'activation de cette fonctionnalité. Le Tableau~\ref{tab:qp-comparaison} présente les résultats comparés pour la question de suivi (Q2).
+Pour mesurer l'effet du \textit{query processing} contextuel (Section~\ref{sec:qp-contextuel}), la même session de test a été exécutée avant et après l'activation de cette fonctionnalité. Le Tableau~\ref{tab:qp-comparaison} présente les résultats comparés pour la question de suivi (Q2).
 
 \begin{table}[H]
 \centering
@@ -266,7 +266,7 @@ Pour mesurer l'effet du \textit{query processing} contextuel (section~\ref{sec:q
 Score reranker (top)     & 0,488 & 0,491 & +0,003 (quasi identique) \\
 Score reranker (moy)     & 0,336 & 0,294 & $-$0,042 \\
 Overlap lexical          & 0\,\% (0/1) & \textbf{100\,\% (2/2)} & \textbf{+100 pts} \\
-Requête reformulée       & <<~Comparez les réseaux...~>> (vague) & <<~Comparer les performances LSTM vs CNN~>> (désambiguïsée) & Anaphore résolue \\
+Requête reformulée       & «~Comparez les réseaux...~» (vague) & «~Comparer les performances LSTM vs CNN~» (désambiguïsée) & Anaphore résolue \\
 Temps de génération      & 8,6 s & 12,8 s & +4,2 s \\
 \bottomrule
 \end{tabularx}
@@ -277,7 +277,7 @@ Temps de génération      & 8,6 s & 12,8 s & +4,2 s \\
 Deux enseignements se dégagent de cette comparaison :
 
 \begin{enumerate}
-  \item \textbf{L'anaphore est résolue} : l'overlap lexical passe de 0\,\% à 100\,\%, confirmant que la requête reformulée contient désormais les termes explicites (LSTM, CNN) présents dans les contextes. La requête reformulée mentionne explicitement <<~LSTM~>> et <<~CNN~>> là où la version sans QP contextuel produisait une formulation vague.
+  \item \textbf{L'anaphore est résolue} : l'overlap lexical passe de 0\,\% à 100\,\%, confirmant que la requête reformulée contient désormais les termes explicites (LSTM, CNN) présents dans les contextes. La requête reformulée mentionne explicitement «~LSTM~» et «~CNN~» là où la version sans QP contextuel produisait une formulation vague.
 
-  \item \textbf{Le score reranker n'augmente pas} : malgré une requête parfaitement désambiguïsée, le score du cross-encoder reste stable (0,488 $\rightarrow$ 0,491). Ce résultat indique que le facteur limitant n'est pas la qualité de la requête, mais le \textbf{contenu du corpus lui-même} : le cours ne contient pas de section dédiée à la comparaison directe des architectures LSTM et CNN. Les passages récupérés décrivent chaque architecture séparément, et le cross-encoder leur attribue des scores moyens car ils ne répondent que partiellement à la question comparative. L'amélioration du retrieval sur les follow-ups comparatifs nécessiterait donc un enrichissement du corpus plutôt qu'une amélioration du QP.
+  \item \textbf{Le score reranker n'augmente pas} : malgré une requête parfaitement désambiguïsée, le score du cross-encoder reste stable (0,488 $\rightarrow$ 0,491). Ce résultat indique que le facteur limitant n'est pas la qualité de la requête, mais le \textbf{contenu du corpus lui-même} : le cours ne contient pas de section dédiée à la comparaison directe des architectures LSTM et CNN. Les passages récupérés décrivent chaque architecture séparément, et le cross-encoder leur attribue des scores moyens car ils ne répondent que partiellement à la question comparative. L'amélioration du retrieval sur les questions de suivi comparatives nécessiterait donc un enrichissement du corpus plutôt qu'une amélioration du QP.
 \end{enumerate}
