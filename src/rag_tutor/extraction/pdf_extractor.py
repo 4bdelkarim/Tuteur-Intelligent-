@@ -62,8 +62,6 @@ IMAGE_PATH_KEYS = ["image_path", "img_path", "image", "crop_path"]  # crop figur
 
 FIGURE_LABELS  = {"image", "chart", "figure", "picture", "img"}     # regions figure
 CAPTION_LABELS = {"figure_title", "table_title", "caption"}         # legendes / sous-legendes
-TITLE_LABELS   = {"paragraph_title", "title", "section_title", "doc_title"}  # titres de section
-DROP_LABELS    = {"header", "footer", "page_number", "page-number", "footnote_sep"}
 # Legende PRINCIPALE (delimite une planche) : "FIGURE 3-4 ...", "TABLE .1 ..."
 MAIN_CAPTION_RE = re.compile(r"^\s*(figure|table|tableau)\s+[\.\dIVX]", re.IGNORECASE)
 # Legende de TABLEAU (pas une figure) : "TABLE .1", "Tableau 2" -> a garder comme texte
@@ -240,14 +238,6 @@ def _cut_fence(raw):
     """GLM-OCR repete le contenu dans un bloc ```markdown : on coupe au premier fence."""
     return re.split(r"```", raw, maxsplit=1)[0].strip()
 
-def _first_formula(raw):
-    m = re.search(r"\$\$.*?\$\$", raw, re.DOTALL)
-    return m.group(0).strip() if m else raw
-
-def _first_table(raw):
-    m = re.search(r"<table\b.*?</table>", raw, re.DOTALL | re.IGNORECASE)
-    return m.group(0).strip() if m else raw
-
 def _dedupe_lines(raw):
     """Supprime les lignes consecutives strictement identiques (boucle du modele)
     ainsi qu'une ligne finale tronquee (repetition coupee par num_predict)."""
@@ -261,114 +251,26 @@ def _dedupe_lines(raw):
         out.append(line)
     return "\n".join(out)
 
-def clean_content(lab, raw):
-    """Retourne le contenu propre d'une region selon son type semantique.
-
-    GLM-OCR repete le contenu dans des blocs ```markdown, duplique formules et
-    tables, et laisse parfois fuiter ses instructions OCR dans les titres ;
-    on garde l'occurrence canonique (la premiere)."""
+def clean_caption(raw):
+    """Nettoie une legende OCR : coupe au premier fence ``` puis dedoublonne
+    les lignes (le modele repete la legende en boucle)."""
     raw = (raw or "").strip()
     if not raw:
         return ""
-    if lab in ("display_formula", "inline_formula"):
-        return _first_formula(_cut_fence(raw))
-    if lab == "table" or raw.lstrip().startswith("<table"):
-        return _first_table(raw)
-    if lab == "algorithm":
-        # le texte markdown est la forme canonique ; la table HTML qui suit est un doublon
-        return _cut_fence(raw.split("<table", 1)[0])
-    if lab in TITLE_LABELS:
-        # un titre = sa PREMIERE ligne (le reste est doublon ou fuite d'instructions OCR)
-        return _cut_fence(raw).splitlines()[0].strip()
-    if lab in CAPTION_LABELS:
-        # une legende = sa premiere occurrence (le modele repete la ligne, cf. OCR page entiere)
-        return _dedupe_lines(_cut_fence(raw)).strip()
-    return _cut_fence(raw)
-
-
-# Prefixe de titre numerote : "1-", "1.1-", "3.10.2-.1"  -> profondeur = nb de niveaux
-_HEADING_PREFIX = re.compile(r"^\s*(\d+(?:\.\d+)*)-(?:\.(\d+))?\s")
-
-def format_heading(content):
-    """Titre de section -> '#'*n selon la profondeur, en gardant le prefixe numerote."""
-    content = re.sub(r"^#{1,6}\s*", "", content.strip())   # GLM-OCR prefixe deja en ##
-    m = _HEADING_PREFIX.match(content)
-    if not m:
-        return f"## {content}"                       # titre sans prefixe (ex. SOMMAIRE)
-    depth = m.group(1).count(".") + 1                 # 1- ->1 | 1.1- ->2 | 3.10.2- ->3
-    if m.group(2):                                    # variante 3.10.2-.1  -> +1 niveau
-        depth += 1
-    level = min(depth + 1, 6)                         # niveau 1 -> ## ; plafond ######
-    return f"{'#' * level} {content}"
-
-
-# --- Conversion table HTML (sortie GLM-OCR) -> table Markdown (LaTeX des cellules preserve) ---
-from html.parser import HTMLParser
-
-class _TableParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.rows, self._row, self._cell, self._in = [], None, None, False
-    def handle_starttag(self, tag, attrs):
-        if tag == "tr":
-            self._row = []
-        elif tag in ("td", "th"):
-            self._cell, self._in = [], True
-    def handle_endtag(self, tag):
-        if tag == "tr" and self._row is not None:
-            self.rows.append(self._row); self._row = None
-        elif tag in ("td", "th") and self._row is not None:
-            self._row.append("".join(self._cell).strip()); self._in = False
-    def handle_data(self, data):
-        if self._in:
-            self._cell.append(data)
-
-def html_table_to_md(html):
-    """<table><tr><td>..</td></tr></table>  ->  table Markdown pipe.
-       Les '|' des cellules (ex. |z| en LaTeX) sont echappes ; le LaTeX est garde tel quel."""
-    p = _TableParser()
-    try:
-        p.feed(html)
-    except Exception:
-        return html                                   # parsing rate -> on garde le HTML
-    rows = [r for r in p.rows if r]
-    if not rows:
-        return html
-    ncol = max(len(r) for r in rows)
-    def line(cells):
-        cells = [c.replace("|", r"\|").replace("\n", " ") for c in cells]
-        cells += [""] * (ncol - len(cells))
-        return "| " + " | ".join(cells) + " |"
-    md = [line(rows[0]), "| " + " | ".join(["---"] * ncol) + " |"]
-    md += [line(r) for r in rows[1:]]
-    return "\n".join(md)
+    return _dedupe_lines(_cut_fence(raw)).strip()
 
 
 # =====================================================
-# Assemblage du markdown unifie  (PUR : injection VLM par callback)
+# Appariement figures / sous-legendes  (PUR : injection VLM par callback)
 # =====================================================
-
-def _extract_pages(jr):
-    """Le JSON du CLI peut etre une liste de pages, ou un dict qui la contient."""
-    if isinstance(jr, list):
-        return jr
-    if isinstance(jr, dict):
-        for k in ("pages", "json_result", "result", "data"):
-            if isinstance(jr.get(k), list):
-                return jr[k]
-        for v in jr.values():                 # sinon : premiere valeur liste
-            if isinstance(v, list):
-                return v
-    return []
-
 
 def _pair_subfigures(figs, subs):
     """Associe chaque figure a la sous-legende la plus proche EN DESSOUS (recouvrement horizontal).
        Renvoie une liste ordonnee de (region, sous_legende).
 
        L'ordre de lecture gauche->droite est celui du champ `index` de GLM-OCR
-       (les regions arrivent deja triees par index dans build_markdown). Un tri
-       par bbox seul reordonne mal les figures d'une meme ligne (ex. FIGURE 4-9)."""
+       (les regions arrivent deja triees). Un tri par bbox seul reordonne mal
+       les figures d'une meme ligne (ex. FIGURE 4-9)."""
     panels, used = [], set()
     for f in figs:
         fb = region_bbox(f)
@@ -385,7 +287,7 @@ def _pair_subfigures(figs, subs):
             gap = sb[1] - fb[3]                                  # ecart vertical (sous-leg sous la figure)
             if x_overlap > 0 and -10 <= gap < best_gap:
                 best, best_gap = i, gap
-        label = clean_content("figure_title", region_text(subs[best])) if best is not None else ""
+        label = clean_caption(region_text(subs[best])) if best is not None else ""
         if best is not None:
             used.add(best)
         panels.append((f, label))
@@ -402,87 +304,6 @@ def _figure_description(pnum, figs, subs, caption, describe_fn):
     if not panels:
         return None
     return describe_fn(pnum, panels, caption)
-
-def _emit_figure(out, figs, subs, caption, pnum, describe_fn):
-    """Ecrit le bloc [FIGURE] (legende + description) dans `out` (liste de lignes)."""
-    desc = _figure_description(pnum, figs, subs, caption, describe_fn)
-    if desc is None:
-        return
-    out.append("")                          # bloc isole
-    out.append("--- [FIGURE] ---")
-    if caption:
-        out.append(caption)                 # on garde la VRAIE legende (ancrage)
-    out.append(desc)
-    out.append("--- [/FIGURE] ---")
-    out.append("")
-
-
-def build_markdown(json_result, source_id, describe_fn, skip_pages=None):
-    """describe_fn(page_num, panels, caption) -> description figure.
-    panels = liste de (region, sous_legende) ; chaque region porte son image_path
-    (crop deja fait par GLM-OCR). Regroupe les sous-figures par legende principale.
-    describe_fn injectable -> testable sans VLM ni PDF reels.
-
-    skip_pages : ensemble de numeros de page (1-indexes) a EXCLURE. Par defaut
-    (None) -> AUCUNE page n'est sautee (DEFAULT_SKIP_PAGES = set()). C'est un
-    choix explicite par PDF (--skip-pages en CLI), jamais une regle automatique."""
-    skip = DEFAULT_SKIP_PAGES if skip_pages is None else skip_pages
-    pages = _extract_pages(json_result)
-    out = ["---", "source_type: pdf", f"source_id: {source_id}",
-           f"page_count: {len(pages)}", "---", ""]
-
-    for pnum, page in enumerate(pages, start=1):
-        if pnum in skip:
-            continue
-        regions = page if isinstance(page, list) else page.get("regions", page.get("blocks", []))
-        regions = sorted(regions, key=lambda r: r.get("index", 0) if isinstance(r, dict) else 0)
-        out.append(f"<!-- loc page={pnum} -->")
-
-        figs, subs = [], []                 # planche en cours d'accumulation
-        def flush(caption=""):
-            nonlocal figs, subs
-            if figs:
-                _emit_figure(out, figs, subs, caption, pnum, describe_fn)
-            figs, subs = [], []
-
-        for reg in regions:
-            lab = region_type(reg)
-            if lab in DROP_LABELS:
-                continue
-            if lab in FIGURE_LABELS:
-                figs.append(reg)
-            elif lab in CAPTION_LABELS:
-                content = clean_content(lab, region_text(reg))
-                if TABLE_CAPTION_RE.match(content):
-                    # legende de TABLEAU -> texte (elle suit la table deja emise)
-                    flush()
-                    out.append(content)
-                    out.append("")
-                elif MAIN_CAPTION_RE.match(content):
-                    flush(content)          # legende de figure -> ferme la planche
-                else:
-                    subs.append(reg)        # sous-legende (a)(b)... -> dans la planche
-            else:                            # titre / texte / formule / table / algorithme
-                content = clean_content(lab, region_text(reg))
-                if not content:
-                    continue
-                flush()                      # securite d'ordre si figures en attente
-                if lab in TITLE_LABELS:
-                    out.append("")
-                    out.append(format_heading(content))
-                    out.append("")
-                elif lab == "table" or content.lstrip().startswith("<table"):
-                    out.append("")
-                    out.append(html_table_to_md(content))   # HTML -> markdown (LaTeX preserve)
-                    out.append("")
-                else:
-                    out.append(content)
-                    out.append("")           # paragraphes aeres (ligne vide entre chacun)
-        flush()                              # fin de page : planche sans legende explicite
-        out.append("")
-
-    return tidy("\n".join(out))
-
 
 # =====================================================
 # Assemblage markdown depuis l'OCR PAGE ENTIERE  (PUR : injection VLM par callback)
@@ -557,9 +378,9 @@ def _build_figure_blocks(pnum, page, describe_fn):
     text_captions = _extract_captions(page["text"])
     ocr_captions = page.get("captions", [])
     sub_caps = [c for c in ocr_captions
-                if SUB_CAPTION_RE.match(clean_content("figure_title", c["content"]))]
+                if SUB_CAPTION_RE.match(clean_caption(c["content"]))]
     main_caps = [c["content"] for c in ocr_captions
-                 if MAIN_CAPTION_RE.match(clean_content("figure_title", c["content"]))]
+                 if MAIN_CAPTION_RE.match(clean_caption(c["content"]))]
     blocks = []
     for k, cluster in enumerate(clusters):
         if k < len(text_captions):
@@ -594,8 +415,8 @@ def build_markdown_fullpage(result, source_id, describe_fn, skip_pages=None):
     """Assemble le markdown final depuis l'OCR page entiere.
 
     describe_fn(page_num, panels, caption) -> description figure, injectable et
-    testable (meme contrat que build_markdown). Le texte vient de l'OCR page
-    entiere (propre) ; les figures viennent du layout, les legendes du texte."""
+    testable (sans VLM ni PDF reels). Le texte vient de l'OCR page entiere
+    (propre) ; les figures viennent du layout, les legendes du texte."""
     skip = DEFAULT_SKIP_PAGES if skip_pages is None else skip_pages
     pages = result["pages"]
     out = ["---", "source_type: pdf", f"source_id: {source_id}",

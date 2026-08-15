@@ -33,7 +33,11 @@ import re
 import argparse
 import unicodedata
 from pathlib import Path
-from html.parser import HTMLParser
+
+try:
+    from ._html_table import html_table_to_md
+except ImportError:  # execute comme script autonome (python normalizer.py)
+    from _html_table import html_table_to_md
 
 # =====================================================
 # FRONT-MATTER
@@ -149,46 +153,12 @@ def unify_headers(text):
 # TABLES : HTML -> markdown (si jamais un ancien PDF en contient)
 # =====================================================
 
-class _TableParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.rows, self._row, self._cell, self._in = [], None, None, False
-    def handle_starttag(self, tag, attrs):
-        if tag == "tr": self._row = []
-        elif tag in ("td", "th"): self._cell, self._in = [], True
-    def handle_endtag(self, tag):
-        if tag == "tr" and self._row is not None:
-            self.rows.append(self._row); self._row = None
-        elif tag in ("td", "th") and self._row is not None:
-            self._row.append("".join(self._cell).strip()); self._in = False
-    def handle_data(self, data):
-        if self._in: self._cell.append(data)
-
-
-def _html_table_to_md(html):
-    p = _TableParser()
-    try:
-        p.feed(html)
-    except Exception:
-        return html
-    rows = [r for r in p.rows if r]
-    if not rows:
-        return html
-    ncol = max(len(r) for r in rows)
-    def line(cells):
-        cells = [c.replace("|", r"\|").replace("\n", " ") for c in cells]
-        cells += [""] * (ncol - len(cells))
-        return "| " + " | ".join(cells) + " |"
-    md = [line(rows[0]), "| " + " | ".join(["---"] * ncol) + " |"] + [line(r) for r in rows[1:]]
-    return "\n".join(md)
-
-
 HTML_TABLE_RE = re.compile(r'<table\b.*?</table>', re.DOTALL | re.IGNORECASE)
 
 
 def unify_tables(text):
     """<table>...</table> -> markdown pipe table. Idempotent (aucun <table> -> inchange)."""
-    return HTML_TABLE_RE.sub(lambda m: _html_table_to_md(m.group(0)), text)
+    return HTML_TABLE_RE.sub(lambda m: html_table_to_md(m.group(0)), text)
 
 
 # =====================================================

@@ -25,7 +25,6 @@ Usage :
   python clean_web_markdown.py markdown_raw/ --out markdown_clean/
   python clean_web_markdown.py markdown_raw/ --out markdown_clean/ --keep-exercises
 """
-import os
 import re
 import argparse
 import unicodedata

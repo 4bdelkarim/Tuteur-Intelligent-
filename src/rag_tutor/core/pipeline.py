@@ -25,7 +25,7 @@ prevu depuis le debut de cette refonte.
 from dataclasses import dataclass
 
 from .query_processing import process_query
-from .retriever import retrieve, merge_dedup
+from .retriever import retrieve
 from .refusal_gate import should_refuse_reranker
 from .generator import generate, generate_stream, verify_answer, DEFAULT_SYSTEM_PROMPT, REFUSAL_MESSAGE
 
@@ -133,7 +133,6 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
 
     # --- Mode streaming : bypass M2 (necessite la reponse complete) ---
     if stream:
-        from types import GeneratorType
         return RAGResult(
             query=query, rewritten_query=rewritten, sub_queries=sub_queries,
             hits=all_hits, contexts=[h["text"] for h in all_hits],

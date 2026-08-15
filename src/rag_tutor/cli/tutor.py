@@ -21,7 +21,6 @@ Usage :
 
 import argparse
 import time
-import sys
 
 from ..core.pipeline import answer as pipeline_answer
 from ..core.generator import REFUSAL_MESSAGE
