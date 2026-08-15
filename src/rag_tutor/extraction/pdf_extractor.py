@@ -3,17 +3,19 @@
 extract_glmocr_layout.py — PDF (natif OU scanne) -> markdown unifie, via GLM-OCR SDK.
 
 Pipeline :
-  GLM-OCR SDK self-hosted  (PP-DocLayout-V3 sur CPU + OCR GLM-OCR via Ollama)
-    -> JSON page-structure : regions + bbox normalisees 0-1000
+  GLM-OCR SDK self-hosted  (PP-DocLayout-V3 + OCR GLM-OCR via Ollama)
+    -> JSON page-structure : regions + bbox normalisees 0-1000 + image_path
+       (les figures sont DEJA detectees ET croppees par GLM-OCR)
   Post-traitement (ce fichier) :
-    - regions texte/titre/formule/table  -> markdown tel quel (LaTeX propre de GLM-OCR)
-    - regions FIGURE                     -> crop du bbox (PyMuPDF) -> VLM qwen2.5vl -> bloc [FIGURE]
+    - regions texte/titre/formule/table  -> markdown (LaTeX propre de GLM-OCR, bruit nettoye)
+    - regions FIGURE                     -> image_path (crop GLM-OCR, PAS de re-crop PyMuPDF)
+                                            -> VLM qwen3-vl:8b -> bloc [FIGURE]
   -> markdown unifie : front-matter + <!-- loc page=N --> + blocs [FIGURE] atomiques
 
 Prerequis :
-  pip install "glmocr[selfhosted]" pymupdf ollama
-  # backend OCR : Ollama servant glm-ocr (endpoint OpenAI-compatible :11434/v1)
-  # config.yaml : maas.enabled=false, enable_layout=true, layout.device=cpu, ocr_api->11434
+  pip install "glmocr[selfhosted]" ollama   # pymupdf optionnel (fallback crop seulement)
+  # backend OCR : Ollama servant glm-ocr sur 127.0.0.1:11434 (config.yaml, api_mode=ollama_generate)
+  # le device du layout est pilote par config.yaml (pipeline.layout.device), pas force en CLI
 
   # 1) VERIFIER le schema JSON reel d'abord (indispensable) :
   python extract_glmocr_layout.py cours.pdf --config config.yaml --inspect
@@ -42,9 +44,14 @@ CROP_DPI  = 200
 DEFAULT_SKIP_PAGES = set()
 
 # --- Schema REEL du JSON GLM-OCR (confirme via --inspect) ---
-TYPE_KEYS = ["label", "category", "type", "cls", "region_type"]     # type de region
+# Le type BRUT est dans `label` (text/image/formula/table). L'information
+# SEMANTIQUE fine (figure_title, paragraph_title, chart, display_formula,
+# algorithm...) est dans `native_label` -> a lire EN PRIORITE.
+NATIVE_LABEL_KEYS = ["native_label", "native_type", "sub_label", "sub_type"]
+TYPE_KEYS = ["label", "category", "type", "cls", "region_type"]     # type brut (fallback)
 BBOX_KEYS = ["bbox_2d", "bbox", "box", "polygon", "poly"]           # boite 0-1000
 TEXT_KEYS = ["content", "markdown", "text", "md", "latex"]          # texte reconnu
+IMAGE_PATH_KEYS = ["image_path", "img_path", "image", "crop_path"]  # crop figure deja fait
 
 FIGURE_LABELS  = {"image", "chart", "figure", "picture", "img"}     # regions figure
 CAPTION_LABELS = {"figure_title", "table_title", "caption"}         # legendes / sous-legendes
@@ -52,6 +59,8 @@ TITLE_LABELS   = {"paragraph_title", "title", "section_title", "doc_title"}  # t
 DROP_LABELS    = {"header", "footer", "page_number", "page-number", "footnote_sep"}
 # Legende PRINCIPALE (delimite une planche) : "FIGURE 3-4 ...", "TABLE .1 ..."
 MAIN_CAPTION_RE = re.compile(r"^\s*(figure|table|tableau)\s+[\.\dIVX]", re.IGNORECASE)
+# Legende de TABLEAU (pas une figure) : "TABLE .1", "Tableau 2" -> a garder comme texte
+TABLE_CAPTION_RE = re.compile(r"^\s*(table|tableau)\s+[\.\dIVX]", re.IGNORECASE)
 
 
 # =====================================================
@@ -65,11 +74,19 @@ def _get(region, keys, default=None):
     return default
 
 def region_type(region):
-    t = _get(region, TYPE_KEYS, "")
+    """Type SEMANTIQUE de la region : `native_label` d'abord (figure_title,
+    paragraph_title, chart, display_formula, algorithm...), puis fallback sur
+    le type brut `label` (text/image/formula/table)."""
+    t = _get(region, NATIVE_LABEL_KEYS, "") or _get(region, TYPE_KEYS, "")
     return str(t).strip().lower()
 
 def region_text(region):
     return str(_get(region, TEXT_KEYS, "") or "")
+
+def region_image_path(region):
+    """Chemin (relatif au dossier du JSON) de l'image deja croppee par GLM-OCR, ou None."""
+    p = _get(region, IMAGE_PATH_KEYS, None)
+    return str(p).strip() if p else None
 
 def region_bbox(region):
     """Renvoie (x1,y1,x2,y2) en 0-1000, ou None. Gere bbox rectangulaire ou polygone."""
@@ -185,12 +202,50 @@ def tidy(text):
     return text.strip()
 
 
+# =====================================================
+# Nettoyage du contenu GLM-OCR (bruit ```markdown + doublons)
+# =====================================================
+
+def _cut_fence(raw):
+    """GLM-OCR repete le contenu dans un bloc ```markdown : on coupe au premier fence."""
+    return re.split(r"```", raw, maxsplit=1)[0].strip()
+
+def _first_formula(raw):
+    m = re.search(r"\$\$.*?\$\$", raw, re.DOTALL)
+    return m.group(0).strip() if m else raw
+
+def _first_table(raw):
+    m = re.search(r"<table\b.*?</table>", raw, re.DOTALL | re.IGNORECASE)
+    return m.group(0).strip() if m else raw
+
+def clean_content(lab, raw):
+    """Retourne le contenu propre d'une region selon son type semantique.
+
+    GLM-OCR repete le contenu dans des blocs ```markdown, duplique formules et
+    tables, et laisse parfois fuiter ses instructions OCR dans les titres ;
+    on garde l'occurrence canonique (la premiere)."""
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if lab in ("display_formula", "inline_formula"):
+        return _first_formula(_cut_fence(raw))
+    if lab == "table" or raw.lstrip().startswith("<table"):
+        return _first_table(raw)
+    if lab == "algorithm":
+        # le texte markdown est la forme canonique ; la table HTML qui suit est un doublon
+        return _cut_fence(raw.split("<table", 1)[0])
+    if lab in TITLE_LABELS:
+        # un titre = sa PREMIERE ligne (le reste est doublon ou fuite d'instructions OCR)
+        return _cut_fence(raw).splitlines()[0].strip()
+    return _cut_fence(raw)
+
+
 # Prefixe de titre numerote : "1-", "1.1-", "3.10.2-.1"  -> profondeur = nb de niveaux
 _HEADING_PREFIX = re.compile(r"^\s*(\d+(?:\.\d+)*)-(?:\.(\d+))?\s")
 
 def format_heading(content):
     """Titre de section -> '#'*n selon la profondeur, en gardant le prefixe numerote."""
-    content = content.strip()
+    content = re.sub(r"^#{1,6}\s*", "", content.strip())   # GLM-OCR prefixe deja en ##
     m = _HEADING_PREFIX.match(content)
     if not m:
         return f"## {content}"                       # titre sans prefixe (ex. SOMMAIRE)
@@ -261,20 +316,15 @@ def _extract_pages(jr):
     return []
 
 
-def _envelope(regions):
-    """Boite englobante (0-1000) d'un groupe de regions."""
-    boxes = [b for b in (region_bbox(r) for r in regions) if b]
-    if not boxes:
-        return None
-    return (min(b[0] for b in boxes), min(b[1] for b in boxes),
-            max(b[2] for b in boxes), max(b[3] for b in boxes))
-
-
 def _pair_subfigures(figs, subs):
     """Associe chaque figure a la sous-legende la plus proche EN DESSOUS (recouvrement horizontal).
-       Renvoie une liste ordonnee de (bbox, sous_legende)."""
+       Renvoie une liste ordonnee de (region, sous_legende).
+
+       L'ordre de lecture gauche->droite est celui du champ `index` de GLM-OCR
+       (les regions arrivent deja triees par index dans build_markdown). Un tri
+       par bbox seul reordonne mal les figures d'une meme ligne (ex. FIGURE 4-9)."""
     panels, used = [], set()
-    for f in sorted(figs, key=lambda r: region_bbox(r)[1] if region_bbox(r) else 0):
+    for f in figs:
         fb = region_bbox(f)
         if not fb:
             continue
@@ -289,25 +339,23 @@ def _pair_subfigures(figs, subs):
             gap = sb[1] - fb[3]                                  # ecart vertical (sous-leg sous la figure)
             if x_overlap > 0 and -10 <= gap < best_gap:
                 best, best_gap = i, gap
-        label = region_text(subs[best]).strip() if best is not None else ""
+        label = clean_content("figure_title", region_text(subs[best])) if best is not None else ""
         if best is not None:
             used.add(best)
-        panels.append((fb, label))
+        panels.append((f, label))
     return panels
 
 
 def _emit_figure(out, figs, subs, caption, pnum, describe_fn):
     """AIGUILLAGE :
-       - sous-legendes (a)(b)... presentes -> planche COMPOSITE : chaque sous-figure croppee
-         separement + etiquetee -> N images + prompt composite.
-       - pas de sous-legende -> figure SIMPLE : UNE image (enveloppe de toutes les regions,
-         jamais fragmentee) + prompt simple.
-    """
+       - sous-legendes (a)(b)... presentes -> planche COMPOSITE : chaque sous-figure
+         (crop GLM-OCR via image_path) + sous-legende -> N images + prompt composite.
+       - sinon -> figure SIMPLE : le crop GLM-OCR de la region, + prompt simple.
+       describe_fn(pnum, panels, caption) avec panels = liste de (region, label)."""
     if len(subs) >= 2:                                  # planche composite
-        panels = [(b, l) for b, l in _pair_subfigures(figs, subs) if b]
-    else:                                               # figure simple -> une seule image
-        env = _envelope(figs)
-        panels = [(env, "")] if env else []
+        panels = [(r, l) for r, l in _pair_subfigures(figs, subs) if r]
+    else:                                               # figure simple -> crop(s) GLM-OCR
+        panels = [(r, "") for r in figs]
     if not panels:
         return
     desc = describe_fn(pnum, panels, caption)
@@ -321,8 +369,9 @@ def _emit_figure(out, figs, subs, caption, pnum, describe_fn):
 
 
 def build_markdown(json_result, source_id, describe_fn, skip_pages=None):
-    """describe_fn(page_num, bbox_norm, caption) -> description figure.
-    Regroupe les sous-figures par legende principale (FIGURE N -) avant de cropper.
+    """describe_fn(page_num, panels, caption) -> description figure.
+    panels = liste de (region, sous_legende) ; chaque region porte son image_path
+    (crop deja fait par GLM-OCR). Regroupe les sous-figures par legende principale.
     describe_fn injectable -> testable sans VLM ni PDF reels.
 
     skip_pages : ensemble de numeros de page (1-indexes) a EXCLURE. Par defaut
@@ -354,13 +403,18 @@ def build_markdown(json_result, source_id, describe_fn, skip_pages=None):
             if lab in FIGURE_LABELS:
                 figs.append(reg)
             elif lab in CAPTION_LABELS:
-                content = region_text(reg).strip()
-                if MAIN_CAPTION_RE.match(content):
-                    flush(content)          # legende principale -> ferme la planche
+                content = clean_content(lab, region_text(reg))
+                if TABLE_CAPTION_RE.match(content):
+                    # legende de TABLEAU -> texte (elle suit la table deja emise)
+                    flush()
+                    out.append(content)
+                    out.append("")
+                elif MAIN_CAPTION_RE.match(content):
+                    flush(content)          # legende de figure -> ferme la planche
                 else:
                     subs.append(reg)        # sous-legende (a)(b)... -> dans la planche
             else:                            # titre / texte / formule / table / algorithme
-                content = region_text(reg).strip()
+                content = clean_content(lab, region_text(reg))
                 if not content:
                     continue
                 flush()                      # securite d'ordre si figures en attente
@@ -386,14 +440,15 @@ def build_markdown(json_result, source_id, describe_fn, skip_pages=None):
 # =====================================================
 
 def run_glmocr(pdf_path, config_path, out_dir="_glmocr_json"):
-    """Lance la commande CLI qui marche chez toi, puis charge le JSON produit.
-       Equivaut a :  glmocr parse <pdf> --config <cfg> --mode selfhosted --layout-device cpu --output <dir>
-    """
+    """Lance le CLI glmocr, charge le JSON produit et renvoie (json_result, base_dir).
+       base_dir = dossier du JSON -> sert a resoudre les image_path relatifs.
+       Le device du layout est pilote par la config (pipeline.layout.device),
+       PAS force en CLI (GPU dispo chez nous)."""
     import subprocess
     import glob
     out = Path(out_dir); out.mkdir(exist_ok=True)
     cmd = ["glmocr", "parse", str(pdf_path), "--config", str(config_path),
-           "--mode", "selfhosted", "--layout-device", "cpu", "--output", str(out)]
+           "--mode", "selfhosted", "--output", str(out)]
     print("→", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
@@ -406,17 +461,22 @@ def run_glmocr(pdf_path, config_path, out_dir="_glmocr_json"):
             f"(regarde le dossier de sortie de ta commande qui marche)."
         )
     match = [j for j in jsons if stem in Path(j).stem]
-    chosen = match[-1] if match else jsons[-1]
+    chosen = Path(match[-1] if match else jsons[-1])
     print(f"JSON charge : {chosen}")
-    return json.loads(Path(chosen).read_text(encoding="utf-8"))
+    return json.loads(chosen.read_text(encoding="utf-8")), chosen.parent
 
 def process(pdf_path, config_path, out_path, skip_pages=None):
-    import fitz
     import time
-    json_result = run_glmocr(pdf_path, config_path)
-    doc = fitz.open(str(pdf_path))
+    json_result, base_dir = run_glmocr(pdf_path, config_path)
 
     counter = {"n": 0}
+    doc_holder = {"handle": None}          # fitz ouvert paresseusement (fallback seulement)
+
+    def _crop_fallback(pnum, bbox):
+        if doc_holder["handle"] is None:
+            import fitz
+            doc_holder["handle"] = fitz.open(str(pdf_path))
+        return crop_region_png(doc_holder["handle"], pnum, bbox)
 
     def describe(pnum, panels, caption):
         # Boucle VLM SILENCIEUSE avant ce patch -> ressemblait a un blocage.
@@ -426,15 +486,26 @@ def process(pdf_path, config_path, out_path, skip_pages=None):
         print(f"  [figure {counter['n']}] page {pnum} ({len(panels)} panneau(x)) "
               f"— {cap_short!r} — VLM en cours...", flush=True)
         t0 = time.time()
-        images = [crop_region_png(doc, pnum, bbox) for bbox, _ in panels]
-        labels = [lbl for _, lbl in panels]
-        desc = describe_figure(images, labels, caption)
+        images, labels = [], []
+        for reg, lbl in panels:
+            img_path = region_image_path(reg)
+            p = (base_dir / img_path).resolve() if img_path else None
+            if p and p.exists():
+                images.append(p.read_bytes())       # crop GLM-OCR (pas de re-crop)
+                labels.append(lbl)
+            else:                                    # fallback : crop PyMuPDF
+                bbox = region_bbox(reg)
+                if bbox:
+                    images.append(_crop_fallback(pnum, bbox))
+                    labels.append(lbl)
+        desc = describe_figure(images, labels, caption) if images else ""
         print(f"    -> termine en {time.time() - t0:.1f}s", flush=True)
         return desc
 
     md = build_markdown(json_result, Path(pdf_path).name, describe, skip_pages=skip_pages)
     Path(out_path).write_text(md, encoding="utf-8")
-    doc.close()
+    if doc_holder["handle"] is not None:
+        doc_holder["handle"].close()
     print(f"OK -> {out_path}  ({len(md)} caracteres, {counter['n']} figure(s) decrite(s))")
 
 
@@ -443,7 +514,7 @@ def process(pdf_path, config_path, out_path, skip_pages=None):
 # =====================================================
 
 def inspect(pdf_path, config_path):
-    jr = run_glmocr(pdf_path, config_path)
+    jr, _base = run_glmocr(pdf_path, config_path)
     pages = _extract_pages(jr)
     print(f"\nPages: {len(pages)}")
     if not pages:

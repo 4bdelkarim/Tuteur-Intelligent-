@@ -311,13 +311,11 @@ Description générée par Qwen3-VL
 ### 5.3 Pipeline d'ingestion
 
 ```
-PDF brut ──→ pdf_extractor.py (GLM-OCR) ──→ markdown
-  │                                          │
-  │                                     figure_describe.py (Qwen3-VL)
-  │                                          │
-  └──────────────────────────────────────────┼──→ normalizer.py ──→ format unifié
-                                             │
-Web ────→ web_scraper.py ────────────────────┘
+PDF brut ──→ pdf_extractor.py (GLM-OCR + Qwen3-VL) ──→ markdown
+  │                                                        │
+  └────────────────────────────────────────────────────────┼──→ normalizer.py ──→ format unifié
+                                                           │
+Web ────→ web_scraper.py ──────────────────────────────────┘
           web_crawler.py
                                                   │
                                                   ▼
