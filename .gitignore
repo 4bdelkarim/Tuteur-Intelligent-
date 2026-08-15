@@ -25,6 +25,9 @@ Thumbs.db
 # Historique d'évaluation (append-only, local)
 eval_history.jsonl
 
+# Sortie intermediaire de l'extraction PDF (crops de figures GLM-OCR)
+_glmocr_json/
+
 # Artefacts LaTeX (le rapport vit désormais dans un dépôt séparé)
 *.aux
 *.log

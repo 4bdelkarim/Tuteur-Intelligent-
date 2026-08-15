@@ -114,7 +114,11 @@ pipeline:
   # Page loader: handles image/PDF loading and API request building
   page_loader:
     # Generation parameters
-    max_tokens: 8192
+    # max_tokens: 1024 (au lieu de 8192) — GLM-OCR ne sait pas s'arreter et
+    # boucle jusqu'a epuiser le budget de tokens ; 1024 couvre la plus grande
+    # region legitime du corpus (~560 chars) avec une marge x7, sans laisser
+    # la place a des dizaines de repetitions.
+    max_tokens: 1024
     temperature: 0.0
     top_p: 0.00001
     top_k: 1
@@ -129,10 +133,14 @@ pipeline:
     max_pixels: 71372800 # 14 * 14 * 4 * 1280
 
     # Task-specific prompts
+    # Framing GLM OBLIGATOIRE (<|user|> ... <|endoftext|> <|assistant|>) :
+    # sans lui, le modele (famille GLM-4V) ne sait pas ou s'arreter et repete
+    # le contenu en boucle. Le template Ollama est nu ({{ .Prompt }}), donc
+    # le framing doit etre porte par le prompt lui-meme.
     task_prompt_mapping:
-      text: "Text Recognition:"
-      table: "Table Recognition:"
-      formula: "Formula Recognition:"
+      text: "<|user|>\nText Recognition:<|endoftext|>\n<|assistant|>\n"
+      table: "<|user|>\nTable Recognition:<|endoftext|>\n<|assistant|>\n"
+      formula: "<|user|>\nFormula Recognition:<|endoftext|>\n<|assistant|>\n"
 
     # PDF processing
     pdf_dpi: 200

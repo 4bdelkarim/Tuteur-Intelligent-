@@ -3,13 +3,15 @@
 extract_glmocr_layout.py — PDF (natif OU scanne) -> markdown unifie, via GLM-OCR SDK.
 
 Pipeline :
-  GLM-OCR SDK self-hosted  (PP-DocLayout-V3 + OCR GLM-OCR via Ollama)
-    -> JSON page-structure : regions + bbox normalisees 0-1000 + image_path
-       (les figures sont DEJA detectees ET croppees par GLM-OCR)
-  Post-traitement (ce fichier) :
-    - regions texte/titre/formule/table  -> markdown (LaTeX propre de GLM-OCR, bruit nettoye)
-    - regions FIGURE                     -> image_path (crop GLM-OCR, PAS de re-crop PyMuPDF)
-                                            -> VLM qwen3-vl:8b -> bloc [FIGURE]
+  1. OCR PAGE ENTIERE (1 appel "Text Recognition:" par page, GLM-OCR via Ollama)
+     -> texte + formules + tableaux PROPRES. Le mode par-region du SDK glmocr croppe
+        chaque region et fait un appel par region -> sur des crops minuscules, glm-ocr
+        boucle / "raisonne a voix haute" / emet des fences vides (abandonne).
+  2. Layout PP-DocLayoutV3 (utilise UNIQUEMENT pour les FIGURES) :
+     -> detection + crop des figures (image/chart) + OCR de leurs legendes.
+  3. Post-traitement (ce fichier) :
+     - texte page entiere -> markdown (LaTeX propre, bruit nettoye)
+     - figures -> crop + legende -> VLM qwen3-vl:8b -> bloc [FIGURE]
   -> markdown unifie : front-matter + <!-- loc page=N --> + blocs [FIGURE] atomiques
 
 Prerequis :
@@ -30,6 +32,7 @@ Le mode --inspect imprime les cles reelles ; ajuste alors les listes *_KEYS / *_
 ci-dessous si besoin (marquees TODO).
 """
 
+import io
 import re
 import json
 import base64
@@ -39,6 +42,10 @@ from pathlib import Path
 
 VLM_MODEL = "qwen3-vl:8b"
 CROP_DPI  = 200
+# qwen3-vl:8b pese ~45 Go : le CHARGEMENT (quand il n'est pas deja en VRAM)
+# prend ~5 min et depassait l'ancien timeout -> ressemblait a un blocage.
+# On le charge UNE fois explicitement au premier appel VLM (warm-up).
+_WARMED = {"done": False}
 # AUCUNE page sautee par defaut. Sauter une page (sommaire/couverture) est une
 # decision PROPRE A CHAQUE PDF, jamais une regle generale -> --skip-pages en CLI.
 DEFAULT_SKIP_PAGES = set()
@@ -61,6 +68,8 @@ DROP_LABELS    = {"header", "footer", "page_number", "page-number", "footnote_se
 MAIN_CAPTION_RE = re.compile(r"^\s*(figure|table|tableau)\s+[\.\dIVX]", re.IGNORECASE)
 # Legende de TABLEAU (pas une figure) : "TABLE .1", "Tableau 2" -> a garder comme texte
 TABLE_CAPTION_RE = re.compile(r"^\s*(table|tableau)\s+[\.\dIVX]", re.IGNORECASE)
+# Sous-legende d'une planche composite : "(a) ...", "(b) ..."
+SUB_CAPTION_RE = re.compile(r"^\s*\([a-z]\)", re.IGNORECASE)
 
 
 # =====================================================
@@ -173,7 +182,8 @@ VLM_PROMPT_COMPOSITE = (
 
 def describe_figure(images_png, labels, caption=""):
     """1 image  -> prompt SIMPLE (aucune mention de sous-figure).
-       N images -> prompt COMPOSITE (sous-figures etiquetees, envoyees dans le meme appel)."""
+       N images -> prompt COMPOSITE (sous-figures etiquetees, envoyees dans le meme appel).
+       Timeout + 1 retry : un appel VLM qui bloque ne doit pas faire tomber tout le pipeline."""
     import ollama
     cap = caption or "(non disponible)"
     if len(images_png) > 1:
@@ -183,12 +193,32 @@ def describe_figure(images_png, labels, caption=""):
     else:
         prompt = VLM_PROMPT_SIMPLE.replace("{caption}", cap)
     b64 = [base64.b64encode(p).decode() for p in images_png]
-    r = ollama.chat(
-        model=VLM_MODEL,
-        messages=[{"role": "user", "content": prompt, "images": b64}],
-        options={"temperature": 0},
-    )
-    return r["message"]["content"].strip()
+    client = ollama.Client(timeout=600)
+    if not _WARMED["done"]:
+        import time
+        print("  [VLM] chargement du modele qwen3-vl:8b (premiere fois, ~5 min)...", flush=True)
+        t0 = time.time()
+        try:
+            client.chat(model=VLM_MODEL,
+                        messages=[{"role": "user", "content": "OK"}],
+                        options={"temperature": 0})
+        except Exception as e:
+            print(f"    ⚠️ warm-up VLM: {e}", flush=True)
+        _WARMED["done"] = True
+        print(f"    -> modele pret en {time.time() - t0:.1f}s", flush=True)
+    for attempt in (1, 2):
+        try:
+            r = client.chat(
+                model=VLM_MODEL,
+                messages=[{"role": "user", "content": prompt, "images": b64}],
+                options={"temperature": 0},
+            )
+            return r["message"]["content"].strip()
+        except Exception as e:
+            if attempt == 2:
+                print(f"    ⚠️ VLM echoue apres 2 essais ({e}) — description vide", flush=True)
+                return ""
+            print(f"    ⚠️ VLM timeout (essai {attempt}) — nouvelle tentative...", flush=True)
 
 
 # =====================================================
@@ -218,6 +248,19 @@ def _first_table(raw):
     m = re.search(r"<table\b.*?</table>", raw, re.DOTALL | re.IGNORECASE)
     return m.group(0).strip() if m else raw
 
+def _dedupe_lines(raw):
+    """Supprime les lignes consecutives strictement identiques (boucle du modele)
+    ainsi qu'une ligne finale tronquee (repetition coupee par num_predict)."""
+    out = []
+    for line in raw.splitlines():
+        if out and line.strip() == out[-1].strip():
+            continue
+        # ligne plus courte = prefixe de la precedente -> repetition tronquee
+        if out and line.strip() and out[-1].strip().startswith(line.strip()):
+            continue
+        out.append(line)
+    return "\n".join(out)
+
 def clean_content(lab, raw):
     """Retourne le contenu propre d'une region selon son type semantique.
 
@@ -237,6 +280,9 @@ def clean_content(lab, raw):
     if lab in TITLE_LABELS:
         # un titre = sa PREMIERE ligne (le reste est doublon ou fuite d'instructions OCR)
         return _cut_fence(raw).splitlines()[0].strip()
+    if lab in CAPTION_LABELS:
+        # une legende = sa premiere occurrence (le modele repete la ligne, cf. OCR page entiere)
+        return _dedupe_lines(_cut_fence(raw)).strip()
     return _cut_fence(raw)
 
 
@@ -346,19 +392,22 @@ def _pair_subfigures(figs, subs):
     return panels
 
 
-def _emit_figure(out, figs, subs, caption, pnum, describe_fn):
-    """AIGUILLAGE :
-       - sous-legendes (a)(b)... presentes -> planche COMPOSITE : chaque sous-figure
-         (crop GLM-OCR via image_path) + sous-legende -> N images + prompt composite.
-       - sinon -> figure SIMPLE : le crop GLM-OCR de la region, + prompt simple.
+def _figure_description(pnum, figs, subs, caption, describe_fn):
+    """AIGUILLAGE simple vs composite -> description VLM (None si aucune figure).
        describe_fn(pnum, panels, caption) avec panels = liste de (region, label)."""
     if len(subs) >= 2:                                  # planche composite
         panels = [(r, l) for r, l in _pair_subfigures(figs, subs) if r]
     else:                                               # figure simple -> crop(s) GLM-OCR
         panels = [(r, "") for r in figs]
     if not panels:
+        return None
+    return describe_fn(pnum, panels, caption)
+
+def _emit_figure(out, figs, subs, caption, pnum, describe_fn):
+    """Ecrit le bloc [FIGURE] (legende + description) dans `out` (liste de lignes)."""
+    desc = _figure_description(pnum, figs, subs, caption, describe_fn)
+    if desc is None:
         return
-    desc = describe_fn(pnum, panels, caption)
     out.append("")                          # bloc isole
     out.append("--- [FIGURE] ---")
     if caption:
@@ -436,38 +485,287 @@ def build_markdown(json_result, source_id, describe_fn, skip_pages=None):
 
 
 # =====================================================
-# Execution GLM-OCR : on appelle le CLI VERIFIE (pas l'API Python qui retombe sur MaaS)
+# Assemblage markdown depuis l'OCR PAGE ENTIERE  (PUR : injection VLM par callback)
 # =====================================================
 
-def run_glmocr(pdf_path, config_path, out_dir="_glmocr_json"):
-    """Lance le CLI glmocr, charge le JSON produit et renvoie (json_result, base_dir).
-       base_dir = dossier du JSON -> sert a resoudre les image_path relatifs.
-       Le device du layout est pilote par la config (pipeline.layout.device),
-       PAS force en CLI (GPU dispo chez nous)."""
-    import subprocess
-    import glob
-    out = Path(out_dir); out.mkdir(exist_ok=True)
-    cmd = ["glmocr", "parse", str(pdf_path), "--config", str(config_path),
-           "--mode", "selfhosted", "--output", str(out)]
-    print("→", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+def _norm(s):
+    """Normalise pour comparer des chaines malgre la ponctuation (ex. - vs –)."""
+    return re.sub(r"[^\w]+", "", (s or "").lower())
 
-    stem = Path(pdf_path).stem
-    jsons = sorted(glob.glob(str(out / "**" / "*.json"), recursive=True),
-                   key=lambda p: Path(p).stat().st_mtime)
-    if not jsons:
-        raise FileNotFoundError(
-            f"Aucun .json produit dans {out}/. Verifie ce que le CLI ecrit "
-            f"(regarde le dossier de sortie de ta commande qui marche)."
-        )
-    match = [j for j in jsons if stem in Path(j).stem]
-    chosen = Path(match[-1] if match else jsons[-1])
-    print(f"JSON charge : {chosen}")
-    return json.loads(chosen.read_text(encoding="utf-8")), chosen.parent
+def _find_caption_line(text, caption):
+    """Indice de la ligne du texte correspondant a la legende (None si absente)."""
+    if not caption:
+        return None
+    nc = _norm(caption)
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if _norm(line) == nc:
+            return i
+    for i, line in enumerate(lines):
+        nl = _norm(line)
+        if nc and nl and (nc in nl or nl in nc):
+            return i
+    return None
+
+def _cluster_figures(figures):
+    """Groupe les regions figure en planches : des sous-figures proches
+    verticalement (meme bande) -> UNE planche composite ; sinon figure simple."""
+    figs = sorted(figures, key=lambda r: (r["bbox_2d"][1], r["bbox_2d"][0]))
+    clusters = []
+    for f in figs:
+        y1, y2 = f["bbox_2d"][1], f["bbox_2d"][3]
+        for c in clusters:
+            cy1 = min(r["bbox_2d"][1] for r in c)
+            cy2 = max(r["bbox_2d"][3] for r in c)
+            if y1 < cy2 + 40 and y2 > cy1 - 40:      # bande verticale commune / proche
+                c.append(f)
+                break
+        else:
+            clusters.append([f])
+    return clusters
+
+def _extract_captions(text):
+    """Legendes principales (FIGURE ...) du texte page entiere, dans l'ordre de
+    lecture. Les legendes de TABLEAU sont exclues (elles restent du texte)."""
+    caps = []
+    for i, line in enumerate(text.splitlines()):
+        s = line.strip()
+        if MAIN_CAPTION_RE.match(s) and not TABLE_CAPTION_RE.match(s):
+            caps.append((s, i))
+    return caps
+
+def _subcaptions_for_cluster(cluster, sub_caps):
+    """Sous-legendes dont la bbox est dans (ou juste sous) la bande du cluster."""
+    cy1 = min(r["bbox_2d"][1] for r in cluster)
+    cy2 = max(r["bbox_2d"][3] for r in cluster)
+    out = []
+    for c in sub_caps:
+        y1, y2 = c["bbox_2d"][1], c["bbox_2d"][3]
+        if cy1 - 10 <= y1 <= cy2 + 80:
+            out.append(c)
+    return out
+
+def _build_figure_blocks(pnum, page, describe_fn):
+    """Associe chaque planche de figures a sa legende et a ses sous-legendes :
+    -> liste de (legende, description).
+    - Legende principale : TEXTE page entiere (deterministe, LaTeX exact),
+      fallback OCR.
+    - Sous-legendes (a)(b)... : OCR des regions figure_title (crop + contexte),
+      puis appariement a chaque sous-figure via _pair_subfigures -> etiquettes
+      du prompt COMPOSITE."""
+    clusters = _cluster_figures(page["figures"])
+    text_captions = _extract_captions(page["text"])
+    ocr_captions = page.get("captions", [])
+    sub_caps = [c for c in ocr_captions
+                if SUB_CAPTION_RE.match(clean_content("figure_title", c["content"]))]
+    main_caps = [c["content"] for c in ocr_captions
+                 if MAIN_CAPTION_RE.match(clean_content("figure_title", c["content"]))]
+    blocks = []
+    for k, cluster in enumerate(clusters):
+        if k < len(text_captions):
+            caption = text_captions[k][0]
+        elif k < len(main_caps):
+            caption = main_caps[k]
+        else:
+            caption = ""
+        subs = _subcaptions_for_cluster(cluster, sub_caps)
+        desc = _figure_description(pnum, cluster, subs, caption, describe_fn)
+        if desc is not None:
+            blocks.append((caption, desc))
+    return blocks
+
+def _insert_figure(text, caption, desc):
+    """Insere le bloc [FIGURE] dans le texte de la page.
+
+    La legende est retrouvee dans le texte (normalise) -> on REPLACE sa ligne par
+    le bloc complet (legende LaTeX EXACTE conservee). Sinon (legende absente du
+    texte, ex. planche en tete de page), le bloc est mis en tete de page."""
+    lines = text.splitlines()
+    idx = _find_caption_line(text, caption)
+    if idx is not None:
+        cap = lines[idx]                       # legende originale (LaTeX exact)
+        lines[idx] = f"--- [FIGURE] ---\n{cap}\n{desc}\n--- [/FIGURE] ---"
+        return "\n".join(lines)
+    cap = caption or ""
+    block = f"--- [FIGURE] ---\n{cap}\n{desc}\n--- [/FIGURE] ---"
+    return block + "\n\n" + text.lstrip()
+
+def build_markdown_fullpage(result, source_id, describe_fn, skip_pages=None):
+    """Assemble le markdown final depuis l'OCR page entiere.
+
+    describe_fn(page_num, panels, caption) -> description figure, injectable et
+    testable (meme contrat que build_markdown). Le texte vient de l'OCR page
+    entiere (propre) ; les figures viennent du layout, les legendes du texte."""
+    skip = DEFAULT_SKIP_PAGES if skip_pages is None else skip_pages
+    pages = result["pages"]
+    out = ["---", "source_type: pdf", f"source_id: {source_id}",
+           f"page_count: {len(pages)}", "---", ""]
+    for pnum, page in enumerate(pages, start=1):
+        if pnum in skip:
+            continue
+        out.append(f"<!-- loc page={pnum} -->")
+        out.append("")
+        body = (page["text"] or "").strip()
+        for caption, desc in _build_figure_blocks(pnum, page, describe_fn):
+            body = _insert_figure(body, caption, desc)
+        out.append(body)
+        out.append("")
+    return tidy("\n".join(out))
+
+
+# =====================================================
+# Execution GLM-OCR : OCR PAGE ENTIERE (1 appel "Text Recognition:" / page)
+# + layout PP-DocLayoutV3 pour DETECTER/CROPPER les figures (legendes -> texte).
+# =====================================================
+
+def _ollama_ocr(pil_img, model, host, port, prompt, num_predict=4096):
+    """Un appel OCR Ollama (/api/generate) sur une image PIL -> texte."""
+    import urllib.request
+    buf = io.BytesIO()
+    pil_img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    body = {
+        "model": model,
+        "prompt": prompt,
+        "images": [b64],
+        "stream": False,
+        "options": {"num_predict": num_predict, "temperature": 0.0, "top_k": 1},
+    }
+    req = urllib.request.Request(
+        f"http://{host}:{port}/api/generate",
+        data=json.dumps(body).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=600) as r:
+        return json.loads(r.read().decode())["response"]
+
+def _crop_pil(img, bbox, pad=False):
+    """Crop d'une bbox normalisee 0-1000 -> PIL.Image (pixels)."""
+    W, H = img.size
+    x1, y1, x2, y2 = [float(v) for v in bbox]
+    x1, x2 = x1 / 1000 * W, x2 / 1000 * W
+    y1, y2 = y1 / 1000 * H, y2 / 1000 * H
+    if pad:  # les legendes sont fines -> marge pour donner du contexte au modele
+        x1, x2 = max(0, x1 - (x2 - x1) * 0.05), min(W, x2 + (x2 - x1) * 0.05)
+        y1, y2 = max(0, y1 - max((y2 - y1) * 0.4, 25)), min(H, y2 + max((y2 - y1) * 0.4, 25))
+    return img.crop((int(x1), int(y1), int(x2), int(y2)))
+
+def _caption_context_bbox(caption_bbox, figure_bboxes):
+    """Etend la bbox d'une legende vers le HAUT pour inclure la figure situee juste
+    au-dessus (contexte -> l'OCR lit la legende au lieu de boucler)."""
+    cx1, cy1, cx2, cy2 = caption_bbox
+    best, best_gap = None, 1e9
+    for fx1, fy1, fx2, fy2 in figure_bboxes:
+        x_overlap = min(cx2, fx2) - max(cx1, fx1)
+        gap = cy1 - fy2                       # figure au-dessus de la legende
+        if x_overlap > 0 and 0 <= gap < best_gap:
+            best, best_gap = (fx1, fy1, fx2, fy2), gap
+    if best is not None:
+        fx1, fy1, fx2, fy2 = best
+        return (min(cx1, fx1), fy1, max(cx2, fx2), cy2)
+    return (cx1, cy1 - 30, cx2, cy2 + 15)
+
+def _extract_caption_line(ocr_raw):
+    """Premiere ligne qui ressemble a une legende (sub '(a)' ou principale 'FIGURE')."""
+    for line in ocr_raw.splitlines():
+        s = line.strip()
+        if SUB_CAPTION_RE.match(s) or MAIN_CAPTION_RE.match(s):
+            return s
+    return ""
+
+def _ocr_caption_robust(img, bbox, figure_bboxes, model, host, port, prompt_text):
+    """OCR d'une legende : crop avec marge, puis retry sur un crop incluant la
+    figure au-dessus si la legende n'est pas reconnue (le petit crop renvoie
+    parfois des fences vides)."""
+    cap = _extract_caption_line(_ollama_ocr(_crop_pil(img, bbox, pad=True),
+                                            model, host, port, prompt_text, 512))
+    if cap:
+        return cap
+    ctx = _caption_context_bbox(bbox, figure_bboxes)
+    return _extract_caption_line(_ollama_ocr(_crop_pil(img, ctx),
+                                             model, host, port, prompt_text, 1024))
+
+def run_glmocr_fullpage(pdf_path, config_path, out_dir="_glmocr_json"):
+    """OCR PAGE ENTIERE + layout pour les figures. Renvoie (result, base_dir).
+
+    Pourquoi ne PAS utiliser le mode par-region du SDK : il croppe chaque region
+    et fait un appel OCR par region -> sur des crops minuscules, glm-ocr boucle /
+    "raisonne a voix haute" / emet des fences vides. En page entiere, le modele
+    produit un texte EXACT et propre (cf. rapport 5.3.1).    Le layout n'est plus
+    utilise que pour DETECTER et CROPPER les figures (les legendes sont lues dans
+    le texte page entiere, pas OCRees a part -> fiable).
+
+    result = {"pages": [{"text", "figures": [region], "captions": [region]}, ...]}
+    base_dir = dossier des images croppees (resout les image_path)."""
+    import fitz
+    from PIL import Image
+
+    from glmocr.config import GlmOcrConfig
+    cfg = GlmOcrConfig.from_yaml(config_path)
+    api = cfg.pipeline.ocr_api
+    model = api.model or "glm-ocr:latest"
+    host = api.api_host or "localhost"
+    port = api.api_port or 11434
+    dpi = cfg.pipeline.page_loader.pdf_dpi or 200
+    prompt_text = (cfg.pipeline.page_loader.task_prompt_mapping or {}).get("text") \
+        or "Text Recognition:"
+
+    # --- rendu des pages ---
+    doc = fitz.open(str(pdf_path))
+    try:
+        page_imgs = []
+        for page in doc:
+            pix = page.get_pixmap(dpi=dpi)
+            page_imgs.append(Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB"))
+    finally:
+        doc.close()
+
+    # --- layout (figures + legendes seulement) ---
+    from glmocr.layout import PPDocLayoutDetector
+    detector = PPDocLayoutDetector(cfg.pipeline.layout)
+    detector.start()
+    try:
+        layout_results, _vis = detector.process(page_imgs)
+    finally:
+        detector.stop()
+
+    out = Path(out_dir)
+    (out / "imgs").mkdir(parents=True, exist_ok=True)
+
+    pages = []
+    for pnum, (img, layout) in enumerate(zip(page_imgs, layout_results), start=1):
+        text = _ollama_ocr(img, model, host, port, prompt_text, num_predict=4096)
+        figs, cap_regions = [], []
+        for reg in sorted(layout, key=lambda r: r.get("index", 0)):
+            label = str(reg.get("label", "")).strip().lower()
+            bbox = reg.get("bbox_2d")
+            if not bbox:
+                continue
+            if label in FIGURE_LABELS:
+                crop = _crop_pil(img, bbox)
+                name = f"cropped_page{pnum}_idx{reg.get('index', 0)}.jpg"
+                crop.save(out / "imgs" / name, quality=92)
+                figs.append({"label": label, "bbox_2d": bbox, "image_path": f"imgs/{name}"})
+            elif label in CAPTION_LABELS:
+                cap_regions.append({"bbox_2d": bbox})
+        # OCR des legendes APRES les figures (pour connaitre leurs bbox en contexte)
+        fig_bboxes = [f["bbox_2d"] for f in figs]
+        captions = []
+        for c in cap_regions:
+            content = _ocr_caption_robust(img, c["bbox_2d"], fig_bboxes,
+                                          model, host, port, prompt_text)
+            if content:
+                captions.append({"bbox_2d": c["bbox_2d"], "content": content})
+                print(f"    legende p{pnum} {c['bbox_2d']}: {content!r}", flush=True)
+        pages.append({"text": text, "figures": figs, "captions": captions})
+        print(f"  page {pnum}: OCR {len(text)} chars, {len(figs)} figure(s), "
+              f"{len(captions)} legende(s)", flush=True)
+
+    return {"pages": pages}, out
 
 def process(pdf_path, config_path, out_path, skip_pages=None):
     import time
-    json_result, base_dir = run_glmocr(pdf_path, config_path)
+    result, base_dir = run_glmocr_fullpage(pdf_path, config_path)
 
     counter = {"n": 0}
     doc_holder = {"handle": None}          # fitz ouvert paresseusement (fallback seulement)
@@ -502,7 +800,8 @@ def process(pdf_path, config_path, out_path, skip_pages=None):
         print(f"    -> termine en {time.time() - t0:.1f}s", flush=True)
         return desc
 
-    md = build_markdown(json_result, Path(pdf_path).name, describe, skip_pages=skip_pages)
+    md = build_markdown_fullpage(result, Path(pdf_path).name, describe, skip_pages=skip_pages)
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text(md, encoding="utf-8")
     if doc_holder["handle"] is not None:
         doc_holder["handle"].close()
@@ -514,19 +813,15 @@ def process(pdf_path, config_path, out_path, skip_pages=None):
 # =====================================================
 
 def inspect(pdf_path, config_path):
-    jr, _base = run_glmocr(pdf_path, config_path)
-    pages = _extract_pages(jr)
+    result, _base = run_glmocr_fullpage(pdf_path, config_path)
+    pages = result["pages"]
     print(f"\nPages: {len(pages)}")
-    if not pages:
-        print("Aucune page reconnue — structure JSON brute :", type(jr).__name__, str(jr)[:300]); return
-    p0 = pages[0]
-    regions = p0 if isinstance(p0, list) else p0.get("regions", p0.get("blocks", []))
-    print(f"Regions page 1: {len(regions)}")
-    if regions:
-        r0 = regions[0]
-        print("Cles d'une region :", list(r0.keys()) if isinstance(r0, dict) else type(r0).__name__)
-        print("Exemple region[0] :", json.dumps(r0, ensure_ascii=False)[:400])
-        print("\n-> Ajuste TYPE_KEYS / BBOX_KEYS / TEXT_KEYS / FIGURE_LABELS si les cles different.")
+    if pages:
+        p0 = pages[0]
+        print("Texte page 1 (extrait) :", repr(p0["text"][:200]))
+        print(f"Figures page 1 : {len(p0['figures'])}")
+        if p0["figures"]:
+            print("Exemple figure :", json.dumps(p0["figures"][0], ensure_ascii=False)[:300])
 
 
 def _parse_skip_pages(spec):
