@@ -34,8 +34,20 @@ rag-chat --show-sources
 rag-eval eval/test_set_v2.json --retrieval-mode hybrid_rerank
 ```
 
+## Données
+
+- `data/raw/` — sources brutes (PDFs de cours + markdown web)
+- `data/processed/` — corpus unifié au format canonique (165+ fichiers .md)
+- `dbfig_pc/` — index ChromaDB prêt à l'emploi (collection `cours_ml_fig`)
+
+Pour réindexer après modification du corpus : `make ingest DIR=data/processed`.
+
 ## Prérequis
 
 - Ollama avec les modèles : `qwen2.5:14b`, `qwen3:8b`, `bge-m3`
 - GPU recommandé (H100 NVL testé, ~95 Go VRAM)
 - GLM-OCR pour l'extraction PDF
+
+## Rapport
+
+Le rapport de stage vit dans un dépôt séparé : `ai-tutor-rapport`.

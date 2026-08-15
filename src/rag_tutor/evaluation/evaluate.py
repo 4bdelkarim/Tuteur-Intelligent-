@@ -776,10 +776,10 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     # Ablation : on bascule le MODE du retriever AVANT tout appel -- retrieve()
-    # lit MODE au moment de l'appel (global module, retriever_hybride.py), donc
+    # lit MODE au moment de l'appel (global du module core/retriever.py), donc
     # changer l'attribut ici suffit pour tout le run, sans toucher au pipeline.
     from ..core import retriever
-    retriever_hybride.MODE = args.retrieval_mode
+    retriever.MODE = args.retrieval_mode
 
     report = run_evaluation(args.dataset_path, k=args.k, verbose=not args.quiet, limit=args.limit,
                              use_query_processing=not args.no_query_processing,

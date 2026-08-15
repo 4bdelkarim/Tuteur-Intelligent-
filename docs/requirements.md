@@ -211,8 +211,8 @@ Les 13 dépendances directes entraînent ~60 packages transitifs. Voici l'arbre 
 | `datasets` (via `ragas`) | ~100 Mo | Tire `pandas`, `pyarrow` — utile seulement pour l'évaluation |
 | `onnxruntime` (via `chromadb`) | ~150 Mo | Runtime ONNX embarqué dans ChromaDB |
 
-> **Reproductibilité** : le fichier `uv.lock` fige toutes les versions exactes (directes + transitives).
-> Pour reproduire l'environnement à l'identique : `uv sync`
+> **Reproductibilité** : les versions minimales sont fixées dans `pyproject.toml`.
+> Installation : `pip install -e .` (voir README).
 
 ---
 
@@ -225,7 +225,7 @@ Les 13 dépendances directes entraînent ~60 packages transitifs. Voici l'arbre 
 OLLAMA_HOST=http://127.0.0.1:11434
 
 # Persistance ChromaDB
-CHROMA_DB_PATH=data/chroma_db
+CHROMA_DB_PATH=dbfig_pc
 
 # Modèles (surcharge possible)
 GEN_MODEL=qwen2.5:14b
@@ -276,12 +276,14 @@ RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 ```
 data/
 ├── raw/                       ← Sources brutes (PDF + URLs)
-│   ├── pdf/                   ← 8 fichiers PDF (~29 Mo)
-│   └── web/                   ← 2 fichiers web bruts (~3.7 Mo)
-├── processed/                 ← Markdown unifié après extraction
-│   └── *.md                   ← 165+ fichiers (format canonique)
-└── chroma_db/                 ← Index ChromaDB (~106 Mo)
-    └── chroma.sqlite3         ← Base vectorielle persistante
+│   ├── pdf/                   ← 8 fichiers PDF (~33 Mo)
+│   └── web/                   ← markdown web bruts (d2l, atcold)
+└── processed/                 ← Markdown unifié après extraction
+    └── *.md                   ← 165+ fichiers (format canonique)
+
+dbfig_pc/                      ← Index ChromaDB (~106 Mo)
+├── chroma.sqlite3             ← Base vectorielle persistante
+└── parents_cours_ml_fig.json  ← Magasin des parents (sections complètes)
 ```
 
 ### 5.2 Format canonique des documents

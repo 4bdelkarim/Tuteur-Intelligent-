@@ -11,14 +11,6 @@ build/
 venv/
 env/
 
-# ChromaDB
-dbfig_pc/
-
-# Données brutes (volumineuses)
-data/raw/
-data/processed/
-data/chroma_db/
-
 # Fichiers de config locaux
 .env
 
@@ -30,13 +22,15 @@ data/chroma_db/
 .DS_Store
 Thumbs.db
 
-# Rapport LaTeX (dossier entier exclu du dépôt)
-rapport/*.pdf
-rapport/*.aux
-rapport/*.log
-rapport/*.out
-rapport/*.toc
-rapport/*.lof
-rapport/*.lot
-rapport/*.bbl
-rapport/*.blg
+# Historique d'évaluation (append-only, local)
+eval_history.jsonl
+
+# Artefacts LaTeX (le rapport vit désormais dans un dépôt séparé)
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
