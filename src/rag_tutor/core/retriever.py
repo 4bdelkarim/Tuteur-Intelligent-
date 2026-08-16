@@ -37,7 +37,7 @@ Si tu veux zero contact HF meme pour ce premier telechargement, lance avec
 MODE="hybrid" (pas de reranker) -- au prix de la qualite mesuree du reranker
 (fidelite ~0.88 avec vs ~0.69 sans, cf. trajectoire du chapitre 6).
 
-Prerequis : python ingest.py <dossier_processed>   (cree dbfig_pc + parents_*.json)
+Prerequis : python ingest.py <dossier_processed>   (cree chroma_db + parents_*.json)
 Dependances : pip install rank-bm25 sentence-transformers
 """
 
@@ -84,7 +84,10 @@ def _reranker():
     global _RERANK
     if _RERANK is None:
         from sentence_transformers import CrossEncoder
-        _RERANK = CrossEncoder(RERANKER_MODEL)
+        # device="cpu" explicite : evite l'appel a torch.cuda.is_available() qui
+        # emet un UserWarning "driver NVIDIA trop ancien" sur cette machine
+        # (CUDA indisponible ici, le reranker tourne sur CPU de toute facon).
+        _RERANK = CrossEncoder(RERANKER_MODEL, device="cpu")
     return _RERANK
 
 
@@ -186,6 +189,9 @@ def children_to_parents(cands, parents, k):
             "text": par["text"], "dist": c.get("score"),
             "meta": {"source": par["source"],
                      "source_type": par.get("source_type"),   # propage pdf/web
+                     "source_url": par.get("source_url"),     # site (web) pour les citations
+                     "title": par.get("title"),               # titre de la page (web)
+                     "source_id": par.get("source_id"),       # nom du fichier PDF
                      "page": par["page_start"],
                      "page_start": par["page_start"], "page_end": par["page_end"],
                      "section": par["section"], "parent_id": pid},

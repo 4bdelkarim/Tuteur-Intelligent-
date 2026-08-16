@@ -15,6 +15,7 @@ import argparse
 import time
 
 from ..core.pipeline import answer as pipeline_answer
+from ..core.generator import citation_label
 
 
 def format_sources(hits, max_sources=3):
@@ -25,8 +26,7 @@ def format_sources(hits, max_sources=3):
     lines = []
     for h in hits[:max_sources]:
         meta = h.get("meta", {}) if isinstance(h, dict) else {}
-        source = meta.get("source") or meta.get("source_url") or "source inconnue"
-        lines.append(f"  - {source}")
+        lines.append(f"  - [{citation_label(meta)}]")
     return "\n".join(lines)
 
 

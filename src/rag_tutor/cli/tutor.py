@@ -23,7 +23,7 @@ import argparse
 import time
 
 from ..core.pipeline import answer as pipeline_answer
-from ..core.generator import REFUSAL_MESSAGE
+from ..core.generator import REFUSAL_MESSAGE, citation_label
 from ..conversation.memory import ConversationMemory, summarize_with_llm
 from ..conversation.prompts import TUTOR_SYSTEM_PROMPT
 from ..evaluation.per_question import evaluate_response, format_eval_report
@@ -36,12 +36,7 @@ def format_sources(hits, max_sources=3):
     lines = []
     for h in hits[:max_sources]:
         meta = h.get("meta", {}) if isinstance(h, dict) else {}
-        source = meta.get("source") or meta.get("source_url") or "source inconnue"
-        section = meta.get("section", "")
-        pages = ""
-        if meta.get("page_start"):
-            pages = f" (p{meta['page_start']}-{meta.get('page_end', '?')})"
-        lines.append(f"  - {source} | {section}{pages}")
+        lines.append(f"  - [{citation_label(meta)}]")
     return "\n".join(lines)
 
 

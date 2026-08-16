@@ -23,8 +23,10 @@
 # CONFIG
 # ============================================================
 
-# Détection auto du venv (priorité : .venv local > .venv du projet parent > système)
-_VENV_PYTHON := $(wildcard .venv/bin/python3 ../rag-tutor/.venv/bin/python3)
+# Détection auto du venv (priorité : env COMPLET du projet parent > .venv local > système).
+# Le .venv local est incomplet (rank_bm25 / chromadb / sentence_transformers absents) ;
+# l'env du projet parent ../rag-tutor/.venv contient toutes les dépendances runtime.
+_VENV_PYTHON := $(wildcard ../rag-tutor/.venv/bin/python3 .venv/bin/python3)
 ifeq ($(_VENV_PYTHON),)
   PYTHON := python3
 else
@@ -45,6 +47,7 @@ SHOW_SOURCES ?=
 # Mode hors-ligne HuggingFace — le modèle bge-reranker est déjà en cache local
 export HF_HUB_OFFLINE=1
 export CUDA_VISIBLE_DEVICES=
+export TQDM_DISABLE=1
 
 # Couleurs
 GREEN  := \033[0;32m
@@ -131,12 +134,12 @@ _check-dir:
 		echo "   Spécifie un dossier avec : make ingest DIR=chemin/vers/processed"; \
 		exit 1; \
 	fi
-	@count=$$(ls $(DIR)/*.md 2>/dev/null | wc -l); \
+	@count=$$(find $(DIR) -name '*.md' 2>/dev/null | wc -l); \
 	if [ $$count -eq 0 ]; then \
 		echo "$(RED)❌ Aucun fichier .md dans '$(DIR)'.$(RESET)"; \
 		exit 1; \
 	fi
-	@echo "   ✅ $(DIR) : $$(ls $(DIR)/*.md 2>/dev/null | wc -l) fichiers .md"
+	@echo "   ✅ $(DIR) : $$(find $(DIR) -name '*.md' 2>/dev/null | wc -l) fichiers .md"
 
 # ============================================================
 # CHAT (Q&A direct)
@@ -168,8 +171,8 @@ eval:
 
 clean:
 	@echo "$(YELLOW)Nettoyage...$(RESET)"
-	@rm -rf dbfig_pc/
-	@echo "   ✅ Index ChromaDB supprimé (dbfig_pc/)"
+	@rm -rf chroma_db/
+	@echo "   ✅ Index ChromaDB supprimé (chroma_db/)"
 	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@echo "   ✅ Caches Python supprimés (__pycache__/)"
 	@find . -type f -name '*.pyc' -delete 2>/dev/null || true

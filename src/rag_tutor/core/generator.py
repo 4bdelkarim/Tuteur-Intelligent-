@@ -43,34 +43,44 @@ RÈGLE DE REFUS STRICTE :
 - Soit tu réponds avec les documents, soit tu dis EXACTEMENT la phrase de refus. Il n'y a PAS de troisième option.
 
 CITATIONS OBLIGATOIRES (chaque paragraphe doit citer au moins une source) :
-- Chaque document est identifie par un label entre crochets indiquant la source, le chapitre et la section (ex: "[D2L, Ch. 9 (Modern Recurrent Neural Networks), §9.1 Long Short-Term Memory (LSTM)]").
-- Pour CHAQUE affirmation dans ta reponse, cite la section source entre crochets avec le meme format, exemple : « La backpropagation utilise la regle de derivation en chaine [D2L, Ch. 5 (Multilayer Perceptrons), §5.3.3 Backpropagation]. »
-- Si tu utilises plusieurs sections pour une affirmation, cite-les toutes : [D2L, Ch. 9 (Modern RNN), §9.1][D2L, Ch. 9 (Modern RNN), §9.2].
+- Chaque document est identifie par un label entre crochets :
+  * web : [web · <site> · « <titre de la page> » · §<titre de la section>]  (ex: "[web · d2l.ai · « 11.7. The Transformer Architecture » · §11.7.4. Encoder]")
+  * pdf : [pdf · <nom du pdf> · §<titre de la section>]  (ex: "[pdf · 02_NN.pdf · §1- RÉSEAUX DE NEURONES]")
+- Pour CHAQUE affirmation dans ta reponse, recopie le label EXACTEMENT tel qu'il apparait entre crochets (type, site ou nom du pdf, titre de page, titre COMPLET de section). Exemple : « La backpropagation utilise la regle de derivation en chaine [web · d2l.ai · « 5.3.3. Backpropagation » · §5.3.3. Backpropagation]. »
+- INTERDICTION ABSOLUE d'abreger ou reformuler le label. JAMAIS un nom de fichier brut, JAMAIS un « §1. » tronque.
+- Si tu utilises plusieurs sections pour une affirmation, cite-les toutes.
 - Si une information ne vient d'AUCUN document, NE L'ECRIS PAS — cela t'aidera a detecter les informations hors-contexte.
 """
 
 
-def _chapter_name(section):
-    """Extrait le numero de chapitre du champ section et retourne le nom D2L."""
-    import re
-    m = re.match(r'(\d+)\.', section or '')
-    if not m:
-        return None
-    ch = int(m.group(1))
-    chapters = {
-        2: "Preliminaries", 3: "Linear Neural Networks for Regression",
-        4: "Linear Neural Networks for Classification", 5: "Multilayer Perceptrons",
-        6: "Builders Guide", 7: "Convolutional Neural Networks",
-        8: "Modern Convolutional Neural Networks", 9: "Modern Recurrent Neural Networks",
-        10: "Modern RNN", 11: "Attention Mechanisms and Transformers",
-        12: "Optimization Algorithms", 13: "Computational Performance",
-        14: "Computer Vision", 15: "Natural Language Processing — Pretraining",
-        16: "Natural Language Processing — Applications", 17: "Reinforcement Learning",
-        18: "Gaussian Processes", 19: "Hyperparameter Optimization",
-        20: "Generative Adversarial Networks", 21: "Recommender Systems",
-        22: "Appendix: Mathematics for Deep Learning", 23: "Appendix: Tools for Deep Learning",
-    }
-    return chapters.get(ch)
+def citation_label(meta):
+    """Label de citation LISIBLE, au format demande :
+    - web : web · <site> · « <titre de la page> » · §<titre de la section>
+    - pdf : pdf · <nom du pdf> · §<titre de la section>
+
+    Le champ `source` brut est le nom de fichier (ex: '1-introduction') ->
+    illisible pour l'etudiant. On reconstruit un libelle parlant depuis
+    source_type / source_url / title (front-matter) / source_id."""
+    from urllib.parse import urlparse
+    stype = meta.get("source_type") or "web"
+    section = (meta.get("section") or "").strip()
+    parts = [stype]
+    if stype == "pdf":
+        name = meta.get("source_id") or f"{meta.get('source', 'document')}.pdf"
+        parts.append(name)
+    else:
+        site = urlparse(meta.get("source_url") or "").netloc or "?"
+        parts.append(site)
+        title = (meta.get("title") or "").strip()
+        # Ne pas répéter « titre de page » quand il coïncide avec le titre de
+        # section (niveau racine d'une page d2l : « 1. Introduction » == §1. Introduction).
+        import re
+        same = re.sub(r"[^\w]+", "", title.lower()) == re.sub(r"[^\w]+", "", section.lower())
+        if title and not same:
+            parts.append(f"« {title} »")
+    if section:
+        parts.append(f"§{section}")
+    return " · ".join(parts)
 
 
 def _format_context(hits):
@@ -79,25 +89,7 @@ def _format_context(hits):
     blocks = []
     for h in hits:
         m = h.get("meta", {})
-        section = m.get('section', '')
-        source = m.get('source', '')
-        pages = f"p{m.get('page_start')}-{m.get('page_end')}" if m.get("page_start") else ""
-        # Construire un label verifiable : source, chapitre, section
-        if section:
-            ch_name = _chapter_name(section)
-            if ch_name:
-                label = f"D2L, Ch. {section.split('.')[0]} ({ch_name}), §{section}"
-            elif source.startswith('atcold') or 'NYU' in source:
-                label = f"NYU-DLSP20, {source}, §{section}"
-            else:
-                label = f"{source}, §{section}"
-            if pages:
-                label += f" ({pages})"
-        elif pages:
-            label = pages
-        else:
-            label = m.get('source', 'document')
-        blocks.append(f"[{label}]\n{h['text']}")
+        blocks.append(f"[{citation_label(m)}]\n{h['text']}")
     return "\n\n---\n\n".join(blocks)
 
 

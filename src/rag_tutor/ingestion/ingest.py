@@ -25,9 +25,9 @@ from ..core.vector_store import index_children, save_parents
 
 
 def run(path, child_target=CHILD_TARGET, child_max=CHILD_MAX, child_overlap=CHILD_OVERLAP,
-        skip_pages=frozenset(), reset=True):
+        reset=True):
     parents, children = chunk_corpus(path, child_target=child_target, child_max=child_max,
-                                      child_overlap=child_overlap, skip_pages=skip_pages)
+                                      child_overlap=child_overlap)
     print_stats(parents, children)
 
     embedder = BGEEmbeddings(EMBEDDING_MODEL)
@@ -47,9 +47,6 @@ if __name__ == "__main__":
     ap.add_argument("--child-max", type=int, default=CHILD_MAX)
     ap.add_argument("--child-overlap", type=int, default=CHILD_OVERLAP,
                     help=f"chevauchement entre enfants consecutifs en embed_text (defaut {CHILD_OVERLAP})")
-    ap.add_argument("--skip-pages", default="",
-                    help="pages a ignorer (PDF uniquement), ex '1' ou '1,2' -- AUCUNE par defaut")
     args = ap.parse_args()
 
-    skip_pages = {int(x) for x in args.skip_pages.split(",") if x.strip().isdigit()}
-    run(Path(args.path), args.child_target, args.child_max, args.child_overlap, skip_pages)
+    run(Path(args.path), args.child_target, args.child_max, args.child_overlap)

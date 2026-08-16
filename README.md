@@ -38,7 +38,7 @@ rag-eval eval/test_set_v2.json --retrieval-mode hybrid_rerank
 
 - `data/raw/` — sources brutes (PDFs de cours + markdown web)
 - `data/processed/` — corpus unifié au format canonique (165+ fichiers .md)
-- `dbfig_pc/` — index ChromaDB prêt à l'emploi (collection `cours_ml_fig`)
+- `chroma_db/` — index ChromaDB prêt à l'emploi (collection `cours_ml_fig`)
 
 Pour réindexer après modification du corpus : `make ingest DIR=data/processed`.
 

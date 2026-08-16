@@ -148,7 +148,7 @@ def is_header(line):
 # 3) CONSTRUCTION DES PARENTS (= sections)
 # =====================================================
 
-def build_parents(text, skip_pages=frozenset()):
+def build_parents(text):
     parents = []
     cur = None
     current_page = None
@@ -163,8 +163,6 @@ def build_parents(text, skip_pages=frozenset()):
         nonlocal cur
         if cur is None:
             start_parent(current_section, page)
-        if page in skip_pages:
-            return
         cur["segments"].append((typ, payload, page))
         if page is not None:
             cur["page_end"] = page
@@ -174,7 +172,7 @@ def build_parents(text, skip_pages=frozenset()):
     for kind, payload, _ in tokenize(text):
         if kind == "page":
             current_page = payload
-            if cur is not None and current_page not in skip_pages:
+            if cur is not None:
                 cur["page_end"] = current_page
                 if cur["page_start"] is None:
                     cur["page_start"] = current_page
@@ -188,7 +186,7 @@ def build_parents(text, skip_pages=frozenset()):
         # prose : on cherche les titres ligne par ligne
         buf = []
         for line in payload.splitlines(keepends=True):
-            if is_header(line) and current_page not in skip_pages:
+            if is_header(line):
                 if buf:
                     add("prose", "".join(buf), current_page); buf = []
                 current_section = line.strip().lstrip("#").strip()
@@ -284,14 +282,14 @@ def build_children(segments, target, hardmax, overlap=CHILD_OVERLAP):
 # =====================================================
 
 def parse_file(md_path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
-               child_overlap=CHILD_OVERLAP, skip_pages=frozenset()):
+               child_overlap=CHILD_OVERLAP):
     """Pur (sans embeddings) : renvoie (parents_store, children) pour UN fichier deja unifie."""
     source = md_path.stem
     raw = md_path.read_text(encoding="utf-8")
     meta, text = split_frontmatter(raw)
     source_type = meta.get("source_type", "pdf")
 
-    raw_parents = build_parents(text, skip_pages=skip_pages)
+    raw_parents = build_parents(text)
 
     parents_store, children = {}, []
     for idx, p in enumerate(raw_parents):
@@ -307,6 +305,8 @@ def parse_file(md_path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
             "page_start": p["page_start"],
             "page_end": p["page_end"],
             "source_url": meta.get("source_url"),
+            "title": meta.get("title"),          # titre de la page (web) pour les citations
+            "source_id": meta.get("source_id"),  # nom du fichier PDF (ex: 02_NN.pdf)
         }
         for j, ch in enumerate(build_children(p["segments"], child_target, child_max,
                                                 overlap=child_overlap)):
@@ -333,14 +333,14 @@ def parse_file(md_path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
 
 
 def chunk_corpus(path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
-                 child_overlap=CHILD_OVERLAP, skip_pages=frozenset()):
+                 child_overlap=CHILD_OVERLAP):
     """Pur : meme contrat que parse_file, mais sur un dossier entier (ou un fichier unique).
     C'est CETTE fonction que ingest.py et les tests doivent appeler -- jamais parse_file
     directement en boucle ailleurs, sinon la logique d'agregation se duplique."""
     files = list(path.rglob("*.md")) if path.is_dir() else [path]
     all_parents, all_children = {}, []
     for f in files:
-        ps, cs = parse_file(f, child_target, child_max, child_overlap, skip_pages=skip_pages)
+        ps, cs = parse_file(f, child_target, child_max, child_overlap)
         all_parents.update(ps)
         all_children.extend(cs)
     return all_parents, all_children
@@ -393,11 +393,8 @@ if __name__ == "__main__":
     ap.add_argument("--child-max", type=int, default=CHILD_MAX)
     ap.add_argument("--child-overlap", type=int, default=CHILD_OVERLAP,
                     help=f"chevauchement entre enfants consecutifs en embed_text (defaut {CHILD_OVERLAP})")
-    ap.add_argument("--skip-pages", default="",
-                    help="pages a ignorer (PDF uniquement), ex '1' ou '1,2' -- AUCUNE par defaut")
     args = ap.parse_args()
 
-    skip_pages = {int(x) for x in args.skip_pages.split(",") if x.strip().isdigit()}
     parents, children = chunk_corpus(Path(args.path), args.child_target, args.child_max,
-                                      args.child_overlap, skip_pages)
+                                      args.child_overlap)
     print_stats(parents, children)

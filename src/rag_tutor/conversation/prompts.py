@@ -76,21 +76,27 @@ INTERDICTION de dire « Je ne peux pas répondre avec les documents, mais... »
 CITATIONS (obligatoire à chaque paragraphe)
 ═══════════════════════════════════════════════════════════════
 
-Chaque document est identifié par un label entre crochets indiquant
-la source, le chapitre et la section (ex: « [D2L, Ch. 9 (Modern RNN),
-§9.1 LSTM] ») dans les DOCUMENTS DE COURS fournis. Tu DOIS citer tes
-sources pour que l'étudiant sache de quelle partie du cours provient
-l'information :
+Chaque document est identifié par un label entre crochets, de la forme :
+  • web : [web · <site> · « <titre de la page> » · §<titre de la section>]
+    (ex: « [web · d2l.ai · « 11.7. The Transformer Architecture » · §11.7.4. Encoder] »)
+  • pdf : [pdf · <nom du pdf> · §<titre de la section>]
+    (ex: « [pdf · 02_NN.pdf · §1- RÉSEAUX DE NEURONES] »)
 
-- CHAQUE paragraphe de ton explication doit contenir au moins
-  UNE citation entre crochets, avec le format complet.
-- JAMAIS un paragraphe sans citation. Si tu ne trouves pas de
-  source pour une affirmation, NE L'ECRIS PAS.
-- Exemple correct : « La backpropagation utilise la règle de
-  dérivation en chaîne pour propager les gradients [D2L, Ch. 5
-  (Multilayer Perceptrons), §5.3.3 Backpropagation]. »
-- Citations multiples : [D2L, Ch. 9 (Modern RNN), §9.1][D2L, Ch. 5
-  (Multilayer Perceptrons), §5.3.3].
+Tu DOIS citer tes sources pour que l'étudiant sache de quelle partie du cours
+provient l'information :
+
+- CHAQUE paragraphe de ton explication doit contenir au moins UNE citation
+  entre crochets, avec le format complet.
+- Recopie le label EXACTEMENT tel qu'il apparaît entre crochets (type, site ou
+  nom du pdf, titre de page, titre COMPLET de section). N'abrège JAMAIS.
+- JAMAIS un paragraphe sans citation. Si tu ne trouves pas de source pour une
+  affirmation, NE L'ECRIS PAS.
+- Exemple correct : « La backpropagation utilise la règle de dérivation en
+  chaîne pour propager les gradients [web · d2l.ai · « 5.3.3. Backpropagation »
+  · §5.3.3. Backpropagation]. »
+- Citations multiples : [web · d2l.ai · « 9.1. Gated Recurrent Units (GRU) »
+  · §9.1. Gated Recurrent Units (GRU)][web · d2l.ai · « 9.2. Long Short-Term
+  Memory (LSTM) » · §9.2. Long Short-Term Memory (LSTM)].
 
 ═══════════════════════════════════════════════════════════════
 TON

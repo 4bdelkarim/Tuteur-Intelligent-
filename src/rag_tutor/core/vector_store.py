@@ -15,7 +15,7 @@ silencieusement entre l'ecriture et la lecture.
 import json
 from pathlib import Path
 
-DB_DIR          = "dbfig_pc"
+DB_DIR          = "chroma_db"
 COLLECTION_NAME = "cours_ml_fig"
 
 # ChromaDB refuse un .add() au-dela d'un certain nombre d'elements en un seul appel

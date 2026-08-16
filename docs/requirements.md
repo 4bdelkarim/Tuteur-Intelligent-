@@ -225,7 +225,7 @@ Les 13 dépendances directes entraînent ~60 packages transitifs. Voici l'arbre 
 OLLAMA_HOST=http://127.0.0.1:11434
 
 # Persistance ChromaDB
-CHROMA_DB_PATH=dbfig_pc
+CHROMA_DB_PATH=chroma_db
 
 # Modèles (surcharge possible)
 GEN_MODEL=qwen2.5:14b
@@ -261,7 +261,7 @@ RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 | `MODE` | `hybrid_rerank` | `retriever.py` | Chaîne de retrieval active |
 | `RERANKER_THRESHOLD` | 0.1119 | `refusal_gate.py` | Seuil de refus M1 (calibré) |
 | `CONFIDENCE_THRESHOLD` | 2 | `refusal_gate.py` | Seuil de refus M2 (confiance) |
-| `DB_DIR` | `dbfig_pc` | `vector_store.py` | Dossier ChromaDB |
+| `DB_DIR` | `chroma_db` | `vector_store.py` | Dossier ChromaDB |
 | `COLLECTION_NAME` | `cours_ml_fig` | `vector_store.py` | Nom de la collection |
 | `RECENT_WINDOW` | 6 | `memory.py` | Tours récents gardés intacts avant compression |
 | `MAX_SUMMARY_TOKENS` | 500 | `memory.py` | Tokens max pour le résumé (fallback troncature) |
@@ -281,7 +281,7 @@ data/
 └── processed/                 ← Markdown unifié après extraction
     └── *.md                   ← 165+ fichiers (format canonique)
 
-dbfig_pc/                      ← Index ChromaDB (~106 Mo)
+chroma_db/                     ← Index ChromaDB (~106 Mo)
 ├── chroma.sqlite3             ← Base vectorielle persistante
 └── parents_cours_ml_fig.json  ← Magasin des parents (sections complètes)
 ```
@@ -348,7 +348,7 @@ Web ────→ web_scraper.py ───────────────
 │                    Ollama (localhost:11434)                       │
 │  qwen2.5:14b  │  bge-m3  │  qwen3:8b  │  glm-ocr (off)          │
 ├──────────────────────────────────────────────────────────────────┤
-│  ChromaDB (dbfig_pc/)  │  BGE-reranker (HuggingFace)            │
+│  ChromaDB (chroma_db/)  │  BGE-reranker (HuggingFace)            │
 └──────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────┐

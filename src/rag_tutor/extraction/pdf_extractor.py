@@ -23,10 +23,6 @@ Prerequis :
   python extract_glmocr_layout.py cours.pdf --config config.yaml --inspect
   # 2) puis produire le markdown :
   python extract_glmocr_layout.py cours.pdf --config config.yaml --out cours.md
-  # 3) si un PDF precis a une page de garde/sommaire a exclure (AUCUNE page n'est
-  #    sautee par defaut -> c'est un choix explicite, par-PDF, jamais automatique) :
-  python extract_glmocr_layout.py cours.pdf --config config.yaml --skip-pages 1
-
 IMPORTANT : le schema exact des regions GLM-OCR n'est pas documente publiquement.
 Le mode --inspect imprime les cles reelles ; ajuste alors les listes *_KEYS / *_LABELS
 ci-dessous si besoin (marquees TODO).
@@ -46,9 +42,6 @@ CROP_DPI  = 200
 # prend ~5 min et depassait l'ancien timeout -> ressemblait a un blocage.
 # On le charge UNE fois explicitement au premier appel VLM (warm-up).
 _WARMED = {"done": False}
-# AUCUNE page sautee par defaut. Sauter une page (sommaire/couverture) est une
-# decision PROPRE A CHAQUE PDF, jamais une regle generale -> --skip-pages en CLI.
-DEFAULT_SKIP_PAGES = set()
 
 # --- Schema REEL du JSON GLM-OCR (confirme via --inspect) ---
 # Le type BRUT est dans `label` (text/image/formula/table). L'information
@@ -411,19 +404,16 @@ def _insert_figure(text, caption, desc):
     block = f"--- [FIGURE] ---\n{cap}\n{desc}\n--- [/FIGURE] ---"
     return block + "\n\n" + text.lstrip()
 
-def build_markdown_fullpage(result, source_id, describe_fn, skip_pages=None):
+def build_markdown_fullpage(result, source_id, describe_fn):
     """Assemble le markdown final depuis l'OCR page entiere.
 
     describe_fn(page_num, panels, caption) -> description figure, injectable et
     testable (sans VLM ni PDF reels). Le texte vient de l'OCR page entiere
     (propre) ; les figures viennent du layout, les legendes du texte."""
-    skip = DEFAULT_SKIP_PAGES if skip_pages is None else skip_pages
     pages = result["pages"]
     out = ["---", "source_type: pdf", f"source_id: {source_id}",
            f"page_count: {len(pages)}", "---", ""]
     for pnum, page in enumerate(pages, start=1):
-        if pnum in skip:
-            continue
         out.append(f"<!-- loc page={pnum} -->")
         out.append("")
         body = (page["text"] or "").strip()
@@ -584,7 +574,7 @@ def run_glmocr_fullpage(pdf_path, config_path, out_dir="_glmocr_json"):
 
     return {"pages": pages}, out
 
-def process(pdf_path, config_path, out_path, skip_pages=None):
+def process(pdf_path, config_path, out_path):
     import time
     result, base_dir = run_glmocr_fullpage(pdf_path, config_path)
 
@@ -621,7 +611,7 @@ def process(pdf_path, config_path, out_path, skip_pages=None):
         print(f"    -> termine en {time.time() - t0:.1f}s", flush=True)
         return desc
 
-    md = build_markdown_fullpage(result, Path(pdf_path).name, describe, skip_pages=skip_pages)
+    md = build_markdown_fullpage(result, Path(pdf_path).name, describe)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text(md, encoding="utf-8")
     if doc_holder["handle"] is not None:
@@ -645,13 +635,6 @@ def inspect(pdf_path, config_path):
             print("Exemple figure :", json.dumps(p0["figures"][0], ensure_ascii=False)[:300])
 
 
-def _parse_skip_pages(spec):
-    """'1' | '1,3,5' | '' -> set d'entiers. Vide/None -> set() (rien saute)."""
-    if not spec:
-        return set()
-    return {int(p.strip()) for p in spec.split(",") if p.strip()}
-
-
 # =====================================================
 # MAIN
 # =====================================================
@@ -662,12 +645,7 @@ if __name__ == "__main__":
     ap.add_argument("--config", default="config.yaml")
     ap.add_argument("--out", default=None)
     ap.add_argument("--inspect", action="store_true", help="imprime le schema JSON reel puis quitte")
-    ap.add_argument("--skip-pages", default="",
-                    help="pages a exclure (1-indexees), ex. '1' ou '1,3' — AUCUNE par defaut, "
-                         "propre a CE pdf (pas une regle globale)")
     args = ap.parse_args()
-
-    skip_pages = _parse_skip_pages(args.skip_pages)
 
     if args.inspect:
         inspect(args.pdf[0], args.config)
@@ -677,4 +655,4 @@ if __name__ == "__main__":
                 out = Path(args.out) / (Path(pdf).stem + ".md")
             else:
                 out = Path(pdf).with_suffix(".md")
-            process(pdf, args.config, str(out), skip_pages=skip_pages)
+            process(pdf, args.config, str(out))
