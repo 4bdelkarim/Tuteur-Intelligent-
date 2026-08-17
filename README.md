@@ -227,15 +227,3 @@ python -m rag_tutor.evaluation.validate_judge --generate
     └── ingestion/          # ingest.py (indexation ChromaDB)
 ```
 
-## Tests
-
-Il n'existe **pas** de suite de tests automatisée (`tests/` est absent, pas de configuration
-`pytest`). La validation repose sur :
-
-- `python -m compileall src` (syntaxe) ;
-- l'import des 25 modules du package ;
-- l'évaluation de bout en bout (`make eval`) ;
-- la calibration du seuil de refus (`evaluation/calibrate.py`).
-
-
-
