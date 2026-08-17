@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-chat_cli.py — pose des questions au tuteur RAG directement en ligne de commande,
+chat.py — pose des questions au tuteur RAG directement en ligne de commande,
 sans passer par l'evaluation Ragas -- usage interactif normal / demo rapide.
 
 Usage :
-  python chat_cli.py
-  python chat_cli.py --k 6 --show-sources
-  python chat_cli.py --no-query-processing --no-refusal-gate   # mode degrade, plus rapide
+  python -m rag_tutor.cli.chat
+  python -m rag_tutor.cli.chat --k 6 --show-sources
+  python -m rag_tutor.cli.chat --no-query-processing --no-refusal-gate   # mode degrade, plus rapide
 
   "quit" / "exit" / "q" / Ctrl+C / Ctrl+D pour sortir.
 """

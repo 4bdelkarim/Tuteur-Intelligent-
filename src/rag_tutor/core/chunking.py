@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-chunk_parent_child.py — Chunking PARENT-CHILD sur le format UNIFIE (sortie normalize.py).
+chunking.py — Chunking PARENT-CHILD sur le format UNIFIE (sortie normalizer.py).
 
 SEULE RESPONSABILITE DE CE MODULE : decouper un corpus deja normalise en chunks
 parent/enfant, enrichis des metadata necessaires, prets a etre embeddes.
 AUCUN embedding, AUCUNE ecriture en base vectorielle, AUCUN retrieval ici -- ces
 taches vivent dans d'autres modules (embeddings.py, vector_store.py/ingest.py,
-retriever_hybride.py) qui consomment la sortie de ce module sans la recalculer.
+retriever.py) qui consomment la sortie de ce module sans la recalculer.
 
-Prerequis : les fichiers ont deja ete unifies par normalize.py. Ce script ne fait
+Prerequis : les fichiers ont deja ete unifies par normalizer.py. Ce script ne fait
 AUCUNE detection de format -> il suppose UNE seule convention partout :
   - front-matter YAML toujours present (source_type: pdf|web)
   - pages   : <!-- loc page=N -->                    (absent si web)
@@ -24,8 +24,8 @@ Principe (inchange) : on CHERCHE petit, on GENERE grand.
   ATOMIQUES (jamais coupes).
 
   pip install pyyaml
-  python normalize.py ./bruts/ --out ./processed/          # etape 1 (separee)
-  python chunk_parent_child.py ./processed/                 # etape 2 (ce script) -- stats seulement
+  python normalizer.py ./bruts/ --out ./processed/          # etape 1 (separee)
+  python chunking.py ./processed/                 # etape 2 (ce script) -- stats seulement
 
 API publique :
   parse_file(md_path)   -> (parents: dict, children: list[dict])   # UN fichier
@@ -56,7 +56,7 @@ CHILD_OVERLAP = 80    # caracteres de chevauchement entre enfants consecutifs (e
                         # le contenu dans l'assemblage parent). Ameliore le rappel quand une
                         # information est a cheval sur deux enfants.
 
-# --- Regex : UNE seule convention (fichiers deja unifies par normalize.py) ---
+# --- Regex : UNE seule convention (fichiers deja unifies par normalizer.py) ---
 FRONTMATTER_RE  = re.compile(r'^---\s*\n(.*?)\n---\s*\n?', re.DOTALL)
 PAGE_RE         = re.compile(r'(?im)^<!--\s*loc\s+page=(\d+)\s*-->\s*$')
 FORMULA_RE      = re.compile(r'\$\$.*?\$\$', re.DOTALL)
@@ -67,13 +67,13 @@ HEADER_RE       = re.compile(r'^#{1,6}\s+\S')
 
 
 # =====================================================
-# 1) FRONT-MATTER (toujours present, ecrit par normalize.py)
+# 1) FRONT-MATTER (toujours present, ecrit par normalizer.py)
 # =====================================================
 
 def split_frontmatter(text):
     """Extrait le front-matter YAML. Garantit que source_type est toujours present
     et correct, avec fallback explicite si absent du YAML (ne devrait jamais arriver
-    apres normalize.py, mais filet de securite)."""
+    apres normalizer.py, mais filet de securite)."""
     m = FRONTMATTER_RE.match(text)
     if not m:
         return {}, text
@@ -84,7 +84,7 @@ def split_frontmatter(text):
         meta = {}
 
     # P3: s'assurer que source_type est toujours present et valide.
-    # normalize.py ecrit TOUJOURS source_type dans le front-matter -> si absent,
+    # normalizer.py ecrit TOUJOURS source_type dans le front-matter -> si absent,
     # c'est un fichier non normalise ; on tente une detection heuristique.
     if meta.get("source_type") not in ("pdf", "web"):
         # Heuristique : presence de marqueurs de page -> pdf, sinon web
@@ -385,10 +385,10 @@ def print_stats(parents, children):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(
-        description="Chunking parent-child sur corpus deja unifie (normalize.py). "
+        description="Chunking parent-child sur corpus deja unifie (normalizer.py). "
                      "N'embedde rien, n'ecrit rien en base : affiche les stats de decoupage."
     )
-    ap.add_argument("path", help="dossier (ou fichier) de sortie de normalize.py")
+    ap.add_argument("path", help="dossier (ou fichier) de sortie de normalizer.py")
     ap.add_argument("--child-target", type=int, default=CHILD_TARGET)
     ap.add_argument("--child-max", type=int, default=CHILD_MAX)
     ap.add_argument("--child-overlap", type=int, default=CHILD_OVERLAP,

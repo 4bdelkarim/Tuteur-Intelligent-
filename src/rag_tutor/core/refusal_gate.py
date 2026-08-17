@@ -9,11 +9,10 @@ refusal_gate.py — MECANISMES DE REFUS :
      juge de pertinence que le score cosine/BM25 — c'est litteralement sa
      fonction. Ne coute RIEN de plus puisqu'il tourne deja en hybrid_rerank.
 
-  2) POST-generation (confidence-based) : check_confidence(answer_text) → bool
-     Parse le score [CONFIANCE: X/5] que le generateur integre en tete de
-     reponse (cf. generator.py, DEFAULT_SYSTEM_PROMPT). Decide APRES la
-     generation — plus fiable car le LLM 14B evalue lui-meme si le contexte
-     est suffisant, ce qu'un simple score de retrieval ne peut pas faire.
+  2) POST-generation (LLM judge) : verify_answer(question, answer, hits) → bool
+     (defini dans generator.py) — un 2e LLM (qwen3:8b) verifie que la reponse
+     est bien ancree dans le contexte fourni. Decide APRES la generation,
+     plus fiable qu'un simple score de retrieval.
 
   NOTE : l'ancien mecanisme score-based (should_refuse, REFUSAL_THRESHOLD) a
   ete supprime (commit ~2026-08-06). Le score du meilleur hit de retrieval
@@ -23,71 +22,8 @@ refusal_gate.py — MECANISMES DE REFUS :
 
 API publique :
   should_refuse_reranker(hits, threshold=RERANKER_REFUSAL_THRESHOLD) -> bool
-  parse_confidence(answer_text) -> int 1-5 | None
-  check_confidence(answer_text, threshold=CONFIDENCE_THRESHOLD) -> bool
   calibrate(scored_examples) -> float
 """
-
-import re
-
-
-# =====================================================
-# MECANISME 2 : score de confiance du LLM (post-generation)
-# =====================================================
-
-# Seuil de confiance en-dessous duquel on refuse la reponse (remplacee par
-# REFUSAL_MESSAGE).
-#
-# En two-pass (check_confidence_llm), le LLM juge est naturellement conservateur
-# → un seuil de 2 est plus approprie qu'un seuil de 3. Refuser uniquement si :
-#   - NON explicite (le LLM juge que le contexte ne permet pas de repondre)
-#   - confiance = 1 (aucune information pertinente)
-#   - confiance = 2 (mention vague, insuffisante)
-#
-# Ce seuil DOIT etre calibre empiriquement (run complet + analyse).
-CONFIDENCE_THRESHOLD = 2
-
-# Pattern pour extraire [CONFIANCE: X/5] en debut de reponse.
-# Robuste aux variations : espaces, majuscules, X/5 ou X sur 5.
-_CONFIDENCE_RE = re.compile(
-    r'^\s*\[?\s*CONFIANCE\s*:\s*(\d)\s*(?:/\s*5|\s*sur\s*5)?\s*\]?\s*$',
-    re.MULTILINE | re.IGNORECASE
-)
-
-
-def parse_confidence(answer_text):
-    """Extrait le score de confiance (int 1-5) d'une reponse du generateur.
-    Cherche [CONFIANCE: X/5] uniquement en TOUT DEBUT de reponse (premiere
-    ligne ou premier bloc). Retourne None si le format est absent ou invalide
-    → le pipeline ne refuse PAS par defaut (conservateur : en cas de doute,
-    on fait confiance a la reponse).
-
-    Robuste au markdown : ** et __ sont neutralises avant parsing (les LLMs
-    ont tendance a wrapper le tag en bold)."""
-    if not answer_text:
-        return None
-    # Neutraliser le markdown bold (** / __) que le LLM pourrait ajouter
-    # autour du tag — pattern ultra-courant avec les modeles instruits.
-    cleaned = answer_text[:200].replace('**', '').replace('__', '')
-    m = _CONFIDENCE_RE.search(cleaned)
-    if not m:
-        return None
-    score = int(m.group(1))
-    if 1 <= score <= 5:
-        return score
-    return None
-
-
-def check_confidence(answer_text, threshold=CONFIDENCE_THRESHOLD):
-    """Verifie si la confiance du LLM dans sa reponse est suffisante.
-    Retourne True si la reponse doit ETRE REFUSEE (confiance < seuil).
-    Retourne False si la reponse est acceptable (confiance >= seuil ou
-    format non parse → conservateur)."""
-    score = parse_confidence(answer_text)
-    if score is None:
-        return False   # format absent → ne pas bloquer (conservateur)
-    return score < threshold
-
 
 # =====================================================
 # MECANISME 1 : score du reranker (pre-generation, cross-encoder)

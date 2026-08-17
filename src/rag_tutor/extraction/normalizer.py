@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-normalize.py — Unification des .md (PDF ancien/recent + web) vers UN SEUL format canonique.
+normalizer.py — Unification des .md (PDF ancien/recent + web) vers UN SEUL format canonique.
 
 Objectif : que le chunker parent-child n'ait plus JAMAIS a detecter quel pipeline a
 produit un fichier. Ce script fait ce travail UNE fois, en amont, et ecrit une version
@@ -10,7 +10,7 @@ Formats reels absorbes en entree :
   - PDF ancien (pdf_to_md.py)       : <!-- page N -->, --- [INTERPRETATION DE LA FIGURE]
                                        --- ... [FIN INTERPRETATION] ---, titres bruts
                                        numerotes SANS '#', pas de front-matter YAML.
-  - PDF recent (extract_glmocr_layout.py) : <!-- loc page=N -->, --- [FIGURE] ---
+  - PDF recent (pdf_extractor.py) : <!-- loc page=N -->, --- [FIGURE] ---
                                        ... --- [/FIGURE] ---, titres markdown '#'..'###',
                                        front-matter YAML deja present.
   - Web (clean_web_markdown.py)     : front-matter YAML, titres markdown natifs, pas de
@@ -26,7 +26,7 @@ Format canonique en sortie (TOUJOURS) :
     normalisation Unicode NFC, espaces.
 
 Usage :
-  python normalize.py ./bruts/ --out ./processed/
+  python -m rag_tutor.extraction.normalizer ./bruts/ --out ./processed/
 """
 
 import re

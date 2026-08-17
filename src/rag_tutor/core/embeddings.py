@@ -5,12 +5,12 @@ embeddings.py — SEULE RESPONSABILITE : transformer du texte en vecteurs.
 Utilise bge-m3 servi par Ollama (100% local, ZERO requete HuggingFace).
 
 IMPORTANT COHERENCE : ce module est le SEUL point d'entree pour l'embedding,
-cote indexation (ingest.py) COMME cote retrieval (retriever_hybride.py). Les
+cote indexation (ingest.py) COMME cote retrieval (retriever.py). Les
 deux doivent appeler EXACTEMENT la meme methode (Ollama /api/embed, meme
 modele) -- sinon les vecteurs de requete et les vecteurs indexes ne vivent
 plus dans le meme espace, SANS erreur visible, juste de mauvais resultats
 de recherche. Ne jamais recreer une deuxieme implementation ailleurs :
-retriever_hybride.py doit importer BGEEmbeddings d'ICI, pas en refaire une.
+retriever.py doit importer BGEEmbeddings d'ICI, pas en refaire une.
 """
 
 EMBEDDING_MODEL = "bge-m3"    # nom du modele Ollama (cf. `ollama list`) -- PAS un repo HuggingFace

@@ -11,7 +11,7 @@
 #
 # Usage :
 #   make setup
-#   make ingest DIR=data/processed
+#   make ingest DIR=data/normalized
 #   make chat K=6
 #   make tutor K=4 SHOW_SOURCES=--show-sources
 #   make eval MODE=hybrid_rerank
@@ -40,8 +40,9 @@ OLLAMA_MODELS := qwen2.5:14b qwen3:8b bge-m3
 
 # Paramètres par défaut
 K           ?= 4
-DIR         ?= data/processed
+DIR         ?= data/normalized
 MODE        ?= hybrid_rerank
+DATASET     ?= eval/golden_dataset_v2.json
 SHOW_SOURCES ?=
 
 # Mode hors-ligne HuggingFace — le modèle bge-reranker est déjà en cache local
@@ -79,7 +80,7 @@ help:
 	@echo ""
 	@echo "$(CYAN)Exemples :$(RESET)"
 	@echo "  make setup"
-	@echo "  make ingest DIR=data/processed"
+	@echo "  make ingest DIR=data/normalized"
 	@echo "  make chat K=6"
 	@echo "  make tutor K=4 SHOW_SOURCES=--show-sources"
 	@echo "  make eval MODE=hybrid"
@@ -163,7 +164,7 @@ tutor:
 
 eval:
 	@echo "$(CYAN)Lancement de l'évaluation (mode=$(MODE))...$(RESET)"
-	@$(PYTHON) -m rag_tutor.evaluation.evaluate --retrieval-mode=$(MODE)
+	@$(PYTHON) -m rag_tutor.evaluation.evaluate $(DATASET) --retrieval-mode=$(MODE)
 
 # ============================================================
 # CLEAN
@@ -179,4 +180,4 @@ clean:
 	@echo "   ✅ Fichiers .pyc supprimés"
 	@echo ""
 	@echo "$(GREEN)✅ Nettoyage terminé.$(RESET)"
-	@echo "   Pour réindexer : make ingest DIR=data/processed"
+	@echo "   Pour réindexer : make ingest DIR=data/normalized"

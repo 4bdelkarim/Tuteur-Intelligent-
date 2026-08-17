@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-retriever_hybride.py — SEULE RESPONSABILITE : recuperation hybride (BM25 + dense
+retriever.py — SEULE RESPONSABILITE : recuperation hybride (BM25 + dense
 + rerank) sur la base deja indexee par ingest.py.
 
 Chaine complete (ce que le systeme utilise vraiment) :
@@ -18,7 +18,7 @@ entre ingestion et retrieval, sans erreur visible) ne peut structurellement
 plus se reproduire.
 
 Expose retrieve(question, k, source_type=None) -> liste de hits au format attendu
-par evaluate_rag.py / pipeline.py :
+par evaluate.py / pipeline.py :
   {"text": <parent>, "dist": <score>,
    "meta": {source, source_type, page, page_start, page_end, section, parent_id}}
 

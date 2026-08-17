@@ -96,12 +96,6 @@ def evaluate_response(query, result, answer_text=None, run_judge=True, run_retri
         pipeline_stats["refusal_m1_reranker"] = False
         pipeline_stats["refusal_m2_verify"] = False
 
-    # Score de confiance parsé (si le générateur en produit un)
-    from ..core.refusal_gate import parse_confidence
-    conf = parse_confidence(full_answer)
-    if conf is not None:
-        pipeline_stats["confidence_score"] = conf
-
     report["pipeline"] = pipeline_stats
 
     # ==================================================================
@@ -299,8 +293,6 @@ def format_eval_report(report: dict) -> str:
             lines.append(_fmt_line(f"  Refus", f"OUI ({m1}, {m2})"))
         else:
             lines.append(_fmt_line(f"  Refus", "non"))
-        if "confidence_score" in p:
-            lines.append(_fmt_line(f"  Confiance LLM", f"{p['confidence_score']}/5"))
         lines.append(_fmt_line(f"  Longueur réponse", f"{p.get('answer_length', 0)} car."))
 
     # --- Juge LLM ---

@@ -4,9 +4,9 @@ vector_store.py — SEULE RESPONSABILITE : persister et relire les enfants
 (vecteurs + metadata) dans Chroma, et les parents (sections completes) en JSON.
 
 Ni chunking, ni embedding ici -- ce module recoit des enfants deja chunkes
-(chunk_parent_child.py) et deja vectorises (embeddings.py), et se contente de
+(chunking.py) et deja vectorises (embeddings.py), et se contente de
 les stocker/relire. Utilise a la fois par ingest.py (ecriture) et par
-retriever_hybride.py (lecture) : c'est le SEUL endroit qui connait DB_DIR,
+retriever.py (lecture) : c'est le SEUL endroit qui connait DB_DIR,
 COLLECTION_NAME et le format du fichier parents_*.json -- personne d'autre
 ne doit ouvrir Chroma ou ce JSON directement, sinon le format peut diverger
 silencieusement entre l'ecriture et la lecture.

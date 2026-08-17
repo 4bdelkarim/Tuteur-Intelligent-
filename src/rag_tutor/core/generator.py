@@ -6,18 +6,18 @@ via llm_client.py et un system prompt "bien ancre" (grounding strict aux
 documents, refus explicite hors-perimetre).
 
 Ne fait NI retrieval NI query processing -- prend des hits (format
-retriever_hybride.retrieve(), eventuellement passes par context_compressor.compress())
+retriever.retrieve())
 et produit le texte de reponse.
 
 DEFAULT_SYSTEM_PROMPT ci-dessous est le prompt CONFIRME pour la phase de TEST
-(evaluate_rag.py / pipeline.py) : posture "professeur de ML", reponse directe
+(evaluate.py / pipeline.py) : posture "professeur de ML", reponse directe
 et factuelle (PAS de posture socratique ici -- volontairement different du
 prompt tuteur pedagogique, qui reste pour une eventuelle interface interactive
 plus tard, a passer explicitement via le parametre system_prompt le moment venu).
 
 ATTENTION COHERENCE : la phrase de refus ci-dessous doit correspondre EXACTEMENT
-a ce que la logique de detection de refus d'evaluate_rag.py recherche (pour le
-calcul de la metrique "refusal correctness") -- si evaluate_rag.py cherche un
+a ce que la logique de detection de refus d'evaluate.py recherche (pour le
+calcul de la metrique "refusal correctness") -- si evaluate.py cherche un
 autre motif, aligner l'un sur l'autre plutot que d'avoir deux formulations qui
 divergent silencieusement.
 
@@ -95,7 +95,7 @@ def _format_context(hits):
 
 def generate(query, hits, system_prompt=None, model=None, history=None):
     """Genere la reponse finale. `hits` : liste de dicts text/dist/meta (sortie
-    de retriever_hybride.retrieve(), eventuellement compressee).
+    de retriever.retrieve()).
 
     `history` (optionnel) : historique de conversation pré-formaté (str), inséré
     AVANT les documents pour que le LLM ait le contexte de la discussion en cours.
@@ -251,69 +251,6 @@ def verify_answer(question, answer, hits):
     # Fallback 2 : conservateur — si le format n'est pas respecté, ne pas bloquer
     return True
 
-
-# =====================================================
-# TWO-PASS : controle de confiance pre-generation
-# =====================================================
-
-_CONFIANCE_SYSTEM_PROMPT = """Tu es un évaluateur de pertinence documentaire. Ton rôle est de déterminer si un contexte documentaire permet de répondre à une question.
-
-Analyse le contexte fourni et réponds EXACTEMENT dans ce format sur une seule ligne :
-
-OUI|<confiance>   — si le contexte contient suffisamment d'information pour répondre
-NON|<confiance>   — si le contexte ne permet pas de répondre
-
-<confiance> est un chiffre de 1 à 5 :
-  5 = information complète et précise dans le contexte
-  4 = l'essentiel est présent, détails mineurs manquants
-  3 = information partielle, éléments importants manquants
-  2 = mention vague ou tangentielle du sujet
-  1 = aucune information pertinente dans le contexte
-
-ATTENTION : évalue uniquement le contenu du contexte fourni, PAS tes connaissances personnelles. Si le sujet est mentionné mais sans les détails nécessaires pour répondre, utilise un score bas (1-3) et réponds NON.
-
-EXEMPLES :
-Contexte: "La backpropagation calcule les gradients via la règle de dérivation en chaîne..."
-Question: "Comment fonctionne la backpropagation ?"
-Réponse: OUI|5
-
-Contexte: "Les réseaux de neurones sont utilisés en vision par ordinateur."
-Question: "Comment fonctionne l'algorithme YOLO pour la détection d'objets ?"
-Réponse: NON|1"""
-
-
-def check_confidence_llm(query, hits):
-    """Pass 1 du two-pass : demande au LLM si le contexte permet de répondre.
-    Retourne (can_answer: bool, confidence: int 1-5).
-    Si le parsing échoue → (True, 3) par défaut (conservateur : ne pas bloquer)."""
-    import re
-    context = _format_context(hits)
-    user_message = f"CONTEXTE :\n\n{context}\n\nQUESTION :\n{query}"
-    try:
-        resp = chat(_CONFIANCE_SYSTEM_PROMPT, user_message)
-    except Exception:
-        return True, 3   # échec LLM → conservateur
-
-    text = resp.strip()
-    # Parser : cherche OUI|X ou NON|X
-    m = re.match(r'^(OUI|NON)\s*\|?\s*(\d)', text, re.IGNORECASE)
-    if not m:
-        # Fallback : chercher un chiffre 1-5 n'importe où
-        digits = re.findall(r'\b([1-5])\b', text)
-        if digits:
-            conf = int(digits[0])
-            # Si pas de OUI/NON explicite, on suppose OUI si conf >= 4, NON sinon
-            can = conf >= 4
-            return can, conf
-        return True, 3   # parsing impossible → conservateur
-
-    can = m.group(1).upper() == 'OUI'
-    conf = int(m.group(2))
-    if conf < 1:
-        conf = 1
-    elif conf > 5:
-        conf = 5
-    return can, conf
 
 def generate_stream(query, hits, system_prompt=None, model=None, history=None):
     """Version streaming de generate() : yield chaque token au fur et a mesure.

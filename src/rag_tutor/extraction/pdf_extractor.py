@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-extract_glmocr_layout.py — PDF (natif OU scanne) -> markdown unifie, via GLM-OCR SDK.
+pdf_extractor.py — PDF (natif OU scanne) -> markdown unifie, via GLM-OCR SDK.
 
 Pipeline :
   1. OCR PAGE ENTIERE (1 appel "Text Recognition:" par page, GLM-OCR via Ollama)
@@ -20,9 +20,9 @@ Prerequis :
   # le device du layout est pilote par config.yaml (pipeline.layout.device), pas force en CLI
 
   # 1) VERIFIER le schema JSON reel d'abord (indispensable) :
-  python extract_glmocr_layout.py cours.pdf --config config.yaml --inspect
+  python -m rag_tutor.extraction.pdf_extractor cours.pdf --config config.yaml --inspect
   # 2) puis produire le markdown :
-  python extract_glmocr_layout.py cours.pdf --config config.yaml --out cours.md
+  python -m rag_tutor.extraction.pdf_extractor cours.pdf --config config.yaml --out cours.md
 IMPORTANT : le schema exact des regions GLM-OCR n'est pas documente publiquement.
 Le mode --inspect imprime les cles reelles ; ajuste alors les listes *_KEYS / *_LABELS
 ci-dessous si besoin (marquees TODO).

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-generate_golden_dataset.py — genere un golden dataset via DeepEval Synthesizer,
+dataset_gen.py — genere un golden dataset via DeepEval Synthesizer,
 a partir du corpus source deja normalise (.md), avec un souci explicite de
 QUALITE des ground_truth ET des comptes EXACTS par categorie (single_passage /
 multi_passage / unanswerable -- pas juste des maximums approximatifs).
@@ -141,7 +141,7 @@ def _make_context_config(max_contexts_per_document, min_context_length=1, max_co
         max_contexts_per_document=max_contexts_per_document,
         min_context_length=min_context_length,
         max_context_length=max_context_length,
-        chunk_size=800,               # proche de CHILD_MAX (chunk_parent_child.py) -- coherence avec le retrieval reel
+        chunk_size=800,               # proche de CHILD_MAX (chunking.py) -- coherence avec le retrieval reel
         context_quality_threshold=0.6,
     )
 
@@ -248,7 +248,7 @@ def add_unanswerable(drift_candidates, answerable_goldens, seed=42):
 
 def goldens_to_records(goldens):
     """Convertit les Golden deepeval au schema CONFIRME utilise par
-    evaluate_rag.py (question/contexts/ground_truth/category) -- pas de
+    evaluate.py (question/contexts/ground_truth/category) -- pas de
     conversion ambigue, ce schema est deja valide en conditions reelles."""
     records = []
     for g in goldens:

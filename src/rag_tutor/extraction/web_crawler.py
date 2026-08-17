@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-crawl_site.py — crawler de site, pilote web_to_markdown.py (ton scraper).
+web_crawler.py — crawler de site, pilote web_scraper.py (ton scraper).
 
 Séparation des rôles (c'est tout l'intérêt d'avoir deux fichiers) :
 
     CE FICHIER (crawl_site.py)      -> trouve TOUTES les pages du site.
                                        Part de l'URL racine, suit les liens
                                        internes en largeur (BFS), déduplique.
-    web_to_markdown.py (ton scraper)-> pour chaque page trouvée : extrait le
+    web_scraper.py (ton scraper)-> pour chaque page trouvée : extrait le
                                        contenu et l'enregistre en Markdown.
                                        Importé tel quel, JAMAIS modifié.
 
@@ -41,17 +41,12 @@ import requests
 from bs4 import BeautifulSoup
 
 # --- ton scraper, importé et réutilisé tel quel -----------------------------
-# (le fichier doit s'appeler web_to_markdown.py et être dans le même dossier,
+# (le fichier s'appelle web_scraper.py et est dans le même dossier,
 #  ou accessible via le PYTHONPATH)
 try:
-    import web_to_markdown as scraper
-except ImportError as e:  # message clair plutôt qu'une stacktrace obscure
-    sys.exit(
-        "Impossible d'importer web_to_markdown.py.\n"
-        "Place crawl_site.py dans le MÊME dossier que web_to_markdown.py "
-        "(ton scraper), puis relance.\n"
-        f"Détail : {e}"
-    )
+    from . import web_scraper as scraper
+except ImportError:  # exécuté comme script autonome (python web_crawler.py)
+    import web_scraper as scraper
 
 DEFAULT_UA = getattr(scraper, "DEFAULT_UA",
                      "Mozilla/5.0 (compatible; RAG-ingest/1.0)")
@@ -284,7 +279,7 @@ def crawl(seeds: "list[str]", out_dir: str, *, max_pages: int = 500,
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Crawler de site : découvre toutes les pages et les fait "
-                    "scraper par web_to_markdown.py.")
+                    "scraper par web_scraper.py.")
     ap.add_argument("seeds", nargs="+",
                     help="URL(s) racine(s) à crawler (une ou plusieurs).")
     ap.add_argument("--out", default="corpus",

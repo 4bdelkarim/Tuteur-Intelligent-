@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-evaluate_rag.py — SEULE RESPONSABILITE : evaluer pipeline.py (le VRAI pipeline,
+evaluate.py — SEULE RESPONSABILITE : evaluer pipeline.py (le VRAI pipeline,
 pas une copie) sur un golden dataset, via Ragas pour les metriques LLM-jugees
 (faithfulness, context precision...) + des metriques custom que Ragas ne
 fournit pas nativement : Hit@k, MRR (retrieval), refusal correctness (refus).
@@ -152,8 +152,8 @@ def _is_relevant(gold_context, hit, overlap_threshold=0.4):
     """Un hit est pertinent si une PART SUBSTANTIELLE des mots distinctifs du
     gold_context se retrouve dans le texte du hit -- PAS une correspondance
     exacte (gc.strip() in hit["text"]), qui echoue des que le chunking source
-    du gold_context (DeepEval, chunk_size=800 dans generate_golden_dataset.py)
-    differe du chunking d'indexation (chunk_parent_child.py) -- meme quand le
+    du gold_context (DeepEval, chunk_size=800 dans dataset_gen.py)
+    differe du chunking d'indexation (chunking.py) -- meme quand le
     retrieval trouve objectivement le bon passage.
 
     overlap_threshold=0.4 (abaisse de 0.5) : fraction des mots (>=4 lettres)
@@ -753,7 +753,7 @@ def load_history(history_path="eval_history.jsonl"):
         return []
 
 
-if __name__ == "__main__":
+def main():
     import argparse
     ap = argparse.ArgumentParser(description="Evalue le pipeline RAG complet sur un golden dataset (Ragas + Hit@k/MRR/refusal correctness).")
     ap.add_argument("dataset_path", help="JSON du golden dataset (DeepEval Synthesizer)")
@@ -803,7 +803,11 @@ if __name__ == "__main__":
 # repondent, sans passer par tout le dataset) :
 #
 #   from ragas import SingleTurnSample
-#   from evaluate_rag import run_ragas
+#   from evaluate import run_ragas
 #   s = SingleTurnSample(user_input="2+2?", response="4",
 #                        retrieved_contexts=["2+2 fait 4."], reference="4")
 #   print(run_ragas([s]))
+
+
+if __name__ == "__main__":
+    main()

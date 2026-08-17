@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-calibrate_refusal_gate.py — calibre le seuil de refus sur un golden dataset,
+calibrate.py — calibre le seuil de refus sur un golden dataset,
 en ne faisant QUE du retrieval (pas de generation) -- rapide, pour iterer sur
 le seuil sans attendre un run complet.
 
@@ -10,7 +10,7 @@ Ce script reste utile pour calibrer should_refuse_reranker() — le seuil optima
 est a reporter dans RERANKER_REFUSAL_THRESHOLD (refusal_gate.py).
 
 Usage :
-  python calibrate_refusal_gate.py eval/golden_dataset.json
+  python -m rag_tutor.evaluation.calibrate eval/golden_dataset.json
 """
 
 import sys

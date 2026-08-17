@@ -3,21 +3,20 @@
 pipeline.py — ORCHESTRATEUR de la phase de requete complete : query processing
 -> retrieval (une ou plusieurs sous-questions) -> generation.
 
-Compression de contexte (context_compressor.py) VOLONTAIREMENT non branchee ici
-pour l'instant -- etape mise de cote. A rebrancher facilement : un seul appel
-compress() entre le merge et generate().
+Compression de contexte VOLONTAIREMENT non branchee ici pour l'instant
+(etape mise de cote ; il suffirait d'un appel compress() avant generate()).
 
 Ne contient AUCUNE logique metier propre -- compose seulement :
   query_processing.process_query()   (reformulation + decomposition)
-  retriever_hybride.retrieve()       (hybride BM25+dense+rerank, par (sous-)question)
-  retriever_hybride.merge_dedup()    (fusion des resultats multi sous-questions,
+  retriever.retrieve()               (hybride BM25+dense+rerank, par (sous-)question)
+  retriever.merge_dedup()            (fusion des resultats multi sous-questions,
                                        dedup par parent_id -- reutilise TEL QUEL,
                                        fonctionne aussi bien sur des enfants que
                                        sur les hits parent deja remontes)
 
   generator.generate()               (reponse finale, prompt tuteur)
 
-C'est ce fichier (pas evaluate_rag.py) que le test ET toute interface interactive
+C'est ce fichier (pas evaluate.py) que le test ET toute interface interactive
 (CLI/Streamlit) doivent appeler -- un seul chemin de code pour les deux, comme
 prevu depuis le debut de cette refonte.
 """
@@ -66,7 +65,7 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
     [top-k de la sous-question 1] + [top-k de la sous-question 2, deduplique],
     dans CET ordre -- meme si un hit de la sous-question 2 etait objectivement
     plus pertinent que le 4e hit de la sous-question 1. hit_at_k()/reciprocal_rank()
-    (evaluate_rag.py) prennent hits[:k] : sur une question decomposee, ca revenait
+    (evaluate.py) prennent hits[:k] : sur une question decomposee, ca revenait
     a ne verifier QUE le top-k de la PREMIERE sous-question, en ignorant les
     suivantes. Plus un modele de query_processing decompose de questions (un
     modele plus capable, ex. 14b vs 7b, le fait probablement plus souvent), plus

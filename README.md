@@ -37,10 +37,11 @@ rag-eval eval/test_set_v2.json --retrieval-mode hybrid_rerank
 ## Données
 
 - `data/raw/` — sources brutes (PDFs de cours + markdown web)
-- `data/processed/` — corpus unifié au format canonique (165+ fichiers .md)
+- `data/processed/` — sortie d'extraction (PDF → GLM-OCR, web → scrape + nettoyage), avant normalisation
+- `data/normalized/` — corpus unifié au format canonique (243 fichiers .md), entrée de l'indexation
 - `chroma_db/` — index ChromaDB prêt à l'emploi (collection `cours_ml_fig`)
 
-Pour réindexer après modification du corpus : `make ingest DIR=data/processed`.
+Pour réindexer après modification du corpus : `make ingest DIR=data/normalized`.
 
 ## Prérequis
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-web_to_markdown.py — RAG ingestion: fetch web pages and convert them to
+web_scraper.py — RAG ingestion: fetch web pages and convert them to
 embedding-ready Markdown.
 
 Design goal: a GENERIC, extensible core with ONE extractor per site. No

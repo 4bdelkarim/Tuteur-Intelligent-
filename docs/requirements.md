@@ -234,7 +234,7 @@ EMBEDDING_MODEL=BAAI/bge-m3
 RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 ```
 
-### 4.2 Configuration GLM-OCR (`config/glmocr_config.yaml`)
+### 4.2 Configuration GLM-OCR (`config/config.yaml`)
 
 - Mode **self-hosted** via Ollama (`api_mode: ollama_generate`, port 11434)
 - Layout model : `PaddlePaddle/PP-DocLayoutV3_safetensors` (CPU, batch=1)
@@ -259,8 +259,8 @@ RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 | `RRF_K` | 60 | `retriever.py` | Constante RRF |
 | `RRF_ALPHA` | 0.6 | `retriever.py` | Pondération dense vs BM25 |
 | `MODE` | `hybrid_rerank` | `retriever.py` | Chaîne de retrieval active |
-| `RERANKER_THRESHOLD` | 0.1119 | `refusal_gate.py` | Seuil de refus M1 (calibré) |
-| `CONFIDENCE_THRESHOLD` | 2 | `refusal_gate.py` | Seuil de refus M2 (confiance) |
+| `RERANKER_REFUSAL_THRESHOLD` | 0.1119 | `refusal_gate.py` | Seuil de refus M1 (calibré) |
+| `verify_answer` (M2) | juge LLM `qwen3:8b` | `generator.py` | Vérification post-génération (fidélité au contexte) |
 | `DB_DIR` | `chroma_db` | `vector_store.py` | Dossier ChromaDB |
 | `COLLECTION_NAME` | `cours_ml_fig` | `vector_store.py` | Nom de la collection |
 | `RECENT_WINDOW` | 6 | `memory.py` | Tours récents gardés intacts avant compression |
@@ -276,10 +276,12 @@ RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 ```
 data/
 ├── raw/                       ← Sources brutes (PDF + URLs)
-│   ├── pdf/                   ← 8 fichiers PDF (~33 Mo)
+│   ├── pdf/                   ← 7 fichiers PDF
 │   └── web/                   ← markdown web bruts (d2l, atcold)
-└── processed/                 ← Markdown unifié après extraction
-    └── *.md                   ← 165+ fichiers (format canonique)
+├── processed/                 ← Sortie d'extraction (GLM-OCR + VLM), pré-normalisation
+│   └── *.md                   ← 243 fichiers
+└── normalized/                ← Corpus unifié au format canonique (entrée de l'indexation)
+    └── *.md                   ← 243 fichiers
 
 chroma_db/                     ← Index ChromaDB (~106 Mo)
 ├── chroma.sqlite3             ← Base vectorielle persistante
@@ -472,7 +474,7 @@ ollama pull qwen3:8b
 ollama pull bge-m3
 
 # 5. Ingérer le corpus (30-60 min)
-python -m rag_tutor.ingestion.ingest data/processed/
+python -m rag_tutor.ingestion.ingest data/normalized/
 
 # 6. Lancer le chat (mode Q&A direct)
 python -m rag_tutor.cli.chat
@@ -530,7 +532,7 @@ python -m rag_tutor.cli.tutor --show-sources --k 6
 
 ```bash
 python -m rag_tutor.extraction.pdf_extractor data/raw/pdf/cours.pdf \
-    --config config/glmocr_config.yaml \
+    --config config/config.yaml \
     --out data/processed/
 ```
 

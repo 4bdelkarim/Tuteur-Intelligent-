@@ -13,7 +13,7 @@ invalide, timeout...) on retombe SANS exception sur la question d'origine, non
 decomposee -- degradation silencieuse cote qualite, jamais de crash du pipeline.
 
 Ne fait NI retrieval NI generation -- produit seulement les requetes que
-retriever_hybride.retrieve() utilisera en aval.
+retriever.retrieve() utilisera en aval.
 
 API publique :
   process_query(query) -> {"rewritten": str, "sub_queries": list[str]}
