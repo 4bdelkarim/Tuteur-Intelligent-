@@ -73,23 +73,53 @@ def _get(region, keys, default=None):
             return region[k]
     return default
 
-def region_type(region):
-    """Type SEMANTIQUE de la region : `native_label` d'abord (figure_title,
-    paragraph_title, chart, display_formula, algorithm...), puis fallback sur
-    le type brut `label` (text/image/formula/table)."""
+def region_type(region: dict) -> str:
+    """Type SEMANTIQUE d'une region GLM-OCR.
+
+    Args:
+        region: Dictionnaire de region (schema GLM-OCR).
+
+    Returns:
+        `native_label` d'abord (figure_title, chart, display_formula...),
+        sinon fallback sur le type brut `label` (text/image/formula/table),
+        en minuscules.
+    """
     t = _get(region, NATIVE_LABEL_KEYS, "") or _get(region, TYPE_KEYS, "")
     return str(t).strip().lower()
 
-def region_text(region):
+def region_text(region: dict) -> str:
+    """Texte reconnu d'une region (content/markdown/latex...), ou ``""``.
+
+    Args:
+        region: Dictionnaire de region.
+
+    Returns:
+        Contenu texte de la region, chaine vide si absent.
+    """
     return str(_get(region, TEXT_KEYS, "") or "")
 
-def region_image_path(region):
-    """Chemin (relatif au dossier du JSON) de l'image deja croppee par GLM-OCR, ou None."""
+def region_image_path(region: dict) -> str | None:
+    """Chemin de l'image deja croppee par GLM-OCR, ou None.
+
+    Args:
+        region: Dictionnaire de region.
+
+    Returns:
+        Chemin relatif au dossier du JSON, ou ``None`` si absent.
+    """
     p = _get(region, IMAGE_PATH_KEYS, None)
     return str(p).strip() if p else None
 
-def region_bbox(region):
-    """Renvoie (x1,y1,x2,y2) en 0-1000, ou None. Gere bbox rectangulaire ou polygone."""
+def region_bbox(region: dict) -> tuple[float, float, float, float] | None:
+    """Renvoie la boite englobante (x1, y1, x2, y2) en 0-1000.
+
+    Args:
+        region: Dictionnaire de region.
+
+    Returns:
+        Tuple de 4 floats, ou ``None`` si la bbox est absente/invalide. Gere
+        bbox rectangulaire comme polygone (enveloppe min/max).
+    """
     b = _get(region, BBOX_KEYS)
     if b is None:
         return None
@@ -110,7 +140,18 @@ def region_bbox(region):
 # Conversion bbox normalisee (0-1000) -> points PDF  (PUR, testable)
 # =====================================================
 
-def norm_bbox_to_points(bbox_norm, page_w_pt, page_h_pt):
+def norm_bbox_to_points(bbox_norm: tuple[float, float, float, float],
+                        page_w_pt: float, page_h_pt: float) -> tuple[float, float, float, float]:
+    """Convertit une bbox normalisee 0-1000 en points PDF.
+
+    Args:
+        bbox_norm: ``(x1, y1, x2, y2)`` en 0-1000.
+        page_w_pt: Largeur de la page en points.
+        page_h_pt: Hauteur de la page en points.
+
+    Returns:
+        ``(x1, y1, x2, y2)`` en points PDF.
+    """
     x1, y1, x2, y2 = bbox_norm
     return (x1 / 1000.0 * page_w_pt, y1 / 1000.0 * page_h_pt,
             x2 / 1000.0 * page_w_pt, y2 / 1000.0 * page_h_pt)
@@ -120,7 +161,19 @@ def norm_bbox_to_points(bbox_norm, page_w_pt, page_h_pt):
 # Crop d'une figure depuis le PDF (PyMuPDF)  [lazy fitz]
 # =====================================================
 
-def crop_region_png(doc, page_num, bbox_norm, dpi=CROP_DPI):
+def crop_region_png(doc, page_num: int, bbox_norm: tuple[float, float, float, float],
+                    dpi: int = CROP_DPI) -> bytes:
+    """Croppe une region du PDF et la renvoie en PNG (fallback sans crop GLM-OCR).
+
+    Args:
+        doc: Document PyMuPDF ouvert (``fitz.open``).
+        page_num: Numero de page (1-indexe).
+        bbox_norm: ``(x1, y1, x2, y2)`` en 0-1000.
+        dpi: Resolution du rendu.
+
+    Returns:
+        Bytes du PNG de la region croppee.
+    """
     import fitz
     page = doc[page_num - 1]
     r = page.rect
@@ -171,10 +224,22 @@ VLM_PROMPT_COMPOSITE = (
 )
 
 
-def describe_figure(images_png, labels, caption=""):
-    """1 image  -> prompt SIMPLE (aucune mention de sous-figure).
-       N images -> prompt COMPOSITE (sous-figures etiquetees, envoyees dans le meme appel).
-       Timeout + 1 retry : un appel VLM qui bloque ne doit pas faire tomber tout le pipeline."""
+def describe_figure(images_png: list[bytes], labels: list[str], caption: str = "") -> str:
+    """Decrit une figure via le VLM (qwen3-vl:8b).
+
+    Args:
+        images_png: Une ou plusieurs images (bytes PNG).
+        labels: Etiquettes des sous-figures (meme longueur que ``images_png``).
+        caption: Legende globale (fait foi pour le VLM).
+
+    Returns:
+        Description textuelle en francais, ou ``""`` si le VLM echoue.
+
+    Notes:
+        1 image -> prompt SIMPLE ; N images -> prompt COMPOSITE (sous-figures
+        envoyees dans le meme appel). Timeout + 1 retry : un appel VLM qui
+        bloque ne doit pas faire tomber tout le pipeline.
+    """
     import ollama
     cap = caption or "(non disponible)"
     if len(images_png) > 1:
@@ -216,7 +281,16 @@ def describe_figure(images_png, labels, caption=""):
 # Nettoyage commun leger (cf. Bloc 4)  (PUR)
 # =====================================================
 
-def tidy(text):
+def tidy(text: str) -> str:
+    """Nettoyage leger : Unicode NFC + espaces de fin de ligne.
+
+    Args:
+        text: Texte a nettoyer.
+
+    Returns:
+        Texte normalise NFC, sans espaces de fin de ligne, blocs de lignes
+        vides reduits a deux sauts de ligne maximum.
+    """
     text = unicodedata.normalize("NFC", text)
     text = re.sub(r"[ \t]+\n", "\n", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -244,9 +318,16 @@ def _dedupe_lines(raw):
         out.append(line)
     return "\n".join(out)
 
-def clean_caption(raw):
-    """Nettoie une legende OCR : coupe au premier fence ``` puis dedoublonne
-    les lignes (le modele repete la legende en boucle)."""
+def clean_caption(raw: str) -> str:
+    """Nettoie une legende OCR.
+
+    Args:
+        raw: Legende brute (peut etre ``None``).
+
+    Returns:
+        Legende nettoyee : coupee au premier fence puis dedoublonnee
+        (le modele repete la legende en boucle).
+    """
     raw = (raw or "").strip()
     if not raw:
         return ""
@@ -404,12 +485,18 @@ def _insert_figure(text, caption, desc):
     block = f"--- [FIGURE] ---\n{cap}\n{desc}\n--- [/FIGURE] ---"
     return block + "\n\n" + text.lstrip()
 
-def build_markdown_fullpage(result, source_id, describe_fn):
+def build_markdown_fullpage(result: dict, source_id: str, describe_fn) -> str:
     """Assemble le markdown final depuis l'OCR page entiere.
 
-    describe_fn(page_num, panels, caption) -> description figure, injectable et
-    testable (sans VLM ni PDF reels). Le texte vient de l'OCR page entiere
-    (propre) ; les figures viennent du layout, les legendes du texte."""
+    Args:
+        result: Sortie de :func:`run_glmocr_fullpage` (``{"pages": [...]}``).
+        source_id: Nom du fichier PDF (ex. ``02_NN.pdf``) ecrit dans le front-matter.
+        describe_fn: Callback ``(page_num, panels, caption) -> description``,
+            injectable et testable (sans VLM ni PDF reels).
+
+    Returns:
+        Markdown unifie (front-matter + ``<!-- loc page=N -->`` + blocs figure).
+    """
     pages = result["pages"]
     out = ["---", "source_type: pdf", f"source_id: {source_id}",
            f"page_count: {len(pages)}", "---", ""]
@@ -496,7 +583,8 @@ def _ocr_caption_robust(img, bbox, figure_bboxes, model, host, port, prompt_text
     return _extract_caption_line(_ollama_ocr(_crop_pil(img, ctx),
                                              model, host, port, prompt_text, 1024))
 
-def run_glmocr_fullpage(pdf_path, config_path, out_dir="_glmocr_json"):
+def run_glmocr_fullpage(pdf_path: str | Path, config_path: str,
+                        out_dir: str = "_glmocr_json") -> tuple[dict, Path]:
     """OCR PAGE ENTIERE + layout pour les figures. Renvoie (result, base_dir).
 
     Pourquoi ne PAS utiliser le mode par-region du SDK : il croppe chaque region
@@ -574,7 +662,14 @@ def run_glmocr_fullpage(pdf_path, config_path, out_dir="_glmocr_json"):
 
     return {"pages": pages}, out
 
-def process(pdf_path, config_path, out_path):
+def process(pdf_path: str | Path, config_path: str, out_path: str) -> None:
+    """Extrait un PDF en markdown unifie et l'ecrit sur disque.
+
+    Args:
+        pdf_path: Chemin du PDF a traiter.
+        config_path: Chemin du fichier de config GLM-OCR (YAML).
+        out_path: Chemin du fichier .md de sortie.
+    """
     import time
     result, base_dir = run_glmocr_fullpage(pdf_path, config_path)
 
@@ -623,7 +718,13 @@ def process(pdf_path, config_path, out_path):
 # Mode --inspect : imprime le schema reel des regions
 # =====================================================
 
-def inspect(pdf_path, config_path):
+def inspect(pdf_path: str | Path, config_path: str) -> None:
+    """Imprime le schema reel des regions GLM-OCR puis quitte (mode --inspect).
+
+    Args:
+        pdf_path: Chemin du PDF a inspecter.
+        config_path: Chemin du fichier de config GLM-OCR (YAML).
+    """
     result, _base = run_glmocr_fullpage(pdf_path, config_path)
     pages = result["pages"]
     print(f"\nPages: {len(pages)}")

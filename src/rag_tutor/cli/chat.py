@@ -18,7 +18,7 @@ from ..core.pipeline import answer as pipeline_answer
 from ..core.generator import citation_label
 
 
-def format_sources(hits, max_sources=3):
+def format_sources(hits: list[dict], max_sources: int = 3) -> str:
     """Affiche les sources des passages recuperes (meta.source/source_url si
     disponible). Defensif : ne plante pas si la forme des hits differe."""
     if not hits:
@@ -30,7 +30,8 @@ def format_sources(hits, max_sources=3):
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
+    """Point d'entree CLI du Q&A direct (cf. ``rag-chat`` / ``make chat``)."""
     ap = argparse.ArgumentParser(description="Pose des questions au tuteur RAG en interactif.")
     ap.add_argument("--k", type=int, default=4, help="nb de passages recuperes par (sous-)question (defaut 4)")
     ap.add_argument("--no-query-processing", action="store_true",

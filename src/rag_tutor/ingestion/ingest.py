@@ -11,9 +11,12 @@ C'est le seul fichier a relancer quand le corpus change. evaluate.py et
 le pipeline de requete n'appellent jamais ce fichier -- ils consomment la
 base deja indexee, via retriever.py.
 
+Entree attendue : le corpus CANONIQUE normalise (``data/normalized/``), pas la
+sortie brute d'extraction (``data/processed/``).
+
 Usage :
-  python ingest.py ./processed/
-  python ingest.py ./processed/ --child-target 400 --child-max 750
+  python -m rag_tutor.ingestion.ingest data/normalized/
+  python -m rag_tutor.ingestion.ingest data/normalized/ --child-target 400 --child-max 750
 """
 
 import argparse
@@ -24,8 +27,22 @@ from ..core.embeddings import BGEEmbeddings, EMBEDDING_MODEL
 from ..core.vector_store import index_children, save_parents
 
 
-def run(path, child_target=CHILD_TARGET, child_max=CHILD_MAX, child_overlap=CHILD_OVERLAP,
-        reset=True):
+def run(path: Path, child_target: int = CHILD_TARGET, child_max: int = CHILD_MAX,
+        child_overlap: int = CHILD_OVERLAP, reset: bool = True):
+    """Execute l'ingestion complete : chunking -> embeddings -> indexation Chroma.
+
+    Args:
+        path: Dossier (ou fichier) du corpus normalise a indexer.
+        child_target: Taille cible (en caracteres) d'un chunk enfant.
+        child_max: Taille maximale (hardmax, en caracteres) d'un chunk enfant.
+        child_overlap: Chevauchement (en caracteres) ajoute a l'``embed_text``
+            des enfants consecutifs (le ``text`` brut reste sans overlap).
+        reset: Si vrai, vide la collection Chroma avant indexation.
+
+    Returns:
+        Tuple ``(parents, children)`` : les sections parentes remontees au
+        runtime et les chunks enfants indexes.
+    """
     parents, children = chunk_corpus(path, child_target=child_target, child_max=child_max,
                                       child_overlap=child_overlap)
     print_stats(parents, children)

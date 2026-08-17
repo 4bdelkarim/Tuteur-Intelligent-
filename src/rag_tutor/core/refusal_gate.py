@@ -22,7 +22,7 @@ refusal_gate.py — MECANISMES DE REFUS :
 
 API publique :
   should_refuse_reranker(hits, threshold=RERANKER_REFUSAL_THRESHOLD) -> bool
-  calibrate(scored_examples) -> float
+  calibrate(scored_examples) -> tuple[float, float]   # (seuil optimal, accuracy)
 """
 
 # =====================================================
@@ -32,14 +32,12 @@ API publique :
 # Seuil sur le score du cross-encoder bge-reranker-v2-m3 en-dessous duquel on
 # refuse de repondre. Le reranker donne des logits (pas des probabilites) —
 # l'echelle approximative est [-10, +10], les scores > 0 indiquent une pertinence
-# positive. Ce seuil DOIT etre calibre via calibrate_reranker_refusal.py.
-#
-# -5.0 = valeur volontairement basse (placeholder) : ne declenche quasi jamais
-# en attendant la calibration. A ajuster apres avoir lance le script de calibration.
+# positive. Valeur CALIBREE via evaluation/calibrate.py sur eval/test_set_v2.json
+# (mode hybrid_rerank) — cf. eval/reranker_calibration.json.
 RERANKER_REFUSAL_THRESHOLD = 0.1119
 
 
-def should_refuse_reranker(hits, threshold=RERANKER_REFUSAL_THRESHOLD):
+def should_refuse_reranker(hits: list[dict], threshold: float = RERANKER_REFUSAL_THRESHOLD) -> bool:
     """Refuse si le score du meilleur hit (score du reranker en mode hybrid_rerank,
     ou score RRF/cosine sinon) est sous le seuil. Ne coute rien : le reranker
     tourne deja dans hybrid_rerank, son score est dans hits[0]["dist"].
@@ -61,7 +59,7 @@ def should_refuse_reranker(hits, threshold=RERANKER_REFUSAL_THRESHOLD):
 # CALIBRATION (generique — pour les trois mecanismes)
 # =====================================================
 
-def calibrate(scored_examples):
+def calibrate(scored_examples: list[tuple[float, bool]]) -> tuple[float, float]:
     """scored_examples : liste de (top_score, is_unanswerable: bool). Balaie les
     seuils possibles (chaque score observe) et renvoie celui qui maximise
     l'accuracy refus/reponse sur cet echantillon -- point de depart, pas

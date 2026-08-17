@@ -11,7 +11,6 @@ Each commented section below is independently splittable into its own module:
 
   [core.fetch]         fetch_page()              static fetch (+ disabled JS hook)
   [core.model]         Document                  markdown + metadata, front-matter
-  [core.noise]         filter_noise()            aggressive output-cell noise filter
   [core.serialize]     html_to_markdown()        shared markdownify serializer
   [core.registry]      register / get_extractor  {domain -> Extractor} dispatch
   [extractors.base]    BaseExtractor             contract only (stays generic)
@@ -85,6 +84,13 @@ def _render_with_playwright(url: str, *, timeout: int = 20) -> str:
 # ===========================================================================
 @dataclass
 class Document:
+    """Contenu extrait d'une page : Markdown + métadonnées, sérialisable en .md.
+
+    ``render()`` préfixe le corps par un front-matter YAML généré depuis
+    ``metadata`` (via ``json.dumps`` : YAML étant un sur-ensemble de JSON,
+    cela évite une dépendance à PyYAML pour des scalaires sûrs).
+    """
+
     markdown: str
     metadata: dict = field(default_factory=dict)
 
@@ -100,30 +106,6 @@ class Document:
 
     def render(self) -> str:
         return f"{self.front_matter()}\n\n{self.markdown.strip()}\n"
-
-
-# ===========================================================================
-# [core.noise]  — generic: applies to any site's code-output cells
-# ===========================================================================
-DEFAULT_NOISE_PATTERNS = [
-    r"^\s*\[\d{2}:\d{2}:\d{2}\]",            # MXNet log timestamps
-    r"Using Pooled .*StorageManager",
-    r"No GPU/TPU found",
-    r"falling back to CPU",
-    r"TF_CPP_MIN_LOG_LEVEL",
-    r"\bWARNING\b", r"UserWarning", r"DeprecationWarning", r"FutureWarning",
-    r"Could not load dynamic library",
-    r"(?i)\b(cuda|cudnn|cuinit|xla)\b",
-    r"\d+%\|",                               # tqdm progress bars
-    r"\bit/s\b",
-]
-
-
-def filter_noise(text: str, patterns: "list[str] | None" = None) -> str:
-    """Drop noisy lines from an output block. Returns '' if nothing useful remains."""
-    rx = [re.compile(p) for p in (patterns or DEFAULT_NOISE_PATTERNS)]
-    kept = [ln for ln in text.split("\n") if not any(r.search(ln) for r in rx)]
-    return "\n".join(kept).strip("\n")
 
 
 # ===========================================================================
@@ -146,7 +128,7 @@ class _Serializer(MarkdownConverter):
 _SERIALIZER = _Serializer(heading_style="ATX", bullets="-")
 
 
-def html_to_markdown(node) -> str:
+def html_to_markdown(node: "Tag | str") -> str:
     """Headings, paragraphs, lists, tables, inline formatting, links -> Markdown."""
     return _SERIALIZER.convert(str(node))
 
@@ -158,11 +140,26 @@ _EXTRACTORS: "list[type[BaseExtractor]]" = []
 
 
 def register(cls: "type[BaseExtractor]") -> "type[BaseExtractor]":
+    """Décorateur : enregistre une sous-classe de ``BaseExtractor``.
+
+    Returns:
+        La classe décorée, inchangée, pour permettre l'usage ``@register``.
+    """
     _EXTRACTORS.append(cls)
     return cls
 
 
 def get_extractor(url: str) -> "BaseExtractor":
+    """Renvoie l'extracteur adapté à l'hôte de *url* (ou le générique par défaut).
+
+    Args:
+        url: URL source ; l'hôte (sans ``www.``) est comparé aux ``DOMAINS``
+            des extracteurs enregistrés.
+
+    Returns:
+        Une instance d'extracteur, ``GenericExtractor`` si aucun domaine ne
+        correspond.
+    """
     host = (urlparse(url).netloc or "").lower()
     host = host[4:] if host.startswith("www.") else host
     for cls in _EXTRACTORS:
@@ -176,11 +173,26 @@ def get_extractor(url: str) -> "BaseExtractor":
 # [extractors.base]  — contract only; stays domain-agnostic
 # ===========================================================================
 class BaseExtractor(ABC):
+    """Contrat d'extraction générique, agnostique du site.
+
+    Une sous-classe définit ``DOMAINS`` et implémente ``extract``. C'est le
+    seul point d'extension : les spécificités d'un site (ex. Sphinx/d2l)
+    restent confinées dans la sous-classe, jamais dans le code commun.
+    """
+
     DOMAINS: "tuple[str, ...]" = ()
 
     @abstractmethod
     def extract(self, html: str, url: str) -> Document:
-        ...
+        """Convertit le HTML brut d'une page en :class:`Document`.
+
+        Args:
+            html: HTML brut de la page.
+            url: URL source, transmise aux métadonnées et à la dispatch.
+
+        Returns:
+            Le document extrait (Markdown + métadonnées).
+        """
 
 
 # ===========================================================================
@@ -219,6 +231,13 @@ def _restore_images(md: str, ph: dict) -> str:
 
 
 class GenericExtractor(BaseExtractor):
+    """Extracteur de repli basé sur trafilatura, pour les sites inconnus.
+
+    Ne connaît aucune structure de page particulière : il délègue à
+    trafilatura (article, tables/liens/images inclus) après avoir protégé les
+    ``<img>`` imbriquées dans des tableaux (que trafilatura perdrait).
+    """
+
     DOMAINS = ()
 
     def extract(self, html: str, url: str) -> Document:
@@ -254,6 +273,14 @@ class GenericExtractor(BaseExtractor):
 # ===========================================================================
 @register
 class D2lExtractor(BaseExtractor):
+    """Extracteur dédié à d2l.ai (livre Sphinx « Dive into Deep Learning »).
+
+    Confine ici TOUTES les spécificités Sphinx/d2l : sélection du conteneur
+    principal, suppression du chrome (onglets Colab, permaliens, copybtn),
+    conservation du seul panneau PyTorch actif, conversion LaTeX/MathML et
+    blocs de code, nettoyage des sorties. Le code commun n'en dépend pas.
+    """
+
     DOMAINS = ("d2l.ai",)
 
     MAIN_SELECTORS = ["div[role=main]", "main", "div.document"]
@@ -418,7 +445,20 @@ _MI_MAP = {"\u211d": r"\mathbb{R}", "\u2115": r"\mathbb{N}", "\u2124": r"\mathbb
            "\u211a": r"\mathbb{Q}", "\u2102": r"\mathbb{C}"}
 
 
-def mathml_to_latex(node) -> str:
+def mathml_to_latex(node: "Tag | NavigableString") -> str:
+    """Convertit récursivement un nœud MathML de présentation en LaTeX.
+
+    Ne couvre que le sous-ensemble simple utilisé par d2l (mfrac, msup/msub,
+    msqrt/mroot, opérateurs/lettres Unicode). Utilisé uniquement en repli sur
+    le DOM rendu (MathJax) ; en production, le HTML statique contient déjà le
+    LaTeX brut.
+
+    Args:
+        node: Racine du sous-arbre MathML (``<math>``, ``<mfrac>``… ou feuille).
+
+    Returns:
+        La chaîne LaTeX correspondante (``''`` si rien d'exploitable).
+    """
     if isinstance(node, NavigableString):
         s = str(node)
         return s if s.strip() else ""
@@ -504,6 +544,18 @@ def _slug(url: str, doc: Document) -> str:
 
 
 def save_document(doc: Document, out_dir: str, url: "str | None" = None) -> Path:
+    """Sérialise *doc* en fichier Markdown (front-matter + corps) dans *out_dir*.
+
+    Le nom de fichier est dérivé de l'URL (slug), ou du titre à défaut.
+
+    Args:
+        doc: Document à écrire.
+        out_dir: Dossier de destination (créé si nécessaire).
+        url: URL utilisée pour le slug ; à défaut ``doc.metadata["source_url"]``.
+
+    Returns:
+        Le chemin du fichier écrit.
+    """
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     url = url or doc.metadata.get("source_url") or "document"
@@ -517,6 +569,21 @@ def save_document(doc: Document, out_dir: str, url: "str | None" = None) -> Path
 # ===========================================================================
 def process(*, url: "str | None" = None, file: "str | None" = None,
             canonical_url: "str | None" = None, render_js: bool = False) -> Document:
+    """Extrait un :class:`Document` depuis une URL ou un fichier HTML local.
+
+    Args:
+        url: URL à récupérer (mutuellement exclusif avec ``file``).
+        file: Chemin d'un fichier HTML local (pour validation).
+        canonical_url: URL source à enregistrer/à utiliser pour la dispatch
+            quand on passe par ``file``.
+        render_js: Si vrai, rend le JS via Playwright (contre-indiqué pour d2l).
+
+    Returns:
+        Le document extrait.
+
+    Raises:
+        ValueError: Si ni ``url`` ni ``file`` n'est fourni.
+    """
     if file:
         html = Path(file).read_text(encoding="utf-8", errors="replace")
         ref = canonical_url or url or f"file://{file}"
@@ -528,7 +595,15 @@ def process(*, url: "str | None" = None, file: "str | None" = None,
     return get_extractor(ref).extract(html, ref)
 
 
-def main(argv=None):
+def main(argv: "list[str] | None" = None) -> Document:
+    """Point d'entrée CLI : ``--url``/``--file`` → extraction → sauvegarde.
+
+    Args:
+        argv: Arguments à analyser (défaut : ``sys.argv[1:]``).
+
+    Returns:
+        Le document extrait.
+    """
     ap = argparse.ArgumentParser(
         description="Fetch/convert a web page to embedding-ready Markdown.")
     src = ap.add_mutually_exclusive_group(required=True)

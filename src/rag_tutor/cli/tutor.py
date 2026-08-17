@@ -29,7 +29,7 @@ from ..conversation.prompts import TUTOR_SYSTEM_PROMPT
 from ..evaluation.per_question import evaluate_response, format_eval_report
 
 
-def format_sources(hits, max_sources=3):
+def format_sources(hits: list[dict], max_sources: int = 3) -> str:
     """Affiche les sources des passages récupérés."""
     if not hits:
         return "  (aucune source)"
@@ -40,7 +40,8 @@ def format_sources(hits, max_sources=3):
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
+    """Point d'entree CLI du tuteur socratique (cf. ``rag-tutor`` / ``make tutor``)."""
     ap = argparse.ArgumentParser(
         description="Tuteur pédagogique socratique — conversation multi-tours."
     )

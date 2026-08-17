@@ -19,6 +19,8 @@ Colab, instance orpheline sur un port aleatoire...). Avec un Client explicite,
 AUCUNE ambiguite sur le serveur contacte -- cf. embeddings.py, meme principe.
 """
 
+from collections.abc import Iterator
+
 GEN_MODEL = "qwen2.5:14b"   # aligne sur les modeles pulles sur Colab (differe du JUDGE_MODEL d'evaluate.py)
 MAX_TOKENS = 900             # H100 disponible desormais -- 400 (contrainte historique CPU-only/Colab) coupait
                               # les reponses en plein mot (confirme via chat.py, ex. "...produit la pr").
@@ -32,8 +34,10 @@ OLLAMA_HOST = "http://127.0.0.1:11434"   # instance Ollama principale -- port 11
                               # cf. embeddings.py, meme raison
 
 
-def chat(system_prompt, user_message, model=GEN_MODEL, temperature=0.2, max_tokens=MAX_TOKENS,
-         host=OLLAMA_HOST, num_ctx=NUM_CTX, keep_alive="30m"):
+def chat(system_prompt: str, user_message: str, model: str = GEN_MODEL,
+         temperature: float = 0.2, max_tokens: int = MAX_TOKENS,
+         host: str = OLLAMA_HOST, num_ctx: int | None = NUM_CTX,
+         keep_alive: str = "30m") -> str:
     """Appel simple : system + user -> texte de reponse (pas de streaming, pas d'historique).
 
     Parametres
@@ -58,9 +62,10 @@ def chat(system_prompt, user_message, model=GEN_MODEL, temperature=0.2, max_toke
     )
     return resp["message"]["content"]
 
-def chat_stream(system_prompt, user_message, model=GEN_MODEL, temperature=0.2,
-                max_tokens=MAX_TOKENS, host=OLLAMA_HOST, num_ctx=NUM_CTX,
-                keep_alive="30m"):
+def chat_stream(system_prompt: str, user_message: str, model: str = GEN_MODEL,
+                temperature: float = 0.2, max_tokens: int = MAX_TOKENS,
+                host: str = OLLAMA_HOST, num_ctx: int | None = NUM_CTX,
+                keep_alive: str = "30m") -> Iterator[str]:
     """Version streaming de chat() : yield chaque token des qu'il est genere par Ollama.
     Meme signature que chat(), mais retourne un generateur de str.
 

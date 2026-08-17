@@ -24,12 +24,13 @@ COLLECTION_NAME = "cours_ml_fig"
 CHROMA_ADD_BATCH_SIZE = 2000
 
 
-def _parents_path(db_dir=DB_DIR, collection_name=COLLECTION_NAME):
+def _parents_path(db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME) -> Path:
     return Path(db_dir) / f"parents_{collection_name}.json"
 
 
-def index_children(children, vectors, db_dir=DB_DIR, collection_name=COLLECTION_NAME,
-                    batch_size=CHROMA_ADD_BATCH_SIZE, reset=True):
+def index_children(children: list[dict], vectors: list[list[float]],
+                    db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME,
+                    batch_size: int = CHROMA_ADD_BATCH_SIZE, reset: bool = True):
     """Cree (ou reset) la collection Chroma et insere les enfants + leurs vecteurs, par lots.
     `reset=True` (defaut) : supprime et recree la collection -> reindexation complete.
     `reset=False` : ajoute a une collection existante (indexation incrementale)."""
@@ -69,7 +70,7 @@ def index_children(children, vectors, db_dir=DB_DIR, collection_name=COLLECTION_
     return coll
 
 
-def save_parents(parents, db_dir=DB_DIR, collection_name=COLLECTION_NAME):
+def save_parents(parents: dict, db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME) -> Path:
     """Ecrit le magasin des parents (sections completes) en JSON a cote de la base Chroma."""
     Path(db_dir).mkdir(parents=True, exist_ok=True)
     pstore = _parents_path(db_dir, collection_name)
@@ -77,13 +78,13 @@ def save_parents(parents, db_dir=DB_DIR, collection_name=COLLECTION_NAME):
     return pstore
 
 
-def load_parents(db_dir=DB_DIR, collection_name=COLLECTION_NAME):
+def load_parents(db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME) -> dict:
     """Relit le magasin des parents -- utilise par le retrieval pour retrouver le texte
     complet d'une section a partir d'un parent_id."""
     return json.loads(_parents_path(db_dir, collection_name).read_text(encoding="utf-8"))
 
 
-def get_collection(db_dir=DB_DIR, collection_name=COLLECTION_NAME):
+def get_collection(db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME):
     """Ouvre la collection Chroma existante en lecture -- utilise par le retrieval."""
     import chromadb
     return chromadb.PersistentClient(path=db_dir).get_collection(collection_name)

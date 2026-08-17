@@ -23,9 +23,8 @@ Principe (inchange) : on CHERCHE petit, on GENERE grand.
   Formules $$...$$, blocs [FIGURE], blocs ```...``` et tables markdown restent
   ATOMIQUES (jamais coupes).
 
-  pip install pyyaml
-  python normalizer.py ./bruts/ --out ./processed/          # etape 1 (separee)
-  python chunking.py ./processed/                 # etape 2 (ce script) -- stats seulement
+  python -m rag_tutor.extraction.normalizer data/processed/ --out data/normalized/  # etape 1 (separee)
+  python -m rag_tutor.core.chunking data/normalized/            # etape 2 (ce script) -- stats seulement
 
 API publique :
   parse_file(md_path)   -> (parents: dict, children: list[dict])   # UN fichier
@@ -70,7 +69,7 @@ HEADER_RE       = re.compile(r'^#{1,6}\s+\S')
 # 1) FRONT-MATTER (toujours present, ecrit par normalizer.py)
 # =====================================================
 
-def split_frontmatter(text):
+def split_frontmatter(text: str) -> tuple[dict, str]:
     """Extrait le front-matter YAML. Garantit que source_type est toujours present
     et correct, avec fallback explicite si absent du YAML (ne devrait jamais arriver
     apres normalizer.py, mais filet de securite)."""
@@ -100,7 +99,7 @@ def split_frontmatter(text):
 #    (ordre preserve, PUR -- jamais de chevauchement entre unites atomiques)
 # =====================================================
 
-def tokenize(text):
+def tokenize(text: str) -> list[tuple[str, "str | int", None]]:
     """Decoupe le texte en segments preserves :
     - page      : marqueur <!-- loc page=N -->
     - formula   : $$...$$  (LaTeX, jamais coupe)
@@ -135,7 +134,7 @@ def tokenize(text):
     return segs
 
 
-def is_header(line):
+def is_header(line: str) -> bool:
     """P2: Detecte un titre markdown. La protection contre les faux headers
     (commentaires de code '# ceci est un commentaire') est assuree en AMONT par
     tokenize() : les blocs de code ```...``` sont extraits comme unites atomiques
@@ -148,7 +147,19 @@ def is_header(line):
 # 3) CONSTRUCTION DES PARENTS (= sections)
 # =====================================================
 
-def build_parents(text):
+def build_parents(text: str) -> list[dict]:
+    """Construit les parents (= sections) a partir du texte tokenise.
+
+    Chaque titre markdown ouvre une nouvelle section ; les segments (prose,
+    formule, figure, code, table) sont accumules dans la section courante,
+    avec suivi des pages de debut/fin. Les sections vides sont ecartees.
+
+    Args:
+        text: Corps du document (sans front-matter).
+
+    Returns:
+        Liste de sections ``{section, page_start, page_end, segments}``.
+    """
     parents = []
     cur = None
     current_page = None
@@ -204,7 +215,7 @@ def build_parents(text):
 # 4) DECOUPAGE EN ENFANTS (blocs atomiques preserves)
 # =====================================================
 
-def prose_units(text, hardmax):
+def prose_units(text: str, hardmax: int) -> list[str]:
     """Decoupe la prose en unites (paragraphes puis phrases). Les blocs de code
     ne passent plus par ici (P1: ils sont deja extraits comme code_block dans tokenize)."""
     units = []
@@ -227,7 +238,8 @@ def prose_units(text, hardmax):
     return units
 
 
-def build_children(segments, target, hardmax, overlap=CHILD_OVERLAP):
+def build_children(segments: list[tuple[str, str, "int | None"]], target: int,
+                   hardmax: int, overlap: int = CHILD_OVERLAP) -> list[dict]:
     """Construit les enfants a partir des segments d'une section.
     overlap: nombre de caracteres du child precedent a inclure au debut de
     l'embed_text du child suivant (P4). Le champ 'text' reste sans overlap
@@ -281,8 +293,8 @@ def build_children(segments, target, hardmax, overlap=CHILD_OVERLAP):
 # 5) CHUNKING + METADATA -- API PUBLIQUE (aucun embedding, aucun I/O base)
 # =====================================================
 
-def parse_file(md_path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
-               child_overlap=CHILD_OVERLAP):
+def parse_file(md_path: Path, child_target: int = CHILD_TARGET, child_max: int = CHILD_MAX,
+               child_overlap: int = CHILD_OVERLAP) -> tuple[dict, list[dict]]:
     """Pur (sans embeddings) : renvoie (parents_store, children) pour UN fichier deja unifie."""
     source = md_path.stem
     raw = md_path.read_text(encoding="utf-8")
@@ -332,8 +344,8 @@ def parse_file(md_path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
     return parents_store, children
 
 
-def chunk_corpus(path, child_target=CHILD_TARGET, child_max=CHILD_MAX,
-                 child_overlap=CHILD_OVERLAP):
+def chunk_corpus(path: Path, child_target: int = CHILD_TARGET, child_max: int = CHILD_MAX,
+                 child_overlap: int = CHILD_OVERLAP) -> tuple[dict, list[dict]]:
     """Pur : meme contrat que parse_file, mais sur un dossier entier (ou un fichier unique).
     C'est CETTE fonction que ingest.py et les tests doivent appeler -- jamais parse_file
     directement en boucle ailleurs, sinon la logique d'agregation se duplique."""
@@ -357,7 +369,13 @@ def _dist(label, values):
           f"moy={int(statistics.mean(values)):>4}  max={max(values):>5}")
 
 
-def print_stats(parents, children):
+def print_stats(parents: dict, children: list[dict]) -> None:
+    """Affiche des statistiques de decoupage (diagnostic pur, aucun effet de bord).
+
+    Args:
+        parents: Store des sections ``{parent_id -> {...}}``.
+        children: Liste des chunks enfants ``{...}``.
+    """
     print("=" * 60)
     print("STATISTIQUES DE DECOUPAGE PARENT-CHILD")
     print("=" * 60)

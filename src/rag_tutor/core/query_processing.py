@@ -51,7 +51,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-def _parse(raw, original_query):
+def _parse(raw: str, original_query: str) -> dict:
     """Extrait le JSON de la reponse LLM ; repli sur la question d'origine si
     le parsing echoue ou si la forme ne correspond pas a ce qui est attendu."""
     match = re.search(r'\{.*\}', raw, re.DOTALL)
@@ -68,7 +68,7 @@ def _parse(raw, original_query):
     return {"rewritten": original_query, "sub_queries": []}
 
 
-def process_query(query, history=None, model=None):
+def process_query(query: str, history: str | None = None, model: str | None = None) -> dict:
     """Reformule `query` et la decompose si besoin. Ne leve jamais d'exception
     liee au LLM/parsing -- repli sur la question d'origine en cas de probleme.
 

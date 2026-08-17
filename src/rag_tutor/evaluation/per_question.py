@@ -30,7 +30,8 @@ import re
 from ..core.generator import verify_answer
 
 
-def evaluate_response(query, result, answer_text=None, run_judge=True, run_retrieval_scores=True):
+def evaluate_response(query: str, result: "RAGResult", answer_text: str | None = None,
+                      run_judge: bool = True, run_retrieval_scores: bool = True) -> dict:
     """Évalue une réponse du pipeline et retourne un dictionnaire structuré.
 
     Paramètres

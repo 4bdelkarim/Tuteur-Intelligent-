@@ -47,8 +47,16 @@ FRONTMATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n?', re.DOTALL)
 OLD_PDF_COMMENT_RE = re.compile(r'^<!--\s*source:\s*(\S+)\s*\|.*-->\s*\n?', re.MULTILINE)
 
 
-def split_frontmatter(text):
-    """(metadata_dict, corps_sans_frontmatter). Absence totale -> {} (ancien pdf_to_md.py)."""
+def split_frontmatter(text: str) -> tuple[dict, str]:
+    """Separe le front-matter YAML du corps du document.
+
+    Args:
+        text: Contenu complet d'un fichier .md (front-matter + corps).
+
+    Returns:
+        Tuple ``(meta, corps)`` — ``meta`` est ``{}`` si aucun front-matter
+        n'est present (ancien format ``pdf_to_md.py``).
+    """
     m = FRONTMATTER_RE.match(text)
     if not m:
         return {}, text
@@ -60,7 +68,19 @@ def split_frontmatter(text):
     return meta, text[m.end():]
 
 
-def detect_source_type(meta, raw_text):
+def detect_source_type(meta: dict, raw_text: str) -> str:
+    """Determine le type de source d'un fichier.
+
+    Priorite au front-matter ; sinon detection heuristique : commentaire
+    ``<!-- source: ... -->`` ou marqueurs de page -> ``pdf``, sinon ``web``.
+
+    Args:
+        meta: Metadata extraites du front-matter.
+        raw_text: Contenu brut complet du fichier.
+
+    Returns:
+        ``"pdf"`` ou ``"web"``.
+    """
     st = meta.get("source_type")
     if st in ("pdf", "web"):
         return st
@@ -69,7 +89,17 @@ def detect_source_type(meta, raw_text):
     return "pdf" if re.search(r'(?im)^<!--\s*(?:loc\s+)?page[=\s]', raw_text) else "web"
 
 
-def render_frontmatter(meta, source_type, source):
+def render_frontmatter(meta: dict, source_type: str, source: str) -> str:
+    """Reconstruit un front-matter YAML canonique.
+
+    Args:
+        meta: Metadata d'origine (copiees, non mutees).
+        source_type: ``"pdf"`` ou ``"web"``.
+        source: Nom de la source (stem du fichier).
+
+    Returns:
+        Bloc front-matter ``--- ... ---`` pret a ecrire en tete de fichier.
+    """
     meta = dict(meta)
     meta["source_type"] = source_type
     meta.setdefault("source", source)
@@ -86,9 +116,15 @@ PAGE_OLD_RE = re.compile(r'(?im)^<!--\s*page\s+(\d+)\s*-->\s*$', re.MULTILINE)
 PAGE_NEW_RE = re.compile(r'(?im)^<!--\s*loc\s+page=(\d+)\s*-->\s*$', re.MULTILINE)
 
 
-def unify_pages(text):
+def unify_pages(text: str) -> str:
     """Convertit '<!-- page N -->' (ancien) -> '<!-- loc page=N -->' (canonique).
-    Idempotent si le fichier utilise deja la convention recente."""
+
+    Args:
+        text: Corps du document.
+
+    Returns:
+        Texte avec la convention de page canonique. Idempotent.
+    """
     return PAGE_OLD_RE.sub(lambda m: f"<!-- loc page={m.group(1)} -->", text)
 
 
@@ -102,9 +138,16 @@ FIG_OLD_RE = re.compile(
 )
 
 
-def unify_figures(text):
-    """Convertit le bloc atomique ancien -> bloc atomique recent, contenu preserve tel quel.
-    Idempotent si le fichier utilise deja la convention [FIGURE]/[/FIGURE]."""
+def unify_figures(text: str) -> str:
+    """Convertit le bloc figure ancien -> bloc figure recent.
+
+    Args:
+        text: Corps du document.
+
+    Returns:
+        Texte avec des blocs ``--- [FIGURE] --- ... --- [/FIGURE] ---``.
+        Contenu preserve tel quel, idempotent.
+    """
     def repl(m):
         inner = m.group(1).strip()
         return f"--- [FIGURE] ---\n{inner}\n--- [/FIGURE] ---"
@@ -123,18 +166,27 @@ TOC_TAIL_RE = re.compile(r'\d\s*$')
 HEADER_MD_RE = re.compile(r'^#{1,6}\s+\S')
 
 
-def _heading_level(num_prefix, has_subindex):
+def _heading_level(num_prefix: str, has_subindex: bool) -> int:
     depth = num_prefix.count(".") + 1        # "1" ->1 | "1.1" ->2 | "3.10.2" ->3
     if has_subindex:                          # variante "3.10.2-.1"
         depth += 1
     return min(depth + 1, 6)                 # niveau 1 -> ## ; plafond ######
 
 
-def unify_headers(text):
-    """Ligne par ligne : titre ancien (brut) -> '#'*n markdown, en gardant le prefixe
-    numerote. Les titres deja au format markdown ne sont PAS touches (idempotent).
-    Les lignes de sommaire (terminees par un numero de page isole) sont laissees
-    telles quelles -> jamais transformees en faux titres."""
+def unify_headers(text: str) -> str:
+    """Convertit les titres bruts numerotes en titres markdown.
+
+    Les titres deja au format markdown ne sont PAS touches (idempotent). Les
+    lignes de sommaire (terminees par un numero de page isole) sont laissees
+    telles quelles -> jamais transformees en faux titres.
+
+    Args:
+        text: Corps du document.
+
+    Returns:
+        Texte avec des titres ``#``..``######`` dont la profondeur est deduite
+        du prefixe numerote.
+    """
     out = []
     for line in text.splitlines(keepends=True):
         stripped = line.rstrip("\n")
@@ -156,8 +208,15 @@ def unify_headers(text):
 HTML_TABLE_RE = re.compile(r'<table\b.*?</table>', re.DOTALL | re.IGNORECASE)
 
 
-def unify_tables(text):
-    """<table>...</table> -> markdown pipe table. Idempotent (aucun <table> -> inchange)."""
+def unify_tables(text: str) -> str:
+    """Convertit ``<table>…</table>`` en table Markdown pipe.
+
+    Args:
+        text: Corps du document.
+
+    Returns:
+        Texte avec des tables Markdown pipe. Idempotent.
+    """
     return HTML_TABLE_RE.sub(lambda m: html_table_to_md(m.group(0)), text)
 
 
@@ -168,14 +227,29 @@ def unify_tables(text):
 ORPHAN_PIPE_RE = re.compile(r'(?m)^[ \t]*\|[ \t]*$\n?')
 
 
-def strip_orphan_pipes(text):
-    """Lignes reduites a un seul '|' isole (cellule jamais liee a une image ![]() ->
-    residu de galerie web non couvert par clean_web_markdown.py). Les vraies lignes
-    de table ('| a | b |') ne matchent pas ce motif (contenu autour du pipe)."""
+def strip_orphan_pipes(text: str) -> str:
+    """Supprime les lignes reduites a un seul ``|`` isole.
+
+    Args:
+        text: Corps du document.
+
+    Returns:
+        Texte sans pipes orphelins (residus de galeries web). Les vraies lignes
+        de table ``| a | b |`` ne sont pas touchees.
+    """
     return ORPHAN_PIPE_RE.sub('', text)
 
 
-def tidy(text):
+def tidy(text: str) -> str:
+    """Normalise Unicode (NFC) et les espaces de fin de ligne.
+
+    Args:
+        text: Texte a nettoyer.
+
+    Returns:
+        Texte normalise NFC, sans espaces de fin de ligne, blocs de lignes
+        vides reduits a deux sauts de ligne maximum.
+    """
     text = unicodedata.normalize("NFC", text)
     text = re.sub(r'[ \t]+\n', '\n', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
@@ -186,7 +260,16 @@ def tidy(text):
 # PIPELINE
 # =====================================================
 
-def normalize_body(text):
+def normalize_body(text: str) -> str:
+    """Applique toutes les etapes d'unification sur un corps de document.
+
+    Args:
+        text: Corps du document (sans front-matter).
+
+    Returns:
+        Corps unifie au format canonique (pages, figures, titres, tables,
+        nettoyage final).
+    """
     text = unify_pages(text)
     text = unify_figures(text)
     text = unify_tables(text)
@@ -196,7 +279,16 @@ def normalize_body(text):
     return text
 
 
-def normalize_file(path: Path, out_dir: Path):
+def normalize_file(path: Path, out_dir: Path) -> str:
+    """Unifie UN fichier .md et ecrit le resultat dans ``out_dir``.
+
+    Args:
+        path: Fichier .md source.
+        out_dir: Dossier de destination (cree si absent).
+
+    Returns:
+        Le ``source_type`` detecte (``"pdf"`` ou ``"web"``).
+    """
     raw = path.read_text(encoding="utf-8")
     meta, body = split_frontmatter(raw)
     source_type = detect_source_type(meta, raw)
@@ -207,7 +299,7 @@ def normalize_file(path: Path, out_dir: Path):
     return source_type
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description="Unifie les .md (pdf ancien/recent + web) en un seul format.")
     ap.add_argument("input_dir")
     ap.add_argument("--out", default="processed")

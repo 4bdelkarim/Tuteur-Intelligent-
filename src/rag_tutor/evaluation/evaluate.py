@@ -113,7 +113,7 @@ if JUDGE_MODEL == _GEN_MODEL:
 # 1) CHARGEMENT DU GOLDEN DATASET (DeepEval Synthesizer, JSON)
 # =====================================================
 
-def load_dataset(path):
+def load_dataset(path: "str | Path") -> list[dict]:
     """Charge le golden dataset et le normalise. SCHEMA CONFIRME (extrait reel
     fourni) :
       question     <- item["question"]
@@ -179,13 +179,32 @@ def _is_relevant(gold_context, hit, overlap_threshold=0.4):
     return False
 
 
-def hit_at_k(gold_context, hits, k):
+def hit_at_k(gold_context: list[str], hits: list[dict], k: int) -> "float | None":
+    """Hit@k : 1.0 si au moins un hit du top-k est pertinent, sinon 0.0.
+
+    Args:
+        gold_context: Contextes de reference (gold).
+        hits: Hits recuperes par le pipeline.
+        k: Nombre de hits du top-k a considerer.
+
+    Returns:
+        1.0 ou 0.0, ou None si ``gold_context`` est vide.
+    """
     if not gold_context:
         return None
     return float(any(_is_relevant(gold_context, h) for h in hits[:k]))
 
 
-def reciprocal_rank(gold_context, hits):
+def reciprocal_rank(gold_context: list[str], hits: list[dict]) -> "float | None":
+    """MRR : inverse du rang du premier hit pertinent (0.0 si aucun).
+
+    Args:
+        gold_context: Contextes de reference (gold).
+        hits: Hits recuperes par le pipeline (ordonnes par score).
+
+    Returns:
+        1/rank du premier hit pertinent, 0.0 si aucun, None si ``gold_context`` vide.
+    """
     if not gold_context:
         return None
     for rank, h in enumerate(hits, start=1):
@@ -224,7 +243,7 @@ def _relevance_scores(gold_context, hits, k):
     return rels
 
 
-def precision_at_k(gold_context, hits, k):
+def precision_at_k(gold_context: list[str], hits: list[dict], k: int) -> "float | None":
     """Precision@k : proportion de hits dans le top-k juges pertinents
     (overlap >= 0.5 avec au moins un gold_context)."""
     if not gold_context or not hits:
@@ -233,7 +252,7 @@ def precision_at_k(gold_context, hits, k):
     return relevant / min(k, len(hits[:k]))
 
 
-def ndcg_at_k(gold_context, hits, k):
+def ndcg_at_k(gold_context: list[str], hits: list[dict], k: int) -> "float | None":
     """nDCG@k : Discounted Cumulative Gain normalise, utilisant le score de
     pertinence gradue (_relevance_scores) plutot que binaire."""
     if not gold_context or not hits:
@@ -247,7 +266,8 @@ def ndcg_at_k(gold_context, hits, k):
     return dcg / idcg if idcg > 0 else 0.0
 
 
-def bootstrap_ci(scores, n_bootstrap=1000, ci=0.95, seed=42):
+def bootstrap_ci(scores: list[float], n_bootstrap: int = 1000, ci: float = 0.95,
+                 seed: int = 42) -> "tuple[float | None, float | None, float | None]":
     """Intervalle de confiance bootstrap (percentile) a `ci`% sur une liste
     de scores. Retourne (lower, upper, mean)."""
     if not scores:
@@ -269,7 +289,7 @@ def bootstrap_ci(scores, n_bootstrap=1000, ci=0.95, seed=42):
     return lower, upper, mean
 
 
-def is_refusal(answer_text):
+def is_refusal(answer_text: str) -> bool:
     """Detection de refus : egalite stricte avec le message pipeline (M2/M3)
     OU detection de refus naturels du LLM (phrases courtes indiquant l'incapacite
     a repondre a partir des documents).
@@ -414,7 +434,7 @@ def _load_metrics():
     return [Faithfulness(), ContextPrecision()]
 
 
-def run_ragas(samples):
+def run_ragas(samples: list) -> dict:
     """`samples` : liste de ragas.SingleTurnSample deja remplis. Si tu ajoutes une
     metrique qui a besoin d'embeddings (ResponseRelevancy, similarite...), il
     faudra aussi passer `embeddings=` a evaluate() (ex. en enveloppant
@@ -462,8 +482,9 @@ def run_ragas(samples):
 # 4) ORCHESTRATION : dataset -> pipeline.answer() -> metriques
 # =====================================================
 
-def run_evaluation(dataset_path, k=K_RETRIEVAL, verbose=True, limit=None, use_query_processing=True,
-                    use_refusal_gate=True, skip_ragas=False):
+def run_evaluation(dataset_path: "str | Path", k: int = K_RETRIEVAL, verbose: bool = True,
+                    limit: "int | None" = None, use_query_processing: bool = True,
+                    use_refusal_gate: bool = True, skip_ragas: bool = False) -> dict:
     """verbose=True (defaut) : affiche la progression question par question et
     le temps par phase. AUCUNE sortie avant ca ne veut PAS dire que ca bloque --
     pipeline.answer() fait 2-3 appels LLM par question (reformulation, retrieval,
@@ -712,14 +733,14 @@ def run_evaluation(dataset_path, k=K_RETRIEVAL, verbose=True, limit=None, use_qu
 # 5) SAUVEGARDE DES RUNS (historique, pour visualisations ulterieures)
 # =====================================================
 
-def save_run(report, dataset_path, k, use_query_processing=True, use_refusal_gate=True,
-             retrieval_mode="hybrid_rerank", history_path="eval_history.jsonl"):
+def save_run(report: dict, dataset_path: "str | Path", k: int,
+             use_query_processing: bool = True, use_refusal_gate: bool = True,
+             retrieval_mode: str = "hybrid_rerank", history_path: str = "eval_history.jsonl") -> dict:
     """Enregistre ce run (horodatage + config + rapport) en AJOUT dans un fichier
     JSONL -- une ligne JSON par run, jamais un unique tableau JSON reecrit en
     entier : append-only, aucun risque de corrompre tout l'historique si
     interrompu en cours d'ecriture (utile pour un run de plusieurs heures).
-    Chaque ligne est un objet JSON independant -- cf. load_history() pour
-    recharger l'historique complet en vue d'une visualisation."""
+    Chaque ligne est un objet JSON independant."""
     import datetime
     from ..core.llm_client import GEN_MODEL, MAX_TOKENS
 
@@ -742,18 +763,8 @@ def save_run(report, dataset_path, k, use_query_processing=True, use_refusal_gat
     return record
 
 
-def load_history(history_path="eval_history.jsonl"):
-    """Recharge tout l'historique des runs sauvegardes (liste de dicts, meme
-    forme que les records ecrits par save_run()) -- pour construire des
-    visualisations comparant plusieurs runs (avant/apres un changement)."""
-    try:
-        with open(history_path, encoding="utf-8") as f:
-            return [json.loads(line) for line in f if line.strip()]
-    except FileNotFoundError:
-        return []
-
-
-def main():
+def main() -> None:
+    """Point d'entree CLI de l'evaluation (cf. ``rag-eval`` / ``make eval``)."""
     import argparse
     ap = argparse.ArgumentParser(description="Evalue le pipeline RAG complet sur un golden dataset (Ragas + Hit@k/MRR/refusal correctness).")
     ap.add_argument("dataset_path", help="JSON du golden dataset (DeepEval Synthesizer)")

@@ -25,6 +25,8 @@ API publique :
   generate(query, hits, system_prompt=None) -> str
 """
 
+from collections.abc import Iterator
+
 from .llm_client import chat
 
 REFUSAL_MESSAGE = "Les documents fournis ne permettent pas de répondre à cette question."
@@ -53,7 +55,7 @@ CITATIONS OBLIGATOIRES (chaque paragraphe doit citer au moins une source) :
 """
 
 
-def citation_label(meta):
+def citation_label(meta: dict) -> str:
     """Label de citation LISIBLE, au format demande :
     - web : web · <site> · « <titre de la page> » · §<titre de la section>
     - pdf : pdf · <nom du pdf> · §<titre de la section>
@@ -93,7 +95,8 @@ def _format_context(hits):
     return "\n\n---\n\n".join(blocks)
 
 
-def generate(query, hits, system_prompt=None, model=None, history=None):
+def generate(query: str, hits: list[dict], system_prompt: str | None = None,
+             model: str | None = None, history: str | None = None) -> str:
     """Genere la reponse finale. `hits` : liste de dicts text/dist/meta (sortie
     de retriever.retrieve()).
 
@@ -212,7 +215,7 @@ Analyse :
 VERDICT: HORS-CONTEXTE"""
 
 
-def verify_answer(question, answer, hits):
+def verify_answer(question: str, answer: str, hits: list[dict]) -> bool:
     """Post-generation LLM judge : verifie que la reponse est ancree dans le
     contexte fourni. Si la reponse utilise des connaissances hors-contexte
     (hallucination / memoire parametrique), retourne False → le pipeline
@@ -252,7 +255,8 @@ def verify_answer(question, answer, hits):
     return True
 
 
-def generate_stream(query, hits, system_prompt=None, model=None, history=None):
+def generate_stream(query: str, hits: list[dict], system_prompt: str | None = None,
+                    model: str | None = None, history: str | None = None) -> Iterator[str]:
     """Version streaming de generate() : yield chaque token au fur et a mesure.
     Meme contrat que generate(), mais retourne un generateur de str.
 

@@ -9,12 +9,11 @@ Compression de contexte VOLONTAIREMENT non branchee ici pour l'instant
 Ne contient AUCUNE logique metier propre -- compose seulement :
   query_processing.process_query()   (reformulation + decomposition)
   retriever.retrieve()               (hybride BM25+dense+rerank, par (sous-)question)
-  retriever.merge_dedup()            (fusion des resultats multi sous-questions,
-                                       dedup par parent_id -- reutilise TEL QUEL,
-                                       fonctionne aussi bien sur des enfants que
-                                       sur les hits parent deja remontes)
+  fusion round-robin                 (entrelacement des hits des sous-questions,
+                                       dedup par parent_id, pour preserver des
+                                       slots a la question globale dans le top-k)
 
-  generator.generate()               (reponse finale, prompt tuteur)
+  generator.generate()               (reponse finale)
 
 C'est ce fichier (pas evaluate.py) que le test ET toute interface interactive
 (CLI/Streamlit) doivent appeler -- un seul chemin de code pour les deux, comme
@@ -22,6 +21,7 @@ prevu depuis le debut de cette refonte.
 """
 
 from dataclasses import dataclass
+from collections.abc import Iterator
 
 from .query_processing import process_query
 from .retriever import retrieve
@@ -31,17 +31,27 @@ from .generator import generate, generate_stream, verify_answer, DEFAULT_SYSTEM_
 
 @dataclass
 class RAGResult:
+    """Resultat d'un appel `answer()` : question, contexte et reponse produites.
+
+    ``refused=True`` signifie qu'un mecanisme de refus (M1 reranker pre-generation
+    ou M2 LLM judge post-generation) a remplace la reponse par ``REFUSAL_MESSAGE``.
+    En mode ``stream=True``, ``answer`` est vide et les tokens sont produits par
+    ``answer_stream`` (generateur a iterer cote appelant).
+    """
+
     query: str
     rewritten_query: str
-    sub_queries: list
-    hits: list        # dicts complets (text/dist/meta) -- pour l'évaluateur (parent_id, source, pages...)
-    contexts: list     # juste les textes -- pratique pour la génération / un affichage rapide
+    sub_queries: list[str]
+    hits: list[dict]        # dicts complets (text/dist/meta) -- pour l'évaluateur (parent_id, source, pages...)
+    contexts: list[str]     # juste les textes -- pratique pour la génération / un affichage rapide
     answer: str
-    refused: bool      # True si refusal_gate a bloque AVANT generate() (pas d'appel LLM fait)
-    answer_stream: object = None  # generateur de tokens en mode stream=True
+    refused: bool           # True si refusal_gate a bloque AVANT generate() (pas d'appel LLM fait)
+    answer_stream: Iterator[str] | None = None  # generateur de tokens en mode stream=True
 
 
-def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusal_gate=True, history=None, stream=False):
+def answer(query: str, k: int = 4, system_prompt: str | None = None,
+           use_query_processing: bool = True, use_refusal_gate: bool = True,
+           history: str | None = None, stream: bool = False) -> RAGResult:
     """use_query_processing=False : saute process_query() entierement (1 appel LLM
     de moins par question) -- utilise la question brute directement pour le
     retrieval. Sacrifice la reformulation/decomposition ; utile en mode degrade
@@ -57,20 +67,13 @@ def answer(query, k=4, system_prompt=None, use_query_processing=True, use_refusa
     Si fourni, il est passe a la fois au query processing (resolution des anaphores
     avant retrieval) et au generator (contexte conversationnel dans le prompt).
 
-    BUG CORRIGE ICI (diagnostique en comparant les runs ancien/nouveau dataset +
-    relecture de merge_dedup()) : quand la question est decomposee en plusieurs
-    sous-questions, chaque retrieve(q, k=k) renvoie deja son propre top-k TRIE
-    par score. Mais merge_dedup() ne fait que CONCATENER + dedupliquer -- il ne
-    re-trie JAMAIS par score. Avant ce correctif : all_hits finissait par etre
-    [top-k de la sous-question 1] + [top-k de la sous-question 2, deduplique],
-    dans CET ordre -- meme si un hit de la sous-question 2 etait objectivement
-    plus pertinent que le 4e hit de la sous-question 1. hit_at_k()/reciprocal_rank()
-    (evaluate.py) prennent hits[:k] : sur une question decomposee, ca revenait
-    a ne verifier QUE le top-k de la PREMIERE sous-question, en ignorant les
-    suivantes. Plus un modele de query_processing decompose de questions (un
-    modele plus capable, ex. 14b vs 7b, le fait probablement plus souvent), plus
-    cette troncature prematuree faussait hit@k/MRR a la baisse -- independamment
-    de toute vraie degradation du retriever."""
+    Fusion multi sous-questions : quand la question est decomposee, chaque
+    sous-question est retrievee separement puis les hits sont ENTRELACES en
+    round-robin (dedup par parent_id) plutot que concatenes : cela preserve des
+    slots dans le top-k pour la question globale, meme face a des sous-questions
+    plus etroites dont les scores cosinus sont artificiellement plus eleves.
+    (Avant : concatener sans re-trier tronquait prematurement les sous-questions
+    suivantes et faussait hit@k/MRR a la baisse.)"""
     if use_query_processing:
         proc = process_query(query, history=history)
         # Toujours inclure la question reformulee (intention globale), et AJOUTER

@@ -21,7 +21,21 @@ from ..core.retriever import retrieve, merge_dedup
 from ..core.refusal_gate import calibrate
 
 
-def collect_scores(dataset_path, k=4):
+def collect_scores(dataset_path: "str | Path", k: int = 4) -> list[tuple[float, bool]]:
+    """Calcule ``(score top-hit, is_unanswerable)`` pour chaque question du dataset.
+
+    Ne fait QUE du retrieval (process_query + retrieve + merge_dedup), pas de
+    generation. Le score releve est celui du meilleur hit (``dist``), pret a
+    etre passe a :func:`refusal_gate.calibrate`.
+
+    Args:
+        dataset_path: Chemin du golden dataset JSON.
+        k: Nombre de parents recuperes par (sous-)question.
+
+    Returns:
+        Liste de ``(top_score, is_unanswerable)`` — une entree par question
+        avec une categorie exploitable et au moins un hit.
+    """
     items = load_dataset(dataset_path)
     scored = []
     for item in items:

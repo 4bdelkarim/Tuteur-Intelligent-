@@ -33,12 +33,19 @@ class _TableParser(HTMLParser):
             self._cell.append(data)
 
 
-def html_table_to_md(html):
-    """<table><tr><td>..</td></tr></table>  ->  table Markdown pipe.
+def html_table_to_md(html: str) -> str:
+    """Convertit ``<table>…</table>`` en table Markdown pipe.
 
-    Les '|' des cellules (ex. |z| en LaTeX) sont echappes ; le LaTeX est garde
-    tel quel. En cas d'echec de parsing, le HTML d'origine est retourne tel
-    quel (mieux vaut du HTML brut qu'un crash)."""
+    Les ``|`` des cellules (ex. ``|z|`` en LaTeX) sont echappes ; le LaTeX est
+    garde tel quel. En cas d'echec de parsing, le HTML d'origine est retourne
+    tel quel (mieux vaut du HTML brut qu'un crash).
+
+    Args:
+        html: Fragment HTML contenant une unique ``<table>…</table>``.
+
+    Returns:
+        Table Markdown pipe, ou le HTML d'origine si le parsing echoue.
+    """
     p = _TableParser()
     try:
         p.feed(html)

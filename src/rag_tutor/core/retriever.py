@@ -37,8 +37,8 @@ Si tu veux zero contact HF meme pour ce premier telechargement, lance avec
 MODE="hybrid" (pas de reranker) -- au prix de la qualite mesuree du reranker
 (fidelite ~0.88 avec vs ~0.69 sans, cf. trajectoire du chapitre 6).
 
-Prerequis : python ingest.py <dossier_processed>   (cree chroma_db + parents_*.json)
-Dependances : pip install rank-bm25 sentence-transformers
+Prerequis : python -m rag_tutor.ingestion.ingest data/normalized/   (cree chroma_db + parents_*.json)
+Dependances : rank-bm25, sentence-transformers (deps du projet, cf. pyproject.toml)
 """
 
 from .vector_store import get_collection, load_parents
@@ -114,7 +114,7 @@ def _bm25_search(q, k, source_type=None):
     return [{"text": _DOCS[i], "meta": _METAS[i] or {}, "score": float(scores[i])} for i in idx]
 
 
-def merge_dedup(a, b):
+def merge_dedup(a: list[dict], b: list[dict]) -> list[dict]:
     """Fusionne deux listes d'enfants en dedupliquant (parent_id + texte)."""
     seen, out = set(), []
     for r in a + b:
@@ -177,7 +177,21 @@ def _rerank(q, cands, top_k):
 # REMONTEE AUX PARENTS (dedup, ordre = rang des enfants)
 # =====================================================
 
-def children_to_parents(cands, parents, k):
+def children_to_parents(cands: list[dict], parents: dict, k: int) -> list[dict]:
+    """Remonte les enfants (dedupliques) vers leurs PARENTS uniques.
+
+    Le premier enfant d'une section fournit son score (``dist``) au parent ;
+    les enfants suivants de la meme section sont ignores (dedup). L'ordre des
+    parents suit le rang des enfants.
+
+    Args:
+        cands: Enfants tries par pertinence.
+        parents: Magasin des sections ``{parent_id -> {...}}``.
+        k: Nombre maximal de parents a renvoyer.
+
+    Returns:
+        Liste de hits parents ``{text, dist, meta}``.
+    """
     hits, seen = [], set()
     for c in cands:
         pid = c["meta"].get("parent_id")
@@ -205,7 +219,8 @@ def children_to_parents(cands, parents, k):
 # API PRINCIPALE
 # =====================================================
 
-def retrieve(question, k=4, final_children=FINAL_CHILDREN, source_type=None):
+def retrieve(question: str, k: int = 4, final_children: int = FINAL_CHILDREN,
+             source_type: str | None = None) -> list[dict]:
     """Recupere jusqu'a k PARENTS via la chaine choisie (MODE).
     source_type='pdf'|'web' filtre optionnellement -> diagnostic PDF vs web.
 

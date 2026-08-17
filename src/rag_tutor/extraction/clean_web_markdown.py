@@ -39,9 +39,19 @@ import yaml
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
 
-def split_frontmatter(text: str):
-    """Separe front-matter (dict) et corps. Ne les separe PAS en fichiers differents
-    -> le dict est reinjecte dans le .md en sortie (render_frontmatter)."""
+def split_frontmatter(text: str) -> tuple[dict, str]:
+    """Separe le front-matter YAML du corps du document.
+
+    Le front-matter reste INLINE dans le .md (pas de fichier sidecar) : le
+    dictionnaire est reinjecte en sortie par :func:`render_frontmatter`.
+
+    Args:
+        text: Contenu complet d'un fichier .md (front-matter + corps).
+
+    Returns:
+        Tuple ``(meta, corps)`` — ``meta`` est un dict vide ``{}`` si aucun
+        front-matter n'est present.
+    """
     m = _FRONTMATTER_RE.match(text)
     if not m:
         return {}, text
@@ -112,6 +122,14 @@ _EMOJI_RE = re.compile(
 
 
 def remove_emojis(text: str) -> str:
+    """Supprime les emojis et autres caracteres Unicode decoratifs.
+
+    Args:
+        text: Markdown a nettoyer.
+
+    Returns:
+        Texte sans emojis (les doubles espaces residuels sont reduits a un).
+    """
     return _EMOJI_RE.sub("", text).replace("  ", " ")
 
 
@@ -152,6 +170,14 @@ _EXERCISE_SECTION_RE = re.compile(
 
 
 def remove_exercises(text: str) -> str:
+    """Supprime les sections Exercises/Problems, bornees a la section suivante.
+
+    Args:
+        text: Markdown a nettoyer.
+
+    Returns:
+        Texte sans les sections d'exercices.
+    """
     return _EXERCISE_SECTION_RE.sub("", text)
 
 
@@ -182,7 +208,14 @@ def clean_markdown_body(text: str, strip_exercises: bool = True) -> str:
     return text
 
 
-def process_file(path: Path, out_dir: Path, strip_exercises: bool = True):
+def process_file(path: Path, out_dir: Path, strip_exercises: bool = True) -> None:
+    """Nettoie UN fichier .md web et ecrit le resultat dans ``out_dir``.
+
+    Args:
+        path: Fichier .md source.
+        out_dir: Dossier de destination (cree si absent).
+        strip_exercises: Si True, supprime les sections Exercises/Problems.
+    """
     raw = path.read_text(encoding="utf-8")
     meta, body = split_frontmatter(raw)
     cleaned = clean_markdown_body(body, strip_exercises=strip_exercises)
@@ -190,7 +223,7 @@ def process_file(path: Path, out_dir: Path, strip_exercises: bool = True):
     (out_dir / path.name).write_text(out, encoding="utf-8")
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description="Nettoyage markdown web, pret au chunking.")
     ap.add_argument("input_dir")
     ap.add_argument("--out", default="markdown_clean")

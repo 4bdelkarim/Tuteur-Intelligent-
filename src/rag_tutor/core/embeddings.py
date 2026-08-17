@@ -37,12 +37,13 @@ class BGEEmbeddings:
     prevenir (port ngrok herite de Colab, instance orpheline...). Avec un Client
     explicite, AUCUNE ambiguite possible sur le serveur contacte."""
 
-    def __init__(self, model=EMBEDDING_MODEL, host=OLLAMA_HOST):
+    def __init__(self, model: str = EMBEDDING_MODEL, host: str = OLLAMA_HOST) -> None:
         import ollama
         self._client = ollama.Client(host=host)
         self.model = model.split(":")[0]        # tolere qu'on lui passe "bge-m3:latest"
 
-    def embed_documents(self, texts, batch_size=16, max_retries=3):
+    def embed_documents(self, texts: list[str], batch_size: int = 16,
+                        max_retries: int = 3) -> list[list[float]]:
         """batch_size reduit a 16 par defaut (etait 32) : sur un serveur Ollama
         partage/contraint, un gros lot peut faire planter la requete (OOM cote
         serveur -> connexion coupee en EOF, pas une erreur HTTP propre). En cas
@@ -78,6 +79,14 @@ class BGEEmbeddings:
               f"{repr(batch[0][:150])}")
         raise RuntimeError(f"echec definitif d'embedding sur : {batch[0][:150]!r}")
 
-    def embed_query(self, text):
+    def embed_query(self, text: str) -> list[float]:
+        """Embedde UNE requete dans le meme espace vectoriel que l'indexation.
+
+        Args:
+            text: Texte de la requete.
+
+        Returns:
+            Vecteur (deja normalise L2 cote serveur Ollama).
+        """
         resp = self._client.embed(model=self.model, input=text)
         return resp["embeddings"][0]

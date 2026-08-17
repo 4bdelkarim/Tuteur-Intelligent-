@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-conversation_memory.py — Gestion de l'historique de conversation pour le tuteur
+memory.py — Gestion de l'historique de conversation pour le tuteur
 pédagogique conversationnel v2.
 
 Responsabilités :
@@ -12,10 +12,9 @@ API publique :
   ConversationMemory.add_turn(role, content) -> None
   ConversationMemory.get_formatted_history(max_tokens=4000) -> str
   ConversationMemory.clear() -> None
-  ConversationMemory.last_n_turns(n) -> list
 """
 
-from collections import deque
+from collections.abc import Callable
 
 
 class ConversationMemory:
@@ -27,7 +26,7 @@ class ConversationMemory:
         disponible, sinon tronqués)
     """
 
-    def __init__(self, recent_window=6, max_summary_tokens=500):
+    def __init__(self, recent_window: int = 6, max_summary_tokens: int = 500) -> None:
         self._turns: list[dict] = []        # [{"role": "student"|"tutor", "content": str}]
         self._summary: str = ""             # résumé compressé des tours anciens
         self._recent_window = recent_window
@@ -37,7 +36,7 @@ class ConversationMemory:
     # API publique
     # ------------------------------------------------------------------
 
-    def add_turn(self, role: str, content: str):
+    def add_turn(self, role: str, content: str) -> None:
         """Ajoute un tour à l'historique. role ∈ {student, tutor}."""
         if role not in ("student", "tutor"):
             raise ValueError(f"role doit être 'student' ou 'tutor', reçu: {role}")
@@ -74,14 +73,10 @@ class ConversationMemory:
 
         return history_text
 
-    def clear(self):
+    def clear(self) -> None:
         """Réinitialise la mémoire."""
         self._turns.clear()
         self._summary = ""
-
-    def last_n_turns(self, n: int = 1) -> list:
-        """Retourne les N derniers tours (le plus récent en dernier)."""
-        return self._turns[-n:] if n > 0 else []
 
     @property
     def turn_count(self) -> int:
@@ -95,7 +90,7 @@ class ConversationMemory:
     # Compression
     # ------------------------------------------------------------------
 
-    def compress(self, llm_summarize_fn=None):
+    def compress(self, llm_summarize_fn: Callable[[str], str] | None = None) -> None:
         """Compresse l'historique : résume les tours anciens, garde les
         recent_window derniers intacts.
 

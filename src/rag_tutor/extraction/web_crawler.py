@@ -4,7 +4,7 @@ web_crawler.py — crawler de site, pilote web_scraper.py (ton scraper).
 
 Séparation des rôles (c'est tout l'intérêt d'avoir deux fichiers) :
 
-    CE FICHIER (crawl_site.py)      -> trouve TOUTES les pages du site.
+    CE FICHIER (web_crawler.py)     -> trouve TOUTES les pages du site.
                                        Part de l'URL racine, suit les liens
                                        internes en largeur (BFS), déduplique.
     web_scraper.py (ton scraper)-> pour chaque page trouvée : extrait le
@@ -18,13 +18,13 @@ extracteur dans ton scraper, rien à changer ici.
 
 Exemples :
     # tout le cours NYU-DLSP21 (le préfixe /NYU-DLSP21 est détecté tout seul)
-    python crawl_site.py https://atcold.github.io/NYU-DLSP21/ --out corpus
+    python web_crawler.py https://atcold.github.io/NYU-DLSP21/ --out corpus
 
     # tout le livre d2l
-    python crawl_site.py https://d2l.ai/ --out corpus --max-pages 600
+    python web_crawler.py https://d2l.ai/ --out corpus --max-pages 600
 
     # plusieurs sites en une passe, chacun reste dans son périmètre
-    python crawl_site.py https://d2l.ai/ https://atcold.github.io/NYU-DLSP21/ --out corpus
+    python web_crawler.py https://d2l.ai/ https://atcold.github.io/NYU-DLSP21/ --out corpus
 """
 from __future__ import annotations
 
@@ -94,6 +94,7 @@ def is_content(url: str, content_re: "re.Pattern | None") -> bool:
 # petits utilitaires
 # ===========================================================================
 def norm_host(netloc: str) -> str:
+    """Normalise un netloc : minuscules, sans userinfo, port ni ``www.``."""
     host = (netloc or "").lower().split("@")[-1].split(":")[0]
     return host[4:] if host.startswith("www.") else host
 
@@ -139,6 +140,7 @@ def discover_links(soup: BeautifulSoup, base_url: str) -> "list[str]":
 
 
 def in_scope(url: str, root_host: str, path_prefix: str) -> bool:
+    """L'URL est-elle crawlable : http(s), même hôte, dans le préfixe, non binaire."""
     p = urlparse(url)
     if p.scheme not in ("http", "https"):
         return False
@@ -276,7 +278,15 @@ def crawl(seeds: "list[str]", out_dir: str, *, max_pages: int = 500,
     return saved
 
 
-def main(argv=None):
+def main(argv: "list[str] | None" = None) -> "list[Path]":
+    """Point d'entrée CLI : crawle les seeds et sauvegarde les pages de cours.
+
+    Args:
+        argv: Arguments à analyser (défaut : ``sys.argv[1:]``).
+
+    Returns:
+        Les chemins des fichiers Markdown écrits.
+    """
     ap = argparse.ArgumentParser(
         description="Crawler de site : découvre toutes les pages et les fait "
                     "scraper par web_scraper.py.")

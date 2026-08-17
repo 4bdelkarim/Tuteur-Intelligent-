@@ -35,7 +35,7 @@ def _patch_and_import():
         sys.modules["langchain_community.chat_models.vertexai"] = fake_mod
 
 
-def generate_validation_output(calibration_path, output_path):
+def generate_validation_output(calibration_path: str, output_path: str) -> None:
     """MODE --generate: Genere les reponses du pipeline + scores Ragas pour
     les questions de calibration. Sauvegarde dans eval/judge_validation.json
     (aucune annotation humaine — J4 abandonne)."""
@@ -166,7 +166,7 @@ def _custom_correctness_score(reference, answer):
     return score / 5.0   # normaliser 0-1 comme les scores Ragas
 
 
-def correctness_only(output_path):
+def correctness_only(output_path: str) -> None:
     """MODE --correctness-only: Relit le JSON existant et evalue la
     correctness avec un prompt simple 1-5 (qwen3:8b), sans passer par
     le FactualCorrectness de Ragas (incompatible avec les modeles 8B).
@@ -199,7 +199,7 @@ def correctness_only(output_path):
     print(f"   {output_annotated_path}")
 
 
-def ragas_only(output_path):
+def ragas_only(output_path: str) -> None:
     """MODE --ragas-only: Relit le JSON existant et relance Ragas en
     sequentiel (max_workers=1) sur les questions answerable uniquement.
     Utile quand le run initial (max_workers=3) a timeout sur certaines

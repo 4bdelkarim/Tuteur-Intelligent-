@@ -63,29 +63,39 @@ class OllamaEmbedderForDeepEval(DeepEvalBaseEmbeddingModel):
     docstring du module). Reutilise embeddings.BGEEmbeddings TEL QUEL -- meme
     modele, meme methode que l'ingestion reelle, pas de deuxieme implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._emb = BGEEmbeddings()
 
-    def load_model(self):
+    def load_model(self) -> BGEEmbeddings:
         return self._emb
 
-    def embed_text(self, text):
+    def embed_text(self, text: str) -> list[float]:
         return self._emb.embed_query(text)
 
-    def embed_texts(self, texts):
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
         return self._emb.embed_documents(texts)
 
-    async def a_embed_text(self, text):
+    async def a_embed_text(self, text: str) -> list[float]:
         return self.embed_text(text)
 
-    async def a_embed_texts(self, texts):
+    async def a_embed_texts(self, texts: list[str]) -> list[list[float]]:
         return self.embed_texts(texts)
 
-    def get_model_name(self):
+    def get_model_name(self) -> str:
         return "bge-m3 (embeddings.BGEEmbeddings)"
 
 
-def build_synthesizer(evolution_config=None):
+def build_synthesizer(evolution_config: EvolutionConfig | None = None) -> Synthesizer:
+    """Construit un Synthesizer DeepEval configuré pour un grounding strict.
+
+    Args:
+        evolution_config: Configuration d'evolution des questions. ``None`` =
+            evolutions par defaut de deepeval (ancrees au contexte) ; sinon
+            ex. ``DRIFT_EVOLUTION_CONFIG`` pour les candidats unanswerable.
+
+    Returns:
+        Le Synthesizer pret a generer des goldens.
+    """
     # temperature=0 (pas 0.3) : ce meme modele genere aussi expected_output, le
     # point le plus sensible pour le grounding strict -- la variete des questions
     # vient surtout des types d'evolution et des chunks differents, pas du hasard
@@ -187,20 +197,20 @@ def _generate_exact(corpus_dir, n_target, min_context_length, max_context_length
 
 
 
-def generate_single_passage(corpus_dir, n=20, buffer_factor=3):
+def generate_single_passage(corpus_dir: str, n: int = 20, buffer_factor: int = 3) -> list:
     """Contexte force a 1 SEUL chunk (min=max=1) -- garantit single_passage,
     pas une question de chance sur le groupement."""
     return _generate_exact(corpus_dir, n, min_context_length=1, max_context_length=1,
                             label="single_passage", buffer_factor=buffer_factor)
 
 
-def generate_multi_passage(corpus_dir, n=20, buffer_factor=3):
+def generate_multi_passage(corpus_dir: str, n: int = 20, buffer_factor: int = 3) -> list:
     """Contexte force a 2-3 chunks -- garantit multi_passage."""
     return _generate_exact(corpus_dir, n, min_context_length=2, max_context_length=3,
                             label="multi_passage", buffer_factor=buffer_factor)
 
 
-def generate_drift_candidates(corpus_dir, n_candidates=10, buffer_factor=3):
+def generate_drift_candidates(corpus_dir: str, n_candidates: int = 10, buffer_factor: int = 3) -> list:
     """Genere des questions via les evolutions REASONING/HYPOTHETICAL/IN_BREADTH
     (pas garanties ancrees au contexte) -- base pour construire la categorie
     unanswerable dans add_unanswerable(). include_expected_output=False : on
@@ -223,7 +233,7 @@ def generate_drift_candidates(corpus_dir, n_candidates=10, buffer_factor=3):
     return goldens[:n_candidates]
 
 
-def add_unanswerable(drift_candidates, answerable_goldens, seed=42):
+def add_unanswerable(drift_candidates: list, answerable_goldens: list, seed: int = 42) -> list[dict]:
     """Associe chaque question 'derivante' (generee via generate_drift_candidates,
     evolutions non garanties ancrees) au contexte d'un golden ANSWERABLE pris au
     hasard parmi les autres -- jamais son propre contexte d'origine. Le
@@ -246,7 +256,7 @@ def add_unanswerable(drift_candidates, answerable_goldens, seed=42):
     return unanswerable
 
 
-def goldens_to_records(goldens):
+def goldens_to_records(goldens: list) -> list[dict]:
     """Convertit les Golden deepeval au schema CONFIRME utilise par
     evaluate.py (question/contexts/ground_truth/category) -- pas de
     conversion ambigue, ce schema est deja valide en conditions reelles."""
