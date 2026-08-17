@@ -1,0 +1,42 @@
+[project]
+name = "rag-tutor"
+version = "2.1.0"
+description = "Tuteur pédagogique intelligent par RAG — pipeline extraction, retrieval hybride, génération ancrée, conversation socratique"
+requires-python = ">=3.11"
+dependencies = [
+    "glmocr[selfhosted]>=0.1.5",
+    "torch>=2.13.0",
+    "chromadb>=0.5.0",
+    "sentence-transformers>=3.0.0",
+    "rank-bm25>=0.2.2",
+    "pymupdf>=1.24.0",
+    "ollama>=0.4.0",
+    "ragas>=0.3.0",
+    "langchain-ollama>=0.2.0",
+    "deepeval>=1.0.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.66.0",
+    "requests>=2.31.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux'" },
+]
+
+[project.scripts]
+rag-chat = "rag_tutor.cli.chat:main"
+rag-tutor = "rag_tutor.cli.tutor:main"
+rag-eval = "rag_tutor.evaluation.evaluate:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,293 @@
+{
+  "dataset": "eval/test_set_v2.json",
+  "mode": "hybrid_rerank",
+  "best_threshold": 0.11190158128738403,
+  "best_accuracy": 1.0,
+  "precision_at_threshold": 1.0,
+  "recall_at_threshold": 1.0,
+  "f1_at_threshold": 1.0,
+  "n_answerable": 30,
+  "n_unanswerable": 15,
+  "answerable_stats": {
+    "min": 0.11190158128738403,
+    "med": 0.8183935880661011,
+    "max": 0.9985042810440063
+  },
+  "unanswerable_stats": {
+    "min": 0.0006110796239227057,
+    "med": 0.002162227174267173,
+    "max": 0.011767053045332432
+  },
+  "per_question": [
+    {
+      "question": "Comment la standardisation d'images et le formatage en entrée diffèrent-ils entre la prédiction et l",
+      "category": "single_passage",
+      "best_reranker_score": 0.6426,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelle est la différence entre le fast R-CNN et le faster R-CNN dans la génération des propositions ",
+      "category": "single_passage",
+      "best_reranker_score": 0.9927,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How does a fully convolutional network help in cursive handwriting recognition by removing the need ",
+      "category": "single_passage",
+      "best_reranker_score": 0.3765,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment le degré polynomial affecte-t-il l'erreur d'entraînement et les phénomènes d'underfitting et",
+      "category": "single_passage",
+      "best_reranker_score": 0.9766,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment l'absence de synchronisation peut-elle accélérer l'exécution sur deux GPU grâce à l'auto-par",
+      "category": "single_passage",
+      "best_reranker_score": 0.3304,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quels sont les 110 millions de paramètres du modèle de base BERT et comment est-il utilisé après l'e",
+      "category": "single_passage",
+      "best_reranker_score": 0.9985,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment le tenseur d'état caché $\textbf{H}_t$ est-il calculé à partir de la cellule de mémoire $\text",
+      "category": "single_passage",
+      "best_reranker_score": 0.9076,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les méthodes max pooling, LP-norm pooling et log-prob pooling utilisées dans les archit",
+      "category": "single_passage",
+      "best_reranker_score": 0.5694,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les dimensions et comment sont calculées les valeurs des portes d'entrée (input gate), ",
+      "category": "single_passage",
+      "best_reranker_score": 0.9165,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment puis-je utiliser torch.save et load_state_dict pour sauvegarder et charger les paramètres d'",
+      "category": "single_passage",
+      "best_reranker_score": 0.9222,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quel est le rôle de l'alignement de région d'intérêt (RoI) dans Mask R-CNN pour préserver les inform",
+      "category": "single_passage",
+      "best_reranker_score": 0.9881,
+      "is_unanswerable": false
+    },
+    {
+      "question": "What does $F_\\infty(\\vect{y}) = \\min_z E(\\vect{y},z)$ represent in terms of the quadratic Euclidean ",
+      "category": "single_passage",
+      "best_reranker_score": 0.9142,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment le modèle Transformer applique-t-il l'encodage et le décodage pour la traduction automatique",
+      "category": "single_passage",
+      "best_reranker_score": 0.7969,
+      "is_unanswerable": false
+    },
+    {
+      "question": "In a neural network with one hidden layer, how is the intermediate variable $\textbf{z}$ calculated u",
+      "category": "single_passage",
+      "best_reranker_score": 0.9525,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment les fonctions de perte basées sur des marges identifient-elles la réponse incorrecte la plus",
+      "category": "single_passage",
+      "best_reranker_score": 0.7852,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment l'ordonnancement asynchrone affecte-t-il la recherche aléatoire par rapport à la réduction s",
+      "category": "multi_passage",
+      "best_reranker_score": 0.9269,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How do sequence learning tasks differ from traditional machine learning in terms of handling variabl",
+      "category": "multi_passage",
+      "best_reranker_score": 0.3386,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How does dropout differ in its application between training and inference phases in neural networks?",
+      "category": "multi_passage",
+      "best_reranker_score": 0.7799,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les capacités du GPU et du CPU de l'instance ml.p3.2xlarge pour le traitement des tâche",
+      "category": "multi_passage",
+      "best_reranker_score": 0.922,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les différences entre l'espace de configuration d'un CNN (taille des lots, taux d'appre",
+      "category": "multi_passage",
+      "best_reranker_score": 0.1119,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How does backpropagation work when weights in multiplicative modules depend on additional inputs?",
+      "category": "multi_passage",
+      "best_reranker_score": 0.735,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Comment Adadelta ajuste-t-il son taux d'apprentissage sans valeur fixe, et comment cela diffère-t-il",
+      "category": "multi_passage",
+      "best_reranker_score": 0.9625,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How do Variational Auto-Encoders relate to Energy-based models and self-supervised learning methods ",
+      "category": "multi_passage",
+      "best_reranker_score": 0.3691,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les similitudes et les differences conceptuelles entre les GCNs et les mecanismes de se",
+      "category": "multi_passage",
+      "best_reranker_score": 0.983,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How does changing the kernel size from 3 to 5 in a 1D convolutional layer affect the output length f",
+      "category": "multi_passage",
+      "best_reranker_score": 0.7049,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelles sont les différences entre l'implémentation de la régression softmax avec des API haut nivea",
+      "category": "multi_passage",
+      "best_reranker_score": 0.8184,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How do the gradients of RNN parameters differ from those of MLPs during backpropagation due to their",
+      "category": "multi_passage",
+      "best_reranker_score": 0.328,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How do transformations in the input space of artificial neural networks differ from those in logisti",
+      "category": "multi_passage",
+      "best_reranker_score": 0.1479,
+      "is_unanswerable": false
+    },
+    {
+      "question": "How do transposed convolutions in an FCN upsample feature maps to match the spatial dimensions of th",
+      "category": "multi_passage",
+      "best_reranker_score": 0.9324,
+      "is_unanswerable": false
+    },
+    {
+      "question": "What are the differences between asynchronous and synchronous computing in terms of handling large d",
+      "category": "multi_passage",
+      "best_reranker_score": 0.2959,
+      "is_unanswerable": false
+    },
+    {
+      "question": "Quelle est la capitale du Burkina Faso et comment s'appelle son président actuel ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0023,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Comment fonctionne la photosynthèse dans les plantes chlorophylliennes ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0012,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qu'est-ce que le traité de Versailles et quand a-t-il été signé ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0118,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Explique le cycle de Krebs et son rôle dans la respiration cellulaire.",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0017,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Comment fonctionne le système immunitaire adaptatif chez l'humain ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0022,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qu'est-ce que la mitose et en quoi diffère-t-elle de la méiose ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0016,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qui a peint la Joconde et à quelle époque ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0006,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qu'est-ce que la dérive des continents et qui a proposé cette théorie ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0029,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Comment fonctionne le protocole HTTP/3 et quelles sont ses différences avec HTTP/2 ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0072,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Explique le fonctionnement d'une base de données relationnelle avec les jointures SQL.",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0045,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Comment fonctionne le garbage collector en Python et qu'est-ce que le comptage de références ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0087,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qu'est-ce que le théorème de Gödel et pourquoi est-il important en logique mathématique ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0014,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Explique la différence entre une liaison covalente et une liaison ionique en chimie.",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0023,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Comment fonctionne un moteur à combustion interne à quatre temps ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0007,
+      "is_unanswerable": true
+    },
+    {
+      "question": "Qu'est-ce que la loi de l'offre et de la demande en microéconomie ?",
+      "category": "unanswerable",
+      "best_reranker_score": 0.0006,
+      "is_unanswerable": true
+    }
+  ]
+}

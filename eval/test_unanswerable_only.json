@@ -1,0 +1,92 @@
+[
+  {
+    "question": "Quelle est la capitale du Burkina Faso et comment s'appelle son président actuel ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Comment fonctionne la photosynthèse dans les plantes chlorophylliennes ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qu'est-ce que le traité de Versailles et quand a-t-il été signé ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Explique le cycle de Krebs et son rôle dans la respiration cellulaire.",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Comment fonctionne le système immunitaire adaptatif chez l'humain ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qu'est-ce que la mitose et en quoi diffère-t-elle de la méiose ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qui a peint la Joconde et à quelle époque ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qu'est-ce que la dérive des continents et qui a proposé cette théorie ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Comment fonctionne le protocole HTTP/3 et quelles sont ses différences avec HTTP/2 ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Explique le fonctionnement d'une base de données relationnelle avec les jointures SQL.",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Comment fonctionne le garbage collector en Python et qu'est-ce que le comptage de références ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qu'est-ce que le théorème de Gödel et pourquoi est-il important en logique mathématique ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Explique la différence entre une liaison covalente et une liaison ionique en chimie.",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Comment fonctionne un moteur à combustion interne à quatre temps ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  },
+  {
+    "question": "Qu'est-ce que la loi de l'offre et de la demande en microéconomie ?",
+    "contexts": [],
+    "ground_truth": "L'information n'est pas présente dans le contexte fourni.",
+    "category": "unanswerable"
+  }
+]
