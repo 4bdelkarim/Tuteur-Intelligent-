@@ -1,4 +1,4 @@
-# Makefile — Tuteur RAG Pédagogique (rag-tutor v2.0.0)
+# Makefile — Tuteur RAG Pédagogique (rag-tutor v2.1.0)
 # ============================================================
 #
 # Cibles principales :
@@ -23,16 +23,21 @@
 # CONFIG
 # ============================================================
 
-# Détection auto du venv (priorité : env COMPLET du projet parent > .venv local > système).
-# Le .venv local est incomplet (rank_bm25 / chromadb / sentence_transformers absents) ;
-# l'env du projet parent ../rag-tutor/.venv contient toutes les dépendances runtime.
-_VENV_PYTHON := $(wildcard ../rag-tutor/.venv/bin/python3 .venv/bin/python3)
-ifeq ($(_VENV_PYTHON),)
+# Environnement Python : venv LOCAL du projet (.venv/), créé par `make setup`.
+# Aucun chemin externe — le projet est autonome et fonctionne dès
+# `git clone` + `make setup`.
+# PIP_CONFIG_FILE=/dev/null : l'installation ignore toute config pip globale
+# (même un pip.conf système malformé ne bloque plus `make setup`).
+VENV        := .venv
+VENV_PYTHON := $(VENV)/bin/python
+VENV_PIP    := $(VENV)/bin/pip
+
+# Venv local s'il existe, sinon retombée sur le python système.
+ifeq ($(wildcard $(VENV_PYTHON)),)
   PYTHON := python3
 else
-  PYTHON := $(firstword $(_VENV_PYTHON))
+  PYTHON := $(VENV_PYTHON)
 endif
-PIP         := $(PYTHON) -m pip
 OLLAMA      := ollama
 
 # Modèles Ollama requis
@@ -101,9 +106,13 @@ _check-python:
 	@echo "   ✅ Python $(shell $(PYTHON) --version)"
 
 _install-deps:
-	@echo "$(CYAN)[2/4] Installation des dépendances...$(RESET)"
-	@$(PIP) install -e . -q
-	@echo "   ✅ Dépendances installées"
+	@echo "$(CYAN)[2/4] Environnement Python + dépendances...$(RESET)"
+	@if [ ! -x "$(VENV_PYTHON)" ]; then \
+		echo "   Création du venv $(VENV)/ ..."; \
+		python3 -m venv $(VENV); \
+	fi
+	@PIP_CONFIG_FILE=/dev/null $(VENV_PIP) install -e . -q
+	@echo "   ✅ Dépendances installées dans $(VENV)/ (config pip globale ignorée)"
 
 _check-ollama:
 	@echo "$(CYAN)[3/4] Vérification Ollama...$(RESET)"

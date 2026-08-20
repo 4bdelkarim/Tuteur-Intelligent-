@@ -85,14 +85,14 @@ flowchart LR
 ## Installation
 
 ```bash
-pip install -e .
-```
-
-Puis vérifier l'environnement (Python, dépendances, Ollama, modèles) :
-
-```bash
 make setup
 ```
+
+Cette cible crée le venv local `.venv/`, y installe les dépendances
+(`pip install -e .`), puis vérifie Python, Ollama et les modèles requis.
+L'installation ignore toute configuration pip globale (`PIP_CONFIG_FILE=/dev/null`) :
+une config système cassée (p. ex. un `pip.conf` sans section `[global]`) ne bloque pas
+`make setup`.
 
 > Le `pyproject.toml` référence un index `uv` pour `torch` (build CUDA 12.6) ; un GPU est
 > recommandé pour l'OCR et la génération, mais le `Makefile` désactive CUDA par défaut
