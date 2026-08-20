@@ -26,6 +26,8 @@
 # Environnement Python : venv LOCAL du projet (.venv/), créé par `make setup`.
 # Aucun chemin externe — le projet est autonome et fonctionne dès
 # `git clone` + `make setup`.
+# PIP_CONFIG_FILE=/dev/null : l'installation ignore toute config pip globale
+# (même un pip.conf système malformé ne bloque plus `make setup`).
 VENV        := .venv
 VENV_PYTHON := $(VENV)/bin/python
 VENV_PIP    := $(VENV)/bin/pip
@@ -109,8 +111,8 @@ _install-deps:
 		echo "   Création du venv $(VENV)/ ..."; \
 		python3 -m venv $(VENV); \
 	fi
-	@$(VENV_PIP) install -e . -q
-	@echo "   ✅ Dépendances installées dans $(VENV)/"
+	@PIP_CONFIG_FILE=/dev/null $(VENV_PIP) install -e . -q
+	@echo "   ✅ Dépendances installées dans $(VENV)/ (config pip globale ignorée)"
 
 _check-ollama:
 	@echo "$(CYAN)[3/4] Vérification Ollama...$(RESET)"
