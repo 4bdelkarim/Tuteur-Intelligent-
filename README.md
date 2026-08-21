@@ -89,7 +89,11 @@ make setup
 ```
 
 Cette cible crée le venv local `.venv/`, y installe les dépendances
-(`pip install -e .`), puis vérifie Python, Ollama et les modèles requis.
+(`pip install -e .`), puis vérifie Python, Ollama et les modèles requis, et
+pré-télécharge le reranker `bge-reranker-v2-m3` dans le cache HuggingFace
+(une seule fois, ~600 Mo-1,2 Go, barre de progression affichée) — ainsi le
+premier `make chat` est immédiat et ne « gèle » pas sur un téléchargement
+silencieux.
 L'installation ignore toute configuration pip globale (`PIP_CONFIG_FILE=/dev/null`) :
 une config système cassée (p. ex. un `pip.conf` sans section `[global]`) ne bloque pas
 `make setup`.
@@ -106,7 +110,14 @@ une config système cassée (p. ex. un `pip.conf` sans section `[global]`) ne bl
   `RERANKER_MODEL`, `DB_DIR=chroma_db`, `COLLECTION_NAME=cours_ml_fig`, le seuil de refus
   `RERANKER_REFUSAL_THRESHOLD`. Ils ne sont pas lus depuis l'environnement.
 - **`.env.example`** documente ces valeurs par défaut (aucune variable n'est lue au runtime ;
-  le `Makefile` exporte seulement `HF_HUB_OFFLINE`, `CUDA_VISIBLE_DEVICES` et `TQDM_DISABLE`).
+  le `Makefile` exporte seulement `CUDA_VISIBLE_DEVICES` et `TQDM_DISABLE`).
+- **Premier lancement du reranker** : `BAAI/bge-reranker-v2-m3` se télécharge une seule fois
+  (~600 Mo, quelques minutes) puis reste en cache local. Le `Makefile` active alors
+  `HF_HUB_OFFLINE=1` **automatiquement** : chargement silencieux du reranker, sans warning
+  ni requête réseau (et sans le flag, huggingface_hub 1.x sort un appel HEAD à chaque
+  lancement — warning « unauthenticated requests », voire échec après retries si hors-ligne).
+  Sur une machine fraîche, le flag n'est **pas** activé tant que le modèle n'est pas en cache,
+  pour ne jamais bloquer le premier téléchargement.
 
 ## Pipeline de données
 

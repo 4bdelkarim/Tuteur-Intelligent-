@@ -50,8 +50,20 @@ MODE        ?= hybrid_rerank
 DATASET     ?= eval/golden_dataset_v2.json
 SHOW_SOURCES ?=
 
-# Mode hors-ligne HuggingFace — le modèle bge-reranker est déjà en cache local
+# Mode hors-ligne HuggingFace CONDITIONNEL : actif UNIQUEMENT si le reranker
+# (BAAI/bge-reranker-v2-m3) est déjà dans le cache local (après `make setup`).
+#   - cache présent -> HF_HUB_OFFLINE=1 : chargement du reranker SILENCIEUX
+#     (aucun warning HF, aucun retry réseau, fonctionnement 100% hors-ligne).
+#   - cache absent  -> pas de flag : le premier téléchargement reste possible.
+#     Sans cela, une machine fraîche échouerait en LocalEntryNotFoundError
+#     (fichiers absents du cache + trafic sortant désactivé) — le bug corrigé.
+# NB : sur huggingface_hub 1.x, charger le modèle SANS ce flag fait sortir un
+# appel HEAD à chaque lancement (warning « unauthenticated requests »), et pire,
+# le rend injoignable = 5 retries puis échec même avec le modèle en cache.
+HF_RERANKER_CACHED := $(shell $(VENV_PYTHON) -c "import sys; from huggingface_hub import snapshot_download; sys.exit(0 if snapshot_download('BAAI/bge-reranker-v2-m3', local_files_only=True) else 1)" 2>/dev/null; echo $$?)
+ifeq ($(HF_RERANKER_CACHED),0)
 export HF_HUB_OFFLINE=1
+endif
 export CUDA_VISIBLE_DEVICES=
 export TQDM_DISABLE=1
 
@@ -94,19 +106,19 @@ help:
 # SETUP
 # ============================================================
 
-setup: _check-python _install-deps _check-ollama _check-models
+setup: _check-python _install-deps _check-ollama _check-models _check-reranker
 	@echo ""
-	@echo "$(GREEN)✅ Setup terminé. Lance 'make ingest' pour indexer le corpus.$(RESET)"
+	@echo "$(GREEN)✅ Setup terminé. Lance 'make chat' ou 'make tutor'.$(RESET)"
 
 _check-python:
-	@echo "$(CYAN)[1/4] Vérification Python...$(RESET)"
+	@echo "$(CYAN)[1/5] Vérification Python...$(RESET)"
 	@$(PYTHON) --version || (echo "$(RED)❌ Python 3 introuvable. Installe python>=3.11$(RESET)" && exit 1)
 	@$(PYTHON) -c "import sys; assert sys.version_info >= (3,11), 'Python >= 3.11 requis'" \
 		|| (echo "$(RED)❌ Python >= 3.11 requis$(RESET)" && exit 1)
 	@echo "   ✅ Python $(shell $(PYTHON) --version)"
 
 _install-deps:
-	@echo "$(CYAN)[2/4] Environnement Python + dépendances...$(RESET)"
+	@echo "$(CYAN)[2/5] Environnement Python + dépendances...$(RESET)"
 	@if [ ! -x "$(VENV_PYTHON)" ]; then \
 		echo "   Création du venv $(VENV)/ ..."; \
 		python3 -m venv $(VENV); \
@@ -115,18 +127,27 @@ _install-deps:
 	@echo "   ✅ Dépendances installées dans $(VENV)/ (config pip globale ignorée)"
 
 _check-ollama:
-	@echo "$(CYAN)[3/4] Vérification Ollama...$(RESET)"
+	@echo "$(CYAN)[3/5] Vérification Ollama...$(RESET)"
 	@curl -s http://127.0.0.1:11434/api/tags > /dev/null 2>&1 \
 		&& echo "   ✅ Ollama actif sur localhost:11434" \
 		|| (echo "$(RED)❌ Ollama injoignable. Lance 'ollama serve' d'abord.$(RESET)" && exit 1)
 
 _check-models:
-	@echo "$(CYAN)[4/4] Vérification des modèles Ollama...$(RESET)"
+	@echo "$(CYAN)[4/5] Vérification des modèles Ollama...$(RESET)"
 	@for model in $(OLLAMA_MODELS); do \
 		$(OLLAMA) list | grep -q $$model \
 			&& echo "   ✅ $$model" \
 			|| (echo "   $(YELLOW)⚠️  $$model absent → 'ollama pull $$model' requis$(RESET)"); \
 	done
+
+# Reranker HF (bge-reranker-v2-m3) : pré-téléchargement dans le cache local.
+# Sans cette étape, le premier `make chat` téléchargerait ~600 Mo-1,2 Go SANS
+# barre de progression (TQDM_DISABLE=1) et semblerait gelé. Ici on désactive
+# TQDM_DISABLE/HF_HUB_OFFLINE le temps de l'étape : le téléchargement est visible.
+# Une fois en cache, l'étape est quasi instantanée et ne touche plus au réseau.
+_check-reranker:
+	@echo "$(CYAN)[5/5] Reranker bge-reranker-v2-m3 (HuggingFace)...$(RESET)"
+	@unset HF_HUB_OFFLINE TQDM_DISABLE; $(VENV_PYTHON) scripts/fetch_reranker.py
 
 # ============================================================
 # INGEST
