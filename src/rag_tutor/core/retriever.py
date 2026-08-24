@@ -31,11 +31,10 @@ RERANKER (a savoir) : Ollama n'expose que la couche d'embedding de ses modeles,
 jamais la tete de classification qu'un cross-encoder utilise -> AUCUN contournement
 propre cote Ollama a ce jour. bge-reranker-v2-m3 continue donc de passer par
 sentence-transformers/HuggingFace (telechargement UNIQUE ~600 Mo au premier lancement,
-mis en cache localement). Pour repasser 100% hors-ligne ENSUITE :
-    export HF_HUB_OFFLINE=1
-Si tu veux zero contact HF meme pour ce premier telechargement, lance avec
-MODE="hybrid" (pas de reranker) -- au prix de la qualite mesuree du reranker
-(fidelite ~0.88 avec vs ~0.69 sans, cf. trajectoire du chapitre 6).
+mis en cache localement). Si le reranker est indisponible, le systeme degrade
+AUTOMATIQUEMENT vers le mode hybrid (sans crash) — cf. RERANKER_ACTIVE.
+Si tu veux zero HF (100% hors-ligne), passe MODE="hybrid" au prix de la qualite
+(fidelite ~0.88 avec reranker vs ~0.69 sans, cf. trajectoire du chapitre 6).
 
 Prerequis : python -m rag_tutor.ingestion.ingest data/normalized/   (cree chroma_db + parents_*.json)
 Dependances : rank-bm25, sentence-transformers (deps du projet, cf. pyproject.toml)
@@ -65,6 +64,13 @@ RRF_ALPHA         = 0.6               # ponderation dense vs BM25 dans le RRF : 
 
 # --- singletons charges paresseusement ---
 _EMBEDDER = _COLL = _PAR = _BM25 = _DOCS = _METAS = _RERANK = None
+# Sentinel pour distinguer "pas encore charge" de "charge echouee"
+_RERANK_UNAVAILABLE = False
+# Flag PUBLIC : indique si le reranker cross-encoder est reellement actif.
+# refusal_gate.py (M1) s'en sert pour savoir si le score `dist` des hits est un
+# logit cross-encoder (comparables au seuil calibre) ou un score RRF/cosine
+# (incomparable -> le refus M1 doit etre desactive).
+RERANKER_ACTIVE = True
 
 
 def _lazy():
@@ -81,14 +87,90 @@ def _lazy():
 
 
 def _reranker():
-    global _RERANK
-    if _RERANK is None:
-        from sentence_transformers import CrossEncoder
-        # device="cpu" explicite : evite l'appel a torch.cuda.is_available() qui
-        # emet un UserWarning "driver NVIDIA trop ancien" sur cette machine
-        # (CUDA indisponible ici, le reranker tourne sur CPU de toute facon).
-        _RERANK = CrossEncoder(RERANKER_MODEL, device="cpu")
-    return _RERANK
+    global _RERANK, _RERANK_UNAVAILABLE, RERANKER_ACTIVE
+    if _RERANK is not None:
+        return _RERANK
+    if _RERANK_UNAVAILABLE:
+        return None
+
+    import sys, time
+    from sentence_transformers import CrossEncoder
+
+    last_error = None
+    for attempt in range(1, 4):  # 3 tentatives (backoff : 3s, 6s, 9s)
+        try:
+            # device="cpu" explicite : evite l'appel a torch.cuda.is_available() qui
+            # emet un UserWarning "driver NVIDIA trop ancien" sur cette machine
+            # (CUDA indisponible ici, le reranker tourne sur CPU de toute facon).
+            _RERANK = CrossEncoder(RERANKER_MODEL, device="cpu")
+            # Verification minimale : le modele doit pouvoir predire un score
+            _RERANK.predict([("test", "test")])
+            return _RERANK
+        except OSError as e:
+            last_error = e
+            err = str(e)
+            # LocalEntryNotFoundError = cache absent/incomplet + pas de reseau
+            # = CrossEncoder n'a pas pu downloader les poids manquants
+            if "does not appear to have a file" in err or "no file named" in err:
+                # Le cache est incomplet. On le purge pour forcer un retry propre
+                # au prochain essai (sinon le cache corrompu bloque tous les retries).
+                import shutil
+                cache = (
+                    __import__("pathlib").Path.home()
+                    / ".cache" / "huggingface" / "hub"
+                    / "models--BAAI--bge-reranker-v2-m3"
+                )
+                if cache.exists():
+                    try:
+                        shutil.rmtree(cache)
+                    except Exception:
+                        pass
+                if attempt < 3:
+                    wait = 3 * attempt
+                    print(
+                        f"\n  [retry {attempt}/3] Cache corrompu purge, "
+                        f"nouvelle tentative dans {wait}s...",
+                        file=sys.stderr, flush=True,
+                    )
+                    time.sleep(wait)
+                    continue
+            elif attempt < 3:
+                wait = 3 * attempt
+                print(
+                    f"\n  [retry {attempt}/3] Echec de chargement ({e}), "
+                    f"nouvelle tentative dans {wait}s...",
+                    file=sys.stderr, flush=True,
+                )
+                time.sleep(wait)
+                continue
+        except Exception as e:
+            last_error = e
+            if attempt < 3:
+                wait = 3 * attempt
+                print(
+                    f"\n  [retry {attempt}/3] Erreur inattendue ({type(e).__name__}: {e}), "
+                    f"nouvelle tentative dans {wait}s...",
+                    file=sys.stderr, flush=True,
+                )
+                time.sleep(wait)
+                continue
+
+    # Toutes les tentatives ont echoue -> degradation definitive
+    _RERANK_UNAVAILABLE = True
+    RERANKER_ACTIVE = False
+    print(
+        f"\n⚠️  Reranker '{RERANKER_MODEL}' INDISPONIBLE apres 3 tentatives.\n"
+        f"   Derniere erreur : {type(last_error).__name__}: {last_error}\n"
+        f"   -> DEGRADATION AUTOMATIQUE vers le mode 'hybrid' (fusion RRF sans rerank).\n"
+        f"   -> La qualite du rerank (fidelite ~0.88) sera reduite (~0.69), mais le systeme fonctionne.\n"
+        f"\n"
+        f"   Pour retablir le reranker complet :\n"
+        f"     1. Verifie ta connexion Internet (le modele ~1 Go sera telecharge une fois).\n"
+        f"     2. Lance : python scripts/fetch_reranker.py\n"
+        f"     3. En dernier recours : pip install --upgrade sentence-transformers transformers\n",
+        file=sys.stderr, flush=True,
+    )
+    return None
 
 
 # =====================================================
@@ -166,8 +248,13 @@ def _rrf_fusion(dense_results, bm25_results, k=RRF_K, top_n=FINAL_CHILDREN, alph
 
 
 def _rerank(q, cands, top_k):
+    rk = _reranker()
+    if rk is None:
+        # Reranker indisponible -> on conserve l'ordre RRF deja calcule (fallback).
+        # Les candidats arrivent deja tries par score RRF (cf. _rrf_fusion).
+        return cands[:top_k]
     pool = cands[:RERANK_CANDIDATES]
-    scores = _reranker().predict([(q, c["text"]) for c in pool])
+    scores = rk.predict([(q, c["text"]) for c in pool])
     for c, s in zip(pool, scores):
         c["score"] = float(s)
     return sorted(pool, key=lambda x: x["score"], reverse=True)[:top_k]

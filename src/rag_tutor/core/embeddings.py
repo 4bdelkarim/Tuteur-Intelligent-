@@ -53,7 +53,18 @@ class BGEEmbeddings:
         vectors, n, i = [], len(texts), 0
         while i < n:
             batch = texts[i:i + batch_size]
-            vectors.extend(self._embed_batch(batch, max_retries))
+            try:
+                vectors.extend(self._embed_batch(batch, max_retries))
+            except RuntimeError as e:
+                # Un item corrompu dans ce lot (texte trop long, malformed...)
+                # -> on ajoute un vecteur zero pour maintenir l'alignement
+                # et continuer l'indexation. L'indexation de TOUT le corpus
+                # ne doit pas echouer a cause d'un seul texte defectueux.
+                print(f"\n  [ERREUR] echec definitif d'embedding sur un lot de {len(batch)} : {e}")
+                print(f"    -> vecteurs zeros inseres pour ce lot (poursuite de l'indexation)")
+                # Determiner la dimension depuis les vecteurs deja produits
+                dim = len(vectors[-1]) if vectors else 1024  # bge-m3 = 1024d
+                vectors.extend([[0.0] * dim] * len(batch))
             i += len(batch)
             print(f"  embeddings Ollama ({self.model}) : {i}/{n}", end="\r", flush=True)
         print()  # newline apres la barre de progression en \r

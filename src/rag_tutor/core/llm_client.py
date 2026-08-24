@@ -51,16 +51,27 @@ def chat(system_prompt: str, user_message: str, model: str = GEN_MODEL,
     opts = {"temperature": temperature, "num_predict": max_tokens}
     if num_ctx is not None:
         opts["num_ctx"] = num_ctx
-    resp = client.chat(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ],
-        options=opts,
-        keep_alive=keep_alive,
-    )
-    return resp["message"]["content"]
+    try:
+        resp = client.chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            options=opts,
+            keep_alive=keep_alive,
+        )
+        return resp["message"]["content"]
+    except Exception as e:
+        msg = str(e).lower()
+        is_missing_model = "not found" in msg or ("model" in msg and ("not" in msg or "no" in msg))
+        if is_missing_model:
+            raise RuntimeError(
+                f"Le modele Ollama '{model}' n'est pas disponible.\n"
+                f"  Verifie avec : ollama list\n"
+                f"  Si absent, telecharge-le : ollama pull {model}"
+            ) from e
+        raise
 
 def chat_stream(system_prompt: str, user_message: str, model: str = GEN_MODEL,
                 temperature: float = 0.2, max_tokens: int = MAX_TOKENS,

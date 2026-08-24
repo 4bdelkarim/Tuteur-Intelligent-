@@ -235,8 +235,18 @@ def verify_answer(question: str, answer: str, hits: list[dict]) -> bool:
     )
     try:
         resp = chat(_VERIFY_SYSTEM_PROMPT, user_message, temperature=0, model="qwen3:8b")
-    except Exception:
-        return True   # echec technique → conservateur (ne pas bloquer)
+    except Exception as exc:
+        # Si le modele juge n'existe pas localement, on tente un fallback sur le
+        # modele de generation. Si ca echoue aussi -> conservateur (ne pas bloquer).
+        msg = str(exc).lower()
+        if "not found" in msg or ("model" in msg and ("not" in msg or "no" in msg)):
+            try:
+                from .llm_client import GEN_MODEL
+                resp = chat(_VERIFY_SYSTEM_PROMPT, user_message, temperature=0, model=GEN_MODEL)
+            except Exception:
+                return True
+        else:
+            return True   # echec technique -> conservateur (ne pas bloquer)
 
     text = resp.strip()
     # Parser robuste : cherche "VERDICT: ANCRÉ" ou "VERDICT: HORS-CONTEXTE"

@@ -50,20 +50,10 @@ MODE        ?= hybrid_rerank
 DATASET     ?= eval/golden_dataset_v2.json
 SHOW_SOURCES ?=
 
-# Mode hors-ligne HuggingFace CONDITIONNEL : actif UNIQUEMENT si le reranker
-# (BAAI/bge-reranker-v2-m3) est déjà dans le cache local (après `make setup`).
-#   - cache présent -> HF_HUB_OFFLINE=1 : chargement du reranker SILENCIEUX
-#     (aucun warning HF, aucun retry réseau, fonctionnement 100% hors-ligne).
-#   - cache absent  -> pas de flag : le premier téléchargement reste possible.
-#     Sans cela, une machine fraîche échouerait en LocalEntryNotFoundError
-#     (fichiers absents du cache + trafic sortant désactivé) — le bug corrigé.
-# NB : sur huggingface_hub 1.x, charger le modèle SANS ce flag fait sortir un
-# appel HEAD à chaque lancement (warning « unauthenticated requests »), et pire,
-# le rend injoignable = 5 retries puis échec même avec le modèle en cache.
-HF_RERANKER_CACHED := $(shell $(VENV_PYTHON) -c "import sys; from huggingface_hub import snapshot_download; sys.exit(0 if snapshot_download('BAAI/bge-reranker-v2-m3', local_files_only=True) else 1)" 2>/dev/null; echo $$?)
-ifeq ($(HF_RERANKER_CACHED),0)
-export HF_HUB_OFFLINE=1
-endif
+# HF_HUB_OFFLINE desactive — le fallback automatique de retriever.py gere
+# lesormais le cas "reranker absent" sans planter (degradation vers hybrid).
+# Le reranker est charge normalement ; s'il manque, il est telecharge
+# automatiquement au premier lancement (~600 Mo mis en cache).
 export CUDA_VISIBLE_DEVICES=
 export TQDM_DISABLE=1
 
@@ -143,7 +133,7 @@ _check-models:
 # Reranker HF (bge-reranker-v2-m3) : pré-téléchargement dans le cache local.
 # Sans cette étape, le premier `make chat` téléchargerait ~600 Mo-1,2 Go SANS
 # barre de progression (TQDM_DISABLE=1) et semblerait gelé. Ici on désactive
-# TQDM_DISABLE/HF_HUB_OFFLINE le temps de l'étape : le téléchargement est visible.
+# TQDM_DISABLE le temps de l'étape : le téléchargement est visible.
 # Une fois en cache, l'étape est quasi instantanée et ne touche plus au réseau.
 _check-reranker:
 	@echo "$(CYAN)[5/5] Reranker bge-reranker-v2-m3 (HuggingFace)...$(RESET)"

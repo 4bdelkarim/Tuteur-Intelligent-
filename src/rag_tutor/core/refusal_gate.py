@@ -46,9 +46,23 @@ def should_refuse_reranker(hits: list[dict], threshold: float = RERANKER_REFUSAL
     En mode hybrid : hits[0]["dist"] = score RRF (peu discriminant).
     En mode dense : hits[0]["dist"] = similarite cosinus.
 
+    IMPORTANT : le seuil RERANKER_REFUSAL_THRESHOLD n'est calibre QUE pour les
+    logits du cross-encoder (echelle [-10, +10]). Si le reranker est indisponible
+    (retriever.RERANKER_ACTIVE=False), les hits portent des scores RRF/cosine
+    (~0.01-0.1) qui seraient TOUJOURS sous le seuil -> refus systematique errone.
+    Dans ce cas, on desactive le refus M1 (le M2 LLM-judge reste actif).
+
     Retourne True si la reponse doit ETRE REFUSEE (score < seuil)."""
     if not hits:
         return True
+    try:
+        from .retriever import RERANKER_ACTIVE
+        if not RERANKER_ACTIVE:
+            # Reranker absent -> scores non comparables au seuil calibre.
+            # On ne refuse PAS sur ce signal degrade (le M2 tranchera).
+            return False
+    except ImportError:
+        pass  # retriever non importable (ex. test unitaire) -> comportement historique
     top_score = hits[0].get("dist")
     if top_score is None:
         return False

@@ -81,10 +81,25 @@ def save_parents(parents: dict, db_dir: str = DB_DIR, collection_name: str = COL
 def load_parents(db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME) -> dict:
     """Relit le magasin des parents -- utilise par le retrieval pour retrouver le texte
     complet d'une section a partir d'un parent_id."""
-    return json.loads(_parents_path(db_dir, collection_name).read_text(encoding="utf-8"))
+    pstore = _parents_path(db_dir, collection_name)
+    if not pstore.exists():
+        raise FileNotFoundError(
+            f"Magasin de parents introuvable : {pstore}\n"
+            f"  L'indexation n'a probablement pas encore ete lancee.\n"
+            f"  Execute d'abord : python -m rag_tutor.ingestion.ingest data/normalized/"
+        )
+    return json.loads(pstore.read_text(encoding="utf-8"))
 
 
 def get_collection(db_dir: str = DB_DIR, collection_name: str = COLLECTION_NAME):
     """Ouvre la collection Chroma existante en lecture -- utilise par le retrieval."""
     import chromadb
-    return chromadb.PersistentClient(path=db_dir).get_collection(collection_name)
+    client = chromadb.PersistentClient(path=db_dir)
+    try:
+        return client.get_collection(collection_name)
+    except Exception as e:
+        raise RuntimeError(
+            f"Collection Chroma '{collection_name}' introuvable dans {db_dir}/.\n"
+            f"  L'indexation n'a probablement pas encore ete lancee.\n"
+            f"  Execute d'abord : python -m rag_tutor.ingestion.ingest data/normalized/"
+        ) from e
