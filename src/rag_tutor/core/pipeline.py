@@ -122,9 +122,10 @@ def answer(query: str, k: int = 4, system_prompt: str | None = None,
                 break
 
     # --- Mecanisme 1 : refus RERANKER (cross-encoder, zero cout supplementaire) ---
-    # Utilise le score du reranker (hits[0]["dist"] en mode hybrid_rerank) pour
-    # decider si le contexte est pertinent. Le cross-encoder est un BIEN meilleur
-    # juge de pertinence que le score cosine/BM25 — c'est litteralement sa fonction.
+    # Utilise le MEILLEUR score du reranker (max parmi tous les hits, pas seulement
+    # le premier — indispensable apres fusion round-robin multi sous-questions).
+    # Le cross-encoder est un BIEN meilleur juge de pertinence que le score
+    # cosine/BM25 — c'est litteralement sa fonction.
     # Ne coute RIEN de plus : le reranker tourne deja dans hybrid_rerank.
     if use_refusal_gate and should_refuse_reranker(all_hits):
         return RAGResult(

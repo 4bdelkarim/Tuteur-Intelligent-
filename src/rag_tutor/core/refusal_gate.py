@@ -40,11 +40,16 @@ RERANKER_REFUSAL_THRESHOLD = 0.1119
 def should_refuse_reranker(hits: list[dict], threshold: float = RERANKER_REFUSAL_THRESHOLD) -> bool:
     """Refuse si le score du meilleur hit (score du reranker en mode hybrid_rerank,
     ou score RRF/cosine sinon) est sous le seuil. Ne coute rien : le reranker
-    tourne deja dans hybrid_rerank, son score est dans hits[0]["dist"].
+    tourne deja dans hybrid_rerank, son score est dans ``hits[*]["dist"]``.
 
-    En mode hybrid_rerank : hits[0]["dist"] = score du cross-encoder (logit).
-    En mode hybrid : hits[0]["dist"] = score RRF (peu discriminant).
-    En mode dense : hits[0]["dist"] = similarite cosinus.
+    Le meilleur score est cherche PARMI TOUS les hits, pas seulement le premier.
+    C'est indispensable quand les hits proviennent d'une fusion round-robin
+    multi sous-questions (pipeline.py) : ``hits[0]`` n'est alors pas forcement
+    le mieux classe, contrairement au cas simple ou le retrieval est unique.
+
+    En mode hybrid_rerank : ``hits[*]["dist"]`` = score du cross-encoder (logit).
+    En mode hybrid : ``hits[*]["dist"]`` = score RRF (peu discriminant).
+    En mode dense : ``hits[*]["dist"]`` = similarite cosinus.
 
     IMPORTANT : le seuil RERANKER_REFUSAL_THRESHOLD n'est calibre QUE pour les
     logits du cross-encoder (echelle [-10, +10]). Si le reranker est indisponible
@@ -63,7 +68,12 @@ def should_refuse_reranker(hits: list[dict], threshold: float = RERANKER_REFUSAL
             return False
     except ImportError:
         pass  # retriever non importable (ex. test unitaire) -> comportement historique
-    top_score = hits[0].get("dist")
+
+    # Chercher le MEILLEUR score parmi tous les hits, pas seulement hits[0].
+    # hits[0] n'est le meilleur que dans le cas simple (retrieval unique trie).
+    # Dans le cas round-robin multi sous-questions (pipeline.py), les hits sont
+    # entrelaces et hits[0] n'est PAS forcement le mieux classe.
+    top_score = max((h.get("dist", float("-inf")) for h in hits), default=None)
     if top_score is None:
         return False
     return top_score < threshold
